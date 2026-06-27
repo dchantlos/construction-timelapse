@@ -1,0 +1,12 @@
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.log
+
+# Local tooling
+node_modules/
+.vscode/
+.idea/
+
+# Python dev server bytecode (if any)
+__pycache__/

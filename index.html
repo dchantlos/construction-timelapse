@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <title>AEONIS · 4D Construction Monitor</title>
+
+    <!-- ArcGIS dark base theme (we override most of it in styles.css) -->
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/dark/main.css" />
+    <link rel="stylesheet" href="./css/styles.css?v=9" />
+
+    <!-- ESM import map: load @arcgis/core straight from the CDN -->
+    <script type="importmap">
+      {
+        "imports": {
+          "@arcgis/core/": "https://js.arcgis.com/4.30/@arcgis/core/"
+        }
+      }
+    </script>
+  </head>
+
+  <body>
+    <!-- 3D scene mount point -->
+    <div id="viewDiv"></div>
+
+    <!-- Boot / loading veil -->
+    <div id="boot" class="boot">
+      <div class="boot__pulse"></div>
+      <div class="boot__text">Initializing Construction Twin<span class="boot__dots"></span></div>
+    </div>
+
+    <!-- ======================= TOP BAR ======================= -->
+    <header class="topbar glass">
+      <div class="brand">
+        <div class="brand__mark">
+          <span class="brand__ring"></span>
+          <span class="brand__core"></span>
+        </div>
+        <div class="brand__text">
+          <h1>ArcGIS</h1>
+          <p>4D Construction Monitor</p>
+        </div>
+      </div>
+
+      <div class="topbar__status">
+        <span class="dot dot--live"></span>
+        <span id="liveLabel">Living Construction Twin</span>
+      </div>
+    </header>
+
+    <!-- ======================= LEFT DASHBOARD ======================= -->
+    <aside class="dashboard glass">
+      <div class="dashboard__head">
+        <h2>Construction Dashboard</h2>
+        <span class="dashboard__sub" id="dashDate">—</span>
+      </div>
+
+      <!-- Progress ring -->
+      <section class="ring-card">
+        <div class="ring">
+          <svg viewBox="0 0 120 120">
+            <circle class="ring__bg" cx="60" cy="60" r="52" />
+            <circle class="ring__bar" id="ringBar" cx="60" cy="60" r="52" />
+          </svg>
+          <div class="ring__label">
+            <span id="progressPct">0%</span>
+            <small>Complete</small>
+          </div>
+        </div>
+        <div class="ring-card__meta">
+          <span class="kicker">Current Phase</span>
+          <strong id="currentPhase">—</strong>
+        </div>
+      </section>
+
+      <!-- Metric tiles -->
+      <section class="metrics">
+        <div class="metric">
+          <span class="kicker">Active Layers</span>
+          <strong id="activeLayerCount">0</strong>
+        </div>
+        <div class="metric">
+          <span class="kicker">Elapsed</span>
+          <strong id="elapsedDays">0d</strong>
+        </div>
+        <div class="metric">
+          <span class="kicker">Remaining</span>
+          <strong id="remainingDays">0d</strong>
+        </div>
+      </section>
+
+      <!-- Active layer breakdown -->
+      <section class="layers">
+        <div class="layers__head">
+          <span class="kicker">Construction Layers</span>
+          <button id="resetLayers" class="btn-reset" type="button" title="Restore all layers">Reset</button>
+        </div>
+        <ul id="layerList" class="layer-list"></ul>
+      </section>
+    </aside>
+
+    <!-- ======================= CUSTOM RIGHT CONTROLS ======================= -->
+    <div class="nav-stack glass">
+      <button class="nav-btn" id="zoomIn" title="Zoom in" aria-label="Zoom in">+</button>
+      <button class="nav-btn" id="zoomOut" title="Zoom out" aria-label="Zoom out">–</button>
+      <button class="nav-btn" id="resetView" title="Reset view" aria-label="Reset view">⟳</button>
+    </div>
+
+    <!-- ======================= BOTTOM PLAYBACK BUTTON ======================= -->
+    <footer class="dock glass">
+      <button class="cine-btn" id="cinematicBtn" title="Play / pause construction timeline">
+        <span class="cine-btn__icon" id="cineIcon">▶</span>
+        <span class="cine-btn__label" id="cineLabel">Play</span>
+        <span class="cine-btn__progress">
+          <span class="cine-btn__progress-fill" id="cineProgress"></span>
+        </span>
+      </button>
+    </footer>
+
+    <!-- TimeSlider runs purely as the time engine (drives time-aware layer
+         filtering + dashboard); its UI is hidden via CSS. -->
+    <div id="timeSlider" class="time-engine" aria-hidden="true"></div>
+
+    <!-- ======================= CUSTOM HIT-TEST TOOLTIP ======================= -->
+    <div id="tooltip" class="tooltip glass" role="dialog" aria-hidden="true">
+      <span class="tooltip__tag" id="tipTag">Component</span>
+      <h3 id="tipTitle">—</h3>
+      <div class="tooltip__row">
+        <span>Status</span>
+        <strong id="tipStatus" class="tooltip__status">—</strong>
+      </div>
+      <div class="tooltip__row">
+        <span>Phase</span>
+        <strong id="tipPhase">—</strong>
+      </div>
+    </div>
+
+    <!-- ======================= ESRI ATTRIBUTION BADGE ======================= -->
+    <a
+      class="esri-badge glass"
+      href="https://www.esri.com"
+      target="_blank"
+      rel="noopener noreferrer"
+      title="Powered by Esri ArcGIS"
+    >
+      <img src="./assets/esri-logo.jpg" alt="Esri" width="28" height="28" />
+      <span>Powered by Esri</span>
+    </a>
+
+    <script type="module" src="./js/app.js"></script>
+  </body>
+</html>
