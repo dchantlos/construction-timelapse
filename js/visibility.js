@@ -10,7 +10,7 @@
  *
  * @param {import("@arcgis/core/WebScene").default} scene
  */
-export function createLayerVisibility(scene, view) {
+export function createLayerVisibility(scene) {
   const list = document.getElementById("visibilityList");
   if (!list) return;
 
@@ -40,13 +40,6 @@ export function createLayerVisibility(scene, view) {
       // visible while scrubbing/playing the timeline.
       if (!layer.timeInfo?.fullTimeExtent && "useViewTime" in layer) {
         layer.useViewTime = false;
-      }
-      // Fly to the layer when switched on so it's easy to confirm it's loaded.
-      if (input.checked && view) {
-        layer
-          .load()
-          .then(() => layer.fullExtent && view.goTo(layer.fullExtent, { duration: 800 }))
-          .catch(() => {});
       }
     });
 

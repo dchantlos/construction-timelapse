@@ -87,7 +87,7 @@ async function boot() {
   });
 
   // --- Per-layer visibility toggles ------------------------------------------
-  createLayerVisibility(scene, view);
+  createLayerVisibility(scene);
 
   // --- Cinematic playback + interaction --------------------------------------
   createCinematic(view, timeSlider, fullTimeExtent);
