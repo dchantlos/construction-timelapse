@@ -670,11 +670,12 @@ body {
   min-width: 0;
 }
 .scrub__date {
-  font-size: 13px;
+  align-self: center;
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   color: #48dfe5;
-  text-shadow: 0 0 12px rgba(72, 223, 229, 0.5);
+  text-shadow: 0 0 10px rgba(72, 223, 229, 0.55);
 }
 
 /* Custom HTML5 range — track is painted via a JS-driven gradient on .scrub__range */

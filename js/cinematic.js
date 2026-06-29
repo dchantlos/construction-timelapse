@@ -23,7 +23,7 @@ export function createCinematic(view, timeSlider, fullTimeExtent) {
   const icon = document.getElementById("cineIcon");
   const label = document.getElementById("cineLabel");
   const slider = document.getElementById("scrubSlider");
-  const dateEl = document.getElementById("scrubDate");
+  const dateEl = document.getElementById("timeDisplay");
 
   // --- Setup: epoch bounds become the slider min/max ------------------------
   const startMs = +fullTimeExtent.start;
