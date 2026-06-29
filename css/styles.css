@@ -509,10 +509,23 @@ body {
   flex-direction: column;
   gap: 7px;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56, 226, 234, 0.4) transparent;
+}
+.toggle-list::-webkit-scrollbar {
+  width: 6px;
+}
+.toggle-list::-webkit-scrollbar-thumb {
+  background: rgba(56, 226, 234, 0.35);
+  border-radius: 999px;
+}
+.toggle-list::-webkit-scrollbar-track {
+  background: transparent;
 }
 .layers-panel.is-collapsed {
   max-height: none;
   width: 216px;
+  overflow: hidden;
 }
 .layers-panel.is-collapsed .toggle-list {
   display: none;
