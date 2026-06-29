@@ -83,6 +83,11 @@ export async function resolveTimeExtent(scene, view) {
     if (ext?.start && ext?.end) {
       start = start === null ? ext.start : new Date(Math.min(+start, +ext.start));
       end = end === null ? ext.end : new Date(Math.max(+end, +ext.end));
+    } else if ("useViewTime" in layer) {
+      // Non-time-aware context layers (e.g. Construction_Objects) must ignore
+      // the TimeSlider, otherwise cumulative filtering hides them for the whole
+      // animation. Pin them to "always visible".
+      layer.useViewTime = false;
     }
   });
 
