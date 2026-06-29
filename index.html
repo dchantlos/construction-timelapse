@@ -7,7 +7,7 @@
 
     <!-- ArcGIS dark base theme (we override most of it in styles.css) -->
     <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/dark/main.css" />
-    <link rel="stylesheet" href="./css/styles.css?v=12" />
+    <link rel="stylesheet" href="./css/styles.css?v=13" />
 
     <!-- ESM import map: load @arcgis/core straight from the CDN -->
     <script type="importmap">
@@ -100,10 +100,10 @@
     </aside>
 
     <!-- ======================= LAYER VISIBILITY PANEL ======================= -->
-    <aside class="layers-panel glass">
+    <aside class="layers-panel glass is-collapsed">
       <div class="layers-panel__head">
         <span class="kicker">Layers</span>
-        <button id="layersToggle" class="panel-collapse" type="button" title="Minimize layers" aria-label="Minimize layers">–</button>
+        <button id="layersToggle" class="panel-collapse" type="button" title="Expand layers" aria-label="Expand layers">+</button>
       </div>
       <ul id="visibilityList" class="toggle-list"></ul>
     </aside>
