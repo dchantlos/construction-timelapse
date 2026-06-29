@@ -36,6 +36,11 @@ export function createLayerVisibility(scene) {
     input.checked = layer.visible;
     input.addEventListener("change", () => {
       layer.visible = input.checked;
+      // Static (non-time-aware) layers must ignore the TimeSlider so they stay
+      // visible while scrubbing/playing the timeline.
+      if (!layer.timeInfo?.fullTimeExtent && "useViewTime" in layer) {
+        layer.useViewTime = false;
+      }
     });
 
     const track = document.createElement("span");
@@ -44,5 +49,16 @@ export function createLayerVisibility(scene) {
     label.append(input, track);
     li.append(name, label);
     list.appendChild(li);
+  }
+
+  // Collapse / expand the panel so it never fights the zoom controls.
+  const panel = list.closest(".layers-panel");
+  const toggle = document.getElementById("layersToggle");
+  if (panel && toggle) {
+    toggle.addEventListener("click", () => {
+      const collapsed = panel.classList.toggle("is-collapsed");
+      toggle.textContent = collapsed ? "+" : "\u2013";
+      toggle.title = collapsed ? "Expand layers" : "Minimize layers";
+    });
   }
 }

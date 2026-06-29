@@ -469,8 +469,9 @@ body {
   position: absolute;
   top: 98px;
   right: 18px;
-  z-index: 10;
+  z-index: 11;
   width: 216px;
+  max-height: calc(50vh - 80px);
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -481,6 +482,25 @@ body {
   align-items: center;
   justify-content: space-between;
 }
+.panel-collapse {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  border: 1px solid rgba(56, 226, 234, 0.28);
+  background: rgba(56, 226, 234, 0.08);
+  color: var(--accent-bright);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: all 0.2s ease;
+}
+.panel-collapse:hover {
+  background: rgba(56, 226, 234, 0.18);
+  border-color: var(--accent);
+  box-shadow: 0 0 12px -4px var(--accent);
+}
 .toggle-list {
   list-style: none;
   margin: 0;
@@ -488,6 +508,14 @@ body {
   display: flex;
   flex-direction: column;
   gap: 7px;
+  overflow-y: auto;
+}
+.layers-panel.is-collapsed {
+  max-height: none;
+  width: 216px;
+}
+.layers-panel.is-collapsed .toggle-list {
+  display: none;
 }
 .toggle-row {
   display: flex;
