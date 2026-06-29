@@ -7,7 +7,7 @@
 
     <!-- ArcGIS dark base theme (we override most of it in styles.css) -->
     <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/dark/main.css" />
-    <link rel="stylesheet" href="./css/styles.css?v=9" />
+    <link rel="stylesheet" href="./css/styles.css?v=10" />
 
     <!-- ESM import map: load @arcgis/core straight from the CDN -->
     <script type="importmap">
@@ -97,6 +97,14 @@
         </div>
         <ul id="layerList" class="layer-list"></ul>
       </section>
+    </aside>
+
+    <!-- ======================= LAYER VISIBILITY PANEL ======================= -->
+    <aside class="layers-panel glass">
+      <div class="layers-panel__head">
+        <span class="kicker">Layers</span>
+      </div>
+      <ul id="visibilityList" class="toggle-list"></ul>
     </aside>
 
     <!-- ======================= CUSTOM RIGHT CONTROLS ======================= -->

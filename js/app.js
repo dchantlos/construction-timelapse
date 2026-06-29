@@ -8,6 +8,7 @@ import * as reactiveUtils from "@arcgis/core/core/reactiveUtils.js";
 import { createView, resolveTimeExtent } from "./scene.js";
 import { createDashboard } from "./dashboard.js";
 import { createLayerControl } from "./layers.js";
+import { createLayerVisibility } from "./visibility.js";
 import { createCinematic } from "./cinematic.js";
 import { createInteraction } from "./interaction.js";
 import { TIME_STEP } from "./config.js";
@@ -84,6 +85,9 @@ async function boot() {
     layerControl.reset();
     dashboard.setIsolated(null);
   });
+
+  // --- Per-layer visibility toggles ------------------------------------------
+  createLayerVisibility(scene);
 
   // --- Cinematic playback + interaction --------------------------------------
   createCinematic(view, timeSlider, fullTimeExtent);
