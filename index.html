@@ -7,7 +7,7 @@
 
     <!-- ArcGIS dark base theme (we override most of it in styles.css) -->
     <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/dark/main.css" />
-    <link rel="stylesheet" href="./css/styles.css?v=13" />
+    <link rel="stylesheet" href="./css/styles.css?v=14" />
 
     <!-- ESM import map: load @arcgis/core straight from the CDN -->
     <script type="importmap">
@@ -115,15 +115,26 @@
       <button class="nav-btn" id="resetView" title="Reset view" aria-label="Reset view">⟳</button>
     </div>
 
-    <!-- ======================= BOTTOM PLAYBACK BUTTON ======================= -->
+    <!-- ======================= BOTTOM PLAYBACK + SCRUBBER ======================= -->
     <footer class="dock glass">
       <button class="cine-btn" id="cinematicBtn" title="Play / pause construction timeline">
         <span class="cine-btn__icon" id="cineIcon">▶</span>
         <span class="cine-btn__label" id="cineLabel">Play</span>
-        <span class="cine-btn__progress">
-          <span class="cine-btn__progress-fill" id="cineProgress"></span>
-        </span>
       </button>
+
+      <div class="scrub">
+        <span class="scrub__date" id="scrubDate">—</span>
+        <input
+          type="range"
+          id="scrubSlider"
+          class="scrub__range"
+          min="0"
+          max="100"
+          step="1"
+          value="0"
+          aria-label="Construction timeline scrubber"
+        />
+      </div>
     </footer>
 
     <!-- TimeSlider runs purely as the time engine (drives time-aware layer

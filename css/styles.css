@@ -601,7 +601,7 @@ body {
 }
 
 /* =============================================================================
-   Bottom playback button
+   Bottom playback dock + custom time scrubber
    ============================================================================= */
 .dock {
   position: absolute;
@@ -609,11 +609,18 @@ body {
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
-  width: fit-content;
-  width: max-content;
-  padding: 10px 14px;
+  width: min(560px, calc(100vw - 48px));
+  padding: 14px 18px;
   display: flex;
   align-items: center;
+  gap: 16px;
+  border-radius: 18px;
+  /* Dark, translucent glassmorphism pill */
+  background: rgba(14, 18, 32, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.7);
 }
 
 /* The TimeSlider runs headlessly as the time engine — keep its DOM out of view. */
@@ -654,23 +661,67 @@ body {
   font-size: 12px;
 }
 
-/* Thin glowing progress bar pinned to the bottom edge of the Play button */
-.cine-btn__progress {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 3px;
-  background: rgba(255, 255, 255, 0.08);
+/* Scrubber column: date label sits directly above the range slider */
+.scrub {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
 }
-.cine-btn__progress-fill {
-  display: block;
-  height: 100%;
-  width: 0%;
+.scrub__date {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #48dfe5;
+  text-shadow: 0 0 12px rgba(72, 223, 229, 0.5);
+}
+
+/* Custom HTML5 range — track is painted via a JS-driven gradient on .scrub__range */
+.scrub__range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--accent-2), var(--accent));
-  box-shadow: 0 0 10px var(--accent), 0 0 4px var(--accent);
-  transition: width 0.25s ease;
+  cursor: pointer;
+  background: linear-gradient(90deg, #48dfe5 0%, #48dfe5 0%, #2a3142 0%, #2a3142 100%);
+  outline: none;
+}
+/* WebKit thumb — glowing neon cyan circle */
+.scrub__range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #48dfe5;
+  border: 2px solid #0b0f1a;
+  box-shadow: 0 0 12px #48dfe5, 0 0 4px #48dfe5;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.scrub__range::-webkit-slider-thumb:hover {
+  transform: scale(1.18);
+  box-shadow: 0 0 18px #48dfe5, 0 0 6px #48dfe5;
+}
+/* Firefox thumb */
+.scrub__range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #48dfe5;
+  border: 2px solid #0b0f1a;
+  box-shadow: 0 0 12px #48dfe5, 0 0 4px #48dfe5;
+}
+.scrub__range::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: #2a3142;
+}
+.scrub__range::-moz-range-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: #48dfe5;
 }
 
 /* =============================================================================
