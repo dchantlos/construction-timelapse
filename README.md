@@ -5,7 +5,6 @@ A futuristic, glassmorphism **4D construction-monitoring dashboard** built on th
 It plays a 3D building's construction sequence over time — a living digital twin —
 with a cinematic camera orbit, interactive layer isolation, and a real-time progress HUD.
 
-![Powered by Esri](assets/esri-logo.jpg)
 
 ## Features
 
