@@ -50,15 +50,31 @@ export function createInteraction(view) {
     const match = BUILDING_LAYERS.find((l) =>
       rawTitle.toLowerCase().includes(l.id.toLowerCase())
     );
-    const label = match?.label ?? rawTitle;
+
+    // Non-sequence context layers (e.g. Construction_Objects) aren't building
+    // components — show neutral site-context info instead of a fake phase.
+    if (!match) {
+      return {
+        tag: "Site Context",
+        label: rawTitle.replace(/_/g, " "),
+        status: "On Site",
+        phaseName: "—",
+        color: "#38e2ea"
+      };
+    }
 
     // Mock status/phase derived from where the layer sits in the sequence.
     const phaseName =
-      PHASES.find((p) => (match?.startAt ?? 0.5) < p.until)?.name ??
-      PHASES.at(-1).name;
-    const status = (match?.startAt ?? 0) < 0.5 ? "Installed" : "Recently Built";
+      PHASES.find((p) => match.startAt < p.until)?.name ?? PHASES.at(-1).name;
+    const status = match.startAt < 0.5 ? "Installed" : "Recently Built";
 
-    return { label, status, phaseName, color: match?.color ?? "#38e2ea" };
+    return {
+      tag: "Building Component",
+      label: match.label,
+      status,
+      phaseName,
+      color: match.color
+    };
   }
 
   view.on("click", async (event) => {
@@ -92,7 +108,7 @@ export function createInteraction(view) {
     }
 
     const info = describe(graphic);
-    tipTag.textContent = "Building Component";
+    tipTag.textContent = info.tag;
     tipTag.style.color = info.color;
     tipTitle.textContent = info.label;
     tipStatus.textContent = info.status;
