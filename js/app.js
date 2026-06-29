@@ -63,7 +63,9 @@ async function boot() {
     timeExtent: { start: fullTimeExtent.start, end: fullTimeExtent.start },
     playRate: 700,
     loop: true,
-    stops: { interval: { value: TIME_STEP.value, unit: TIME_STEP.unit } },
+    // Fine 1-day stops keep cumulative filtering responsive while letting the
+    // custom scrubber set arbitrary timeExtents without snapping back.
+    stops: { interval: { value: 1, unit: "days" } },
     labelFormatFunction: (value) =>
       value?.toLocaleDateString("en-US", { month: "short", year: "2-digit" })
   });
