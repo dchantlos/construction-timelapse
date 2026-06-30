@@ -963,12 +963,11 @@ body {
 
 .asst {
   position: absolute;
-  left: 50%;
-  bottom: 104px;
-  transform: translate(-50%, 12px);
+  top: 88px;
+  right: 18px;
   z-index: 31;
-  width: min(420px, calc(100vw - 48px));
-  max-height: min(440px, 55vh);
+  width: min(380px, calc(100vw - 36px));
+  max-height: min(440px, 62vh);
   display: flex;
   flex-direction: column;
   border-radius: 16px;
@@ -980,13 +979,17 @@ body {
     0 0 30px -10px rgba(72, 223, 229, 0.45);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.22s ease, transform 0.22s ease;
+  transition: opacity 0.2s ease;
   overflow: hidden;
 }
 .asst.is-open {
   opacity: 1;
   pointer-events: auto;
-  transform: translate(-50%, 0);
+}
+.asst.is-dragging {
+  transition: none;
+  box-shadow: 0 24px 60px -14px rgba(0, 0, 0, 0.85),
+    0 0 36px -8px rgba(72, 223, 229, 0.6);
 }
 .asst__head {
   display: flex;
@@ -994,6 +997,12 @@ body {
   justify-content: space-between;
   padding: 11px 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+.asst__head:active {
+  cursor: grabbing;
 }
 .asst__title {
   font-size: 13px;
@@ -1092,8 +1101,13 @@ body {
 }
 
 @media (max-width: 720px) {
-  .asst-fab,
-  .asst {
+  .asst-fab {
     bottom: 92px;
+  }
+  .asst {
+    top: 72px;
+    left: 18px;
+    right: 18px;
+    width: auto;
   }
 }

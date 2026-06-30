@@ -51,6 +51,45 @@ export function createAssistant({ fullTimeExtent, onDate }) {
   fab.addEventListener("click", open);
   closeBtn?.addEventListener("click", close);
 
+  // --- Dragging: grab the header to float the panel anywhere -----------------
+  const head = panel.querySelector(".asst__head");
+  let dragging = false;
+  let offsetX = 0;
+  let offsetY = 0;
+
+  function onPointerDown(e) {
+    if (e.target.closest(".asst__close")) return; // let the close button work
+    const rect = panel.getBoundingClientRect();
+    // Anchor to left/top so we can move freely (overrides the CSS right/top).
+    panel.style.left = `${rect.left}px`;
+    panel.style.top = `${rect.top}px`;
+    panel.style.right = "auto";
+    panel.style.bottom = "auto";
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+    dragging = true;
+    panel.classList.add("is-dragging");
+    head?.setPointerCapture?.(e.pointerId);
+  }
+  function onPointerMove(e) {
+    if (!dragging) return;
+    const w = panel.offsetWidth;
+    const h = panel.offsetHeight;
+    const x = Math.max(8, Math.min(window.innerWidth - w - 8, e.clientX - offsetX));
+    const y = Math.max(8, Math.min(window.innerHeight - h - 8, e.clientY - offsetY));
+    panel.style.left = `${x}px`;
+    panel.style.top = `${y}px`;
+  }
+  function onPointerUp(e) {
+    if (!dragging) return;
+    dragging = false;
+    panel.classList.remove("is-dragging");
+    head?.releasePointerCapture?.(e.pointerId);
+  }
+  head?.addEventListener("pointerdown", onPointerDown);
+  window.addEventListener("pointermove", onPointerMove);
+  window.addEventListener("pointerup", onPointerUp);
+
   // --- Chat bubbles ---------------------------------------------------------
   function bubble(text, who) {
     const el = document.createElement("div");
