@@ -10,7 +10,7 @@ import TimeExtent from "@arcgis/core/TimeExtent.js";
 import { WEBSCENE_ID, PORTAL_URL, FALLBACK_TIME_EXTENT } from "./config.js";
 
 // Assets (icons, workers, wasm) must resolve from the same CDN version.
-esriConfig.assetsPath = "https://js.arcgis.com/4.30/@arcgis/core/assets";
+esriConfig.assetsPath = "https://js.arcgis.com/5.1/@arcgis/core/assets";
 
 /**
  * Build the WebScene + SceneView, strip the default UI chrome and switch on
