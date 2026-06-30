@@ -2,7 +2,7 @@
 // cinematic.js — manual time scrubber + auto-play + slow camera orbit
 // =============================================================================
 
-import TimeExtent from "@arcgis/core/TimeExtent.js";
+import TimeExtent from "@arcgis/core/time/TimeExtent.js";
 
 /**
  * Couples a manually interpolated time progression with a smooth camera orbit

@@ -5,7 +5,7 @@
 import esriConfig from "@arcgis/core/config.js";
 import WebScene from "@arcgis/core/WebScene.js";
 import SceneView from "@arcgis/core/views/SceneView.js";
-import TimeExtent from "@arcgis/core/TimeExtent.js";
+import TimeExtent from "@arcgis/core/time/TimeExtent.js";
 
 import { WEBSCENE_ID, PORTAL_URL, FALLBACK_TIME_EXTENT } from "./config.js";
 
