@@ -180,6 +180,13 @@ export function createAssistant({ fullTimeExtent, onDate }) {
       return { date: at(startMs + (p / 100) * (endMs - startMs)), label: `${p}% through the build` };
     }
 
+    // A bare whole number 0–100 (no % sign) is read as a percentage.
+    const bare = text.match(/^(\d{1,3})$/);
+    if (bare && Number(bare[1]) <= 100) {
+      const p = Number(bare[1]);
+      return { date: at(startMs + (p / 100) * (endMs - startMs)), label: `${p}% through the build` };
+    }
+
     // ISO date  2025-11-01
     const iso = text.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
     if (iso) {
