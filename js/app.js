@@ -10,6 +10,7 @@ import { createDashboard } from "./dashboard.js";
 import { createLayerControl } from "./layers.js";
 import { createLayerVisibility } from "./visibility.js";
 import { createCinematic } from "./cinematic.js";
+import { createAssistant } from "./assistant.js";
 import { createInteraction } from "./interaction.js";
 import { TIME_STEP } from "./config.js";
 
@@ -92,8 +93,14 @@ async function boot() {
   createLayerVisibility(scene);
 
   // --- Cinematic playback + interaction --------------------------------------
-  createCinematic(view, timeSlider, fullTimeExtent);
+  const cinematic = createCinematic(view, timeSlider, fullTimeExtent);
   createInteraction(view);
+
+  // --- Timeline assistant (local date/phrase command box) --------------------
+  createAssistant({
+    fullTimeExtent,
+    onDate: (date) => cinematic.scrubTo(date)
+  });
 
   // --- Custom navigation controls --------------------------------------------
   wireNavControls(view);

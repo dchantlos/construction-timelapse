@@ -128,5 +128,17 @@ export function createCinematic(view, timeSlider, fullTimeExtent) {
   // Prime the initial date label + track fill.
   applyMs(startMs);
 
-  return { stop };
+  /**
+   * Scrub the timeline to an explicit Date (used by the timeline assistant).
+   * Pauses playback, clamps to the authored bounds, and moves the thumb.
+   * @param {Date|number} date
+   */
+  function scrubTo(date) {
+    if (playing) stop();
+    const ms = Math.max(startMs, Math.min(endMs, +date));
+    elapsed = ((ms - startMs) / (endMs - startMs)) * DURATION;
+    applyMs(ms);
+  }
+
+  return { stop, scrubTo };
 }
