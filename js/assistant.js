@@ -201,6 +201,25 @@ export function createAssistant({ fullTimeExtent, onDate }) {
       if (!isNaN(+d)) return { date: at(+d), label: fmtDate.format(d) };
     }
 
+    // Month/day with no year (e.g., "10/23") — infer the year from the build window
+    const md = text.match(/^(\d{1,2})\/(\d{1,2})$/);
+    if (md) {
+      const mo = Number(md[1]) - 1;
+      const day = Number(md[2]);
+      if (mo >= 0 && mo <= 11 && day >= 1 && day <= 31) {
+        const startY = new Date(startMs).getFullYear();
+        const endY = new Date(endMs).getFullYear();
+        const mid = (startMs + endMs) / 2;
+        let best = null;
+        for (let y = startY; y <= endY; y++) {
+          const cand = new Date(y, mo, day);
+          if (+cand >= startMs && +cand <= endMs) { best = cand; break; }
+          if (!best || Math.abs(+cand - mid) < Math.abs(+best - mid)) best = cand;
+        }
+        if (best && !isNaN(+best)) return { date: at(+best), label: fmtDate.format(best) };
+      }
+    }
+
     // Month-name date  "nov 1 2025" / "1 november 2025" / "november 2025"
     const monRe = /(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*/;
     const mon = text.match(monRe);
