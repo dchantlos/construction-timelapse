@@ -12,6 +12,46 @@ const MONTHS = {
   jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11
 };
 
+/**
+ * Resolve "quarter / third / half" style phrases (plus Q1–Q4 and "a/b"
+ * fractions) to a 0..1 progress fraction through the build. Returns null when
+ * nothing matches. "first quarter" = end of the 1st quarter (25%), etc.
+ */
+function fractionOf(text) {
+  // Q1–Q4 shorthand → end of that quarter
+  const q = text.match(/\bq\s*([1-4])\b/);
+  if (q) return Number(q[1]) / 4;
+
+  // "<ordinal> quarter|third" → end of that segment
+  const ord = { first: 1, second: 2, third: 3, fourth: 4, last: -1, final: -1 };
+  const om = text.match(/\b(first|second|third|fourth|last|final)[\s-]+(quarter|third)s?\b/);
+  if (om) {
+    const unit = om[2] === "quarter" ? 4 : 3;
+    const n = ord[om[1]] === -1 ? unit : ord[om[1]];
+    return n / unit;
+  }
+
+  // "<count> quarters|thirds" → that many segments in
+  const counts = { one: 1, two: 2, three: 3, a: 1, an: 1 };
+  const cm = text.match(/\b(one|two|three|a|an)[\s-]+(quarters?|thirds?)\b/);
+  if (cm) {
+    const unit = cm[2].startsWith("quarter") ? 4 : 3;
+    return Math.min(1, counts[cm[1]] / unit);
+  }
+
+  // Bare "quarter" / "third"
+  if (/\bquarters?\b/.test(text)) return 0.25;
+  if (/\bthirds?\b/.test(text)) return 1 / 3;
+
+  // Numeric fraction "a/b" (skip when it's really an m/d/yyyy date)
+  if (!/\d{1,2}\/\d{1,2}\/\d{4}/.test(text)) {
+    const fm = text.match(/\b([1-9])\s*\/\s*([1-9])\b/);
+    if (fm && Number(fm[1]) <= Number(fm[2])) return Number(fm[1]) / Number(fm[2]);
+  }
+
+  return null;
+}
+
 const fmtDate = new Intl.DateTimeFormat("en-US", {
   month: "short",
   day: "2-digit",
@@ -100,7 +140,7 @@ export function createAssistant({ fullTimeExtent, onDate }) {
   }
 
   bubble(
-    "Type a date or phrase to jump the build there — e.g. \u201CNov 1 2025\u201D, \u201C60%\u201D, \u201Chalfway\u201D, or \u201Ccompletion\u201D.",
+    "Type a date or phrase to jump the build there — e.g. \u201CNov 1 2025\u201D, \u201C25%\u201D, \u201Ca quarter\u201D, \u201Chalfway\u201D, or \u201Ccompletion\u201D.",
     "bot"
   );
 
@@ -124,6 +164,13 @@ export function createAssistant({ fullTimeExtent, onDate }) {
     }
     if (/\b(half|halfway|midpoint|middle|mid)\b/.test(text)) {
       return { date: at((startMs + endMs) / 2), label: "the halfway point" };
+    }
+
+    // Fractions / quarters / thirds → percentage through the build
+    const frac = fractionOf(text);
+    if (frac != null) {
+      const p = Math.round(frac * 100);
+      return { date: at(startMs + frac * (endMs - startMs)), label: `${p}% through the build` };
     }
 
     // Percent through the build
@@ -182,7 +229,7 @@ export function createAssistant({ fullTimeExtent, onDate }) {
     const hit = parse(raw);
     if (!hit) {
       bubble(
-        "Sorry, I couldn\u2019t read that. Try a date like \u201C2025-11-01\u201D, a percentage like \u201C40%\u201D, or words like \u201Cstart\u201D / \u201Chalfway\u201D / \u201Ccompletion\u201D.",
+        "Sorry, I couldn\u2019t read that. Try a date like \u201C2025-11-01\u201D, a fraction like \u201C40%\u201D / \u201Ca quarter\u201D / \u201Ctwo thirds\u201D, or words like \u201Cstart\u201D / \u201Chalfway\u201D / \u201Ccompletion\u201D.",
         "bot"
       );
       return;
