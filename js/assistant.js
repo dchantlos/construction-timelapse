@@ -64,7 +64,16 @@ const QUIPS = [
   "That’s above my pay grade. I’m a one-trick crane: feed me a construction date or a build percentage and I’ll get to work.",
   "Nice try! I’m not built for that. I scrub the build timeline — toss me a date or a percentage like \u201C60%\u201D.",
   "I’d love to, but I only speak timeline. Request a construction date or a build percentage and we’re golden.",
-  "Beep boop — request denied (politely). I just slide the build through time. Try a date or a percentage, e.g. \u201Ca quarter\u201D."
+  "Beep boop — request denied (politely). I just slide the build through time. Try a date or a percentage, e.g. \u201Ca quarter\u201D.",
+  "I flunked everything except dates and percentages. Hand me one and watch me shine.",
+  "My talents are gloriously narrow: timeline dates and build percentages. Pick one and let’s build.",
+  "I’m all hard hat, no homework. Give me a construction date or a percentage like \u201C75%\u201D.",
+  "You’ve reached the timeline desk. We only stock dates and percentages — anything else is sold out.",
+  "Plot twist: I’m just a fancy slider. A date or a build percentage is all I crave.",
+  "Wrong floor! This elevator only stops at dates and build percentages.",
+  "I’d google that for you, but I’m strictly a timeline operator. Date or percentage, please.",
+  "Bold request. Sadly my superpower is limited to dates and build percentages — try one of those.",
+  "Let’s keep it on-site: a construction date or a percentage like \u201Chalfway\u201D and I’m on it."
 ];
 
 /**
