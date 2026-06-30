@@ -58,6 +58,15 @@ const fmtDate = new Intl.DateTimeFormat("en-US", {
   year: "numeric"
 });
 
+// Charming-but-snarky replies for anything outside this tool's job description.
+const QUIPS = [
+  "Hard hat, not crystal ball — I only move the construction timeline. Give me a date or a build percentage (e.g. \u201CNov 1 2025\u201D or \u201C40%\u201D).",
+  "That’s above my pay grade. I’m a one-trick crane: feed me a construction date or a build percentage and I’ll get to work.",
+  "Nice try! I’m not built for that. I scrub the build timeline — toss me a date or a percentage like \u201C60%\u201D.",
+  "I’d love to, but I only speak timeline. Request a construction date or a build percentage and we’re golden.",
+  "Beep boop — request denied (politely). I just slide the build through time. Try a date or a percentage, e.g. \u201Ca quarter\u201D."
+];
+
 /**
  * Wire up the assistant panel + FAB and translate typed phrases into dates.
  *
@@ -254,10 +263,7 @@ export function createAssistant({ fullTimeExtent, onDate }) {
 
     const hit = parse(raw);
     if (!hit) {
-      bubble(
-        "Sorry, I couldn\u2019t read that. Try a date like \u201C2025-11-01\u201D, a fraction like \u201C40%\u201D / \u201Ca quarter\u201D / \u201Ctwo thirds\u201D, or words like \u201Cstart\u201D / \u201Chalfway\u201D / \u201Ccompletion\u201D.",
-        "bot"
-      );
+      bubble(QUIPS[Math.floor(Math.random() * QUIPS.length)], "bot");
       return;
     }
 
