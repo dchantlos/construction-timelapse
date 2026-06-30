@@ -1033,6 +1033,18 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56, 226, 234, 0.4) transparent;
+}
+.asst__log::-webkit-scrollbar {
+  width: 6px;
+}
+.asst__log::-webkit-scrollbar-thumb {
+  background: rgba(56, 226, 234, 0.35);
+  border-radius: 999px;
+}
+.asst__log::-webkit-scrollbar-track {
+  background: transparent;
 }
 .asst-msg {
   max-width: 85%;
