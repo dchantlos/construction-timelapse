@@ -9,8 +9,8 @@ import { createView, resolveTimeExtent } from "./scene.js";
 import { createDashboard } from "./dashboard.js";
 import { createLayerControl } from "./layers.js";
 import { createLayerVisibility } from "./visibility.js";
-import { createCinematic } from "./cinematic.js";
-import { createAssistant } from "./assistant.js";
+import { createCinematic } from "./cinematic.js?v=17";
+import { createAssistant } from "./assistant.js?v=17";
 import { createInteraction } from "./interaction.js";
 import { TIME_STEP } from "./config.js";
 
