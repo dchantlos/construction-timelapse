@@ -1,7 +1,7 @@
 # Construction Timelapse
 
 A futuristic, glassmorphism **4D construction-monitoring dashboard** built on the
-[ArcGIS Maps SDK for JavaScript (4.x)](https://developers.arcgis.com/javascript/).
+[ArcGIS Maps SDK for JavaScript (5.x)](https://developers.arcgis.com/javascript/).
 It plays a 3D building's construction sequence over time — a living digital twin —
 with a cinematic camera orbit, interactive layer isolation, and a real-time progress HUD.
 
@@ -22,7 +22,7 @@ with a cinematic camera orbit, interactive layer isolation, and a real-time prog
 
 ## Tech
 
-- ArcGIS Maps SDK for JavaScript **4.30** (loaded as ES modules from the CDN via an import map)
+- ArcGIS Maps SDK for JavaScript **5.1** (loaded as ES modules from the CDN via an import map)
 - Vanilla JavaScript (ES modules), HTML, and CSS — no build step required
 
 ## Run locally
