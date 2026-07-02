@@ -88,8 +88,11 @@ export async function resolveTimeExtent(scene, view) {
       // the TimeSlider, otherwise cumulative filtering hides them for the whole
       // animation. Pin them to "always visible".
       layer.useViewTime = false;
-      // Construction_Objects is authored hidden in the scene — force it on.
-      if (layer.title === "Construction_Objects") layer.visible = true;
+      // The scene's context layer ("Construction Objects") is authored hidden —
+      // force it on. Tolerate underscore/space naming across WebScene versions.
+      if (layer.title?.replace(/[\s_]/g, "") === "ConstructionObjects") {
+        layer.visible = true;
+      }
     }
   });
 

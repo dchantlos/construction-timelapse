@@ -3,7 +3,7 @@
 // =============================================================================
 
 /** Portal item id of the time-enabled WebScene. */
-export const WEBSCENE_ID = "c54e805c7396419dadf44fb408f34b9f";
+export const WEBSCENE_ID = "e413d34ae0ed4c2da9243e4898666080";
 
 /** ArcGIS Online portal that hosts the WebScene. */
 export const PORTAL_URL = "https://www.arcgis.com";
@@ -16,11 +16,11 @@ export const PORTAL_URL = "https://www.arcgis.com";
 export const BUILDING_LAYERS = [
   { id: "Slabs", label: "Slabs", startAt: 0.0, color: "#5eead4" },
   { id: "Columns", label: "Columns", startAt: 0.1, color: "#38bdf8" },
-  { id: "StructuralFraming", label: "Structural Framing", startAt: 0.2, color: "#818cf8" },
+  { id: "Structural Framing", label: "Structural Framing", startAt: 0.2, color: "#818cf8" },
   { id: "Walls", label: "Walls", startAt: 0.45, color: "#a78bfa" },
   { id: "Plates", label: "Plates", startAt: 0.6, color: "#f472b6" },
   { id: "Roofs", label: "Roofs", startAt: 0.75, color: "#fb923c" },
-  { id: "CurtainWallPanels", label: "Curtain Wall Panels", startAt: 0.85, color: "#facc15" }
+  { id: "Curtain Wall Panels", label: "Curtain Wall Panels", startAt: 0.85, color: "#facc15" }
 ];
 
 /**
@@ -40,12 +40,12 @@ export const PHASES = [
  * Authored time extent of the source WebScene (read from its TimeSlider widget
  * configuration). Used as a reliable fallback if the layers don't expose their
  * own timeInfo when first queried.
- *   startTime 1754438400000 → 06 Aug 2025
- *   endTime   1796259600000 → ~Dec 2026
+ *   startTime 1760025600000 → 09 Oct 2025
+ *   endTime   1789920000000 → 20 Sep 2026
  */
 export const FALLBACK_TIME_EXTENT = {
-  start: new Date(1754438400000),
-  end: new Date(1796259600000)
+  start: new Date(1760025600000),
+  end: new Date(1789920000000)
 };
 
 /** Authored time-step for the slider (WebScene used 11-day stops). */
