@@ -4,7 +4,7 @@
 // components that have slipped behind, and lists the full status breakdown.
 // =============================================================================
 
-import { PLANNED_PROGRESS_PCT, PROGRESS_STATUS } from "./config.js?v=3";
+import { PLANNED_PROGRESS_PCT, PROGRESS_STATUS } from "./config.js?v=4";
 
 /** Circumference of the SVG ring (2πr, r=52) — matches .ring__bar dasharray. */
 const RING_CIRCUMFERENCE = 327;
@@ -20,6 +20,7 @@ const pct = (n) => `${n.toFixed(1)}%`;
  *   counts: Record<string, number>,
  *   behind: number,
  *   behindPct: number,
+ *   daysBehind: number,
  *   installed: number,
  *   installedPct: number
  * }} stats
@@ -44,11 +45,22 @@ export function renderProgressPanel(stats, context = {}) {
 
   const sub = document.getElementById("progSub");
   if (sub) {
-    sub.textContent = hasData
-      ? context.scope
-        ? `${context.scope} · ${fmt(stats.behind)} behind`
-        : `${fmt(stats.behind)} components behind schedule`
-      : "Status unavailable";
+    const days = Math.round(stats.daysBehind ?? 0);
+    let text = "Status unavailable";
+    if (hasData) {
+      if (context.scope) {
+        text =
+          stats.behind > 0
+            ? `${context.scope} · ${fmt(stats.behind)} behind · ~${days}d`
+            : `${context.scope} · on track`;
+      } else {
+        text =
+          stats.behind > 0
+            ? `~${days} days behind · ${fmt(stats.behind)} components`
+            : "On schedule";
+      }
+    }
+    sub.textContent = text;
     sub.classList.toggle("is-behind", hasData && stats.behind > 0);
   }
 

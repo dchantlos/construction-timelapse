@@ -78,6 +78,12 @@ export const PROGRESS_STATUS = {
   field: "CStatus",
   installedValue: "Installed",
   behindValues: ["Scheduled_10_Days", "Scheduled_11_to_30_Days"],
+  // Representative "days behind schedule" for each slipped bucket (the midpoint
+  // of its window) — used to estimate an approximate average lateness.
+  behindDays: {
+    Scheduled_10_Days: 5,
+    Scheduled_11_to_30_Days: 20
+  },
   buckets: [
     { value: "Installed", label: "Installed", color: "#4ade80" },
     { value: "Scheduled_10_Days", label: "Due within 10 days", color: "#3b82f6" },

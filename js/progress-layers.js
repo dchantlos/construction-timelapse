@@ -4,8 +4,8 @@
 // every panel metric (ring, behind, overdue, breakdown) to that layer alone.
 // =============================================================================
 
-import { summarizeStatus } from "./progress-stats.js?v=3";
-import { BUILDING_LAYERS } from "./config.js?v=3";
+import { summarizeStatus } from "./progress-stats.js?v=4";
+import { BUILDING_LAYERS } from "./config.js?v=4";
 
 const fmt = (n) => n.toLocaleString("en-US");
 
@@ -39,7 +39,12 @@ export function createProgressLayers(scene, data, onScope) {
   const buildingLayers = data.layers.map((entry) => entry.layer);
   let isolated = null; // the isolated layer, or null for "show all"
 
-  const rows = data.layers.map((entry) => {
+  // Alphabetical by clean building-type name for a predictable filter list.
+  const ordered = [...data.layers].sort((a, b) =>
+    cleanName(a.title).localeCompare(cleanName(b.title))
+  );
+
+  const rows = ordered.map((entry) => {
     const name = cleanName(entry.title);
     const color = swatchColor(name);
     const summary = summarizeStatus(entry.counts);

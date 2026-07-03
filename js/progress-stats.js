@@ -8,7 +8,19 @@
 // =============================================================================
 
 import esriRequest from "@arcgis/core/request.js";
-import { PROGRESS_STATUS } from "./config.js?v=3";
+import { PROGRESS_STATUS } from "./config.js?v=4";
+
+/** Context/basemap layers that carry no construction status — hidden from the
+ *  progress panel aggregate stats and its "Filter by Layer" list. */
+const EXCLUDED_LAYERS = new Set(["constructionobjects", "places", "labels", "buildings"]);
+
+/** Normalize a layer title for exclusion matching (drops "(Current)", ws, case). */
+function normalizeTitle(title = "") {
+  return title
+    .replace(/\s*\(current\)\s*$/i, "")
+    .replace(/[\s_]/g, "")
+    .toLowerCase();
+}
 
 /**
  * Derive the I3S layer-resource URL (…/SceneServer/layers/N) for a SceneLayer,
@@ -63,7 +75,7 @@ async function fetchLayerStatusCounts(layer) {
  * Summarize a CStatus value→count map into the shape the panel renders.
  *
  * @param {Record<string, number>} counts
- * @returns {{ total:number, counts:Record<string,number>, behind:number, behindPct:number, installed:number, installedPct:number }}
+ * @returns {{ total:number, counts:Record<string,number>, behind:number, behindPct:number, daysBehind:number, installed:number, installedPct:number }}
  */
 export function summarizeStatus(counts) {
   const total = Object.values(counts).reduce((sum, n) => sum + n, 0);
@@ -73,11 +85,20 @@ export function summarizeStatus(counts) {
   );
   const installed = counts[PROGRESS_STATUS.installedValue] ?? 0;
 
+  // Approximate average lateness: weight each slipped bucket by a representative
+  // "days behind" (midpoint of its window), then average over the behind count.
+  const behindDaysTotal = PROGRESS_STATUS.behindValues.reduce(
+    (sum, value) =>
+      sum + (counts[value] ?? 0) * (PROGRESS_STATUS.behindDays?.[value] ?? 0),
+    0
+  );
+
   return {
     total,
     counts,
     behind,
     behindPct: total ? (behind / total) * 100 : 0,
+    daysBehind: behind ? behindDaysTotal / behind : 0,
     installed,
     installedPct: total ? (installed / total) * 100 : 0
   };
@@ -85,7 +106,7 @@ export function summarizeStatus(counts) {
 
 /**
  * Collect CStatus per building layer plus a whole-building aggregate, excluding
- * the non-status "Construction Objects" context layer.
+ * non-status context layers (Construction Objects, Places, Labels, Buildings).
  *
  * @param {import("@arcgis/core/WebScene").default} scene
  * @returns {Promise<{
@@ -96,7 +117,7 @@ export function summarizeStatus(counts) {
 export async function collectConstructionStatus(scene) {
   const sceneLayers = scene.allLayers
     .filter((layer) => layer.type === "scene")
-    .filter((layer) => layer.title?.replace(/[\s_]/g, "") !== "ConstructionObjects")
+    .filter((layer) => !EXCLUDED_LAYERS.has(normalizeTitle(layer.title)))
     .toArray();
 
   const layers = await Promise.all(
