@@ -3,7 +3,7 @@
 // =============================================================================
 
 /** Portal item id of the time-enabled WebScene. */
-export const WEBSCENE_ID = "e413d34ae0ed4c2da9243e4898666080";
+export const WEBSCENE_ID = "dca938994e01425fa146c9587b3def04";
 
 /** ArcGIS Online portal that hosts the WebScene. */
 export const PORTAL_URL = "https://www.arcgis.com";
