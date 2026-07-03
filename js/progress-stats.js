@@ -8,7 +8,7 @@
 // =============================================================================
 
 import esriRequest from "@arcgis/core/request.js";
-import { PROGRESS_STATUS } from "./config.js?v=2";
+import { PROGRESS_STATUS } from "./config.js?v=3";
 
 /**
  * Derive the I3S layer-resource URL (…/SceneServer/layers/N) for a SceneLayer,
@@ -60,41 +60,12 @@ async function fetchLayerStatusCounts(layer) {
 }
 
 /**
- * Aggregate CStatus across every operational building layer in the scene,
- * excluding the non-status "Construction Objects" context layer.
+ * Summarize a CStatus value→count map into the shape the panel renders.
  *
- * @param {import("@arcgis/core/WebScene").default} scene
- * @returns {Promise<{
- *   total: number,
- *   counts: Record<string, number>,
- *   behind: number,
- *   behindPct: number,
- *   installed: number,
- *   installedPct: number
- * }>}
+ * @param {Record<string, number>} counts
+ * @returns {{ total:number, counts:Record<string,number>, behind:number, behindPct:number, installed:number, installedPct:number }}
  */
-export async function aggregateConstructionStatus(scene) {
-  const layers = scene.allLayers
-    .filter((layer) => layer.type === "scene")
-    .filter((layer) => layer.title?.replace(/[\s_]/g, "") !== "ConstructionObjects")
-    .toArray();
-
-  const perLayer = await Promise.all(
-    layers.map((layer) =>
-      fetchLayerStatusCounts(layer).catch((err) => {
-        console.warn(`CStatus stats unavailable for ${layer.title}`, err);
-        return {};
-      })
-    )
-  );
-
-  const counts = {};
-  for (const layerCounts of perLayer) {
-    for (const [value, count] of Object.entries(layerCounts)) {
-      counts[value] = (counts[value] ?? 0) + count;
-    }
-  }
-
+export function summarizeStatus(counts) {
   const total = Object.values(counts).reduce((sum, n) => sum + n, 0);
   const behind = PROGRESS_STATUS.behindValues.reduce(
     (sum, value) => sum + (counts[value] ?? 0),
@@ -110,4 +81,41 @@ export async function aggregateConstructionStatus(scene) {
     installed,
     installedPct: total ? (installed / total) * 100 : 0
   };
+}
+
+/**
+ * Collect CStatus per building layer plus a whole-building aggregate, excluding
+ * the non-status "Construction Objects" context layer.
+ *
+ * @param {import("@arcgis/core/WebScene").default} scene
+ * @returns {Promise<{
+ *   layers: Array<{ layer: object, title: string, counts: Record<string, number> }>,
+ *   summary: ReturnType<typeof summarizeStatus>
+ * }>}
+ */
+export async function collectConstructionStatus(scene) {
+  const sceneLayers = scene.allLayers
+    .filter((layer) => layer.type === "scene")
+    .filter((layer) => layer.title?.replace(/[\s_]/g, "") !== "ConstructionObjects")
+    .toArray();
+
+  const layers = await Promise.all(
+    sceneLayers.map(async (layer) => ({
+      layer,
+      title: layer.title,
+      counts: await fetchLayerStatusCounts(layer).catch((err) => {
+        console.warn(`CStatus stats unavailable for ${layer.title}`, err);
+        return {};
+      })
+    }))
+  );
+
+  const aggregate = {};
+  for (const { counts } of layers) {
+    for (const [value, count] of Object.entries(counts)) {
+      aggregate[value] = (aggregate[value] ?? 0) + count;
+    }
+  }
+
+  return { layers, summary: summarizeStatus(aggregate) };
 }

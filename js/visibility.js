@@ -2,6 +2,8 @@
 // visibility.js — sleek per-layer visibility toggles for the scene-service layers
 // =============================================================================
 
+import * as reactiveUtils from "@arcgis/core/core/reactiveUtils.js";
+
 /**
  * Build a compact, glassy layer list on the right that toggles each 3D
  * building / context layer on and off. Mirrors the SceneView TOC but styled to
@@ -42,6 +44,15 @@ export function createLayerVisibility(scene) {
         layer.useViewTime = false;
       }
     });
+
+    // Reflect visibility changes made elsewhere (e.g. the isolate control) so
+    // this toggle never drifts out of sync with the actual layer state.
+    reactiveUtils.watch(
+      () => layer.visible,
+      (visible) => {
+        input.checked = visible;
+      }
+    );
 
     const track = document.createElement("span");
     track.className = "track";

@@ -6,12 +6,13 @@
 // how many components have actually slipped behind.
 // =============================================================================
 
-import { createView } from "./scene.js?v=2";
-import { createLayerVisibility } from "./visibility.js?v=2";
-import { createSpin } from "./spin.js?v=2";
-import { aggregateConstructionStatus } from "./progress-stats.js?v=2";
-import { renderProgressPanel } from "./progress-panel.js?v=2";
-import { PROGRESS_WEBSCENE_ID } from "./config.js?v=2";
+import { createView } from "./scene.js?v=3";
+import { createLayerVisibility } from "./visibility.js?v=3";
+import { createSpin } from "./spin.js?v=3";
+import { collectConstructionStatus } from "./progress-stats.js?v=3";
+import { renderProgressPanel } from "./progress-panel.js?v=3";
+import { createProgressLayers } from "./progress-layers.js?v=3";
+import { PROGRESS_WEBSCENE_ID } from "./config.js?v=3";
 
 /** Surface any error directly on the boot veil so failures are never silent. */
 function showBootError(message) {
@@ -64,8 +65,12 @@ async function boot() {
   // Real construction status vs. planned schedule. Failures here must not blank
   // the whole view — fall back to an empty panel that reads "unavailable".
   try {
-    const stats = await aggregateConstructionStatus(scene);
-    renderProgressPanel(stats);
+    const data = await collectConstructionStatus(scene);
+    renderProgressPanel(data.summary);
+    // Per-layer isolate: filters the render and every metric to one layer.
+    createProgressLayers(scene, data, (summary, scope) =>
+      renderProgressPanel(summary, { scope })
+    );
   } catch (err) {
     console.warn("Progress statistics unavailable", err);
     renderProgressPanel({

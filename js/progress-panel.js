@@ -4,7 +4,7 @@
 // components that have slipped behind, and lists the full status breakdown.
 // =============================================================================
 
-import { PLANNED_PROGRESS_PCT, PROGRESS_STATUS } from "./config.js?v=2";
+import { PLANNED_PROGRESS_PCT, PROGRESS_STATUS } from "./config.js?v=3";
 
 /** Circumference of the SVG ring (2πr, r=52) — matches .ring__bar dasharray. */
 const RING_CIRCUMFERENCE = 327;
@@ -23,8 +23,9 @@ const pct = (n) => `${n.toFixed(1)}%`;
  *   installed: number,
  *   installedPct: number
  * }} stats
+ * @param {{ scope?: string|null }} [context] Optional isolated-layer label.
  */
-export function renderProgressPanel(stats) {
+export function renderProgressPanel(stats, context = {}) {
   const hasData = stats.total > 0;
   const planned = PLANNED_PROGRESS_PCT;
   const effective = Math.max(0, planned - stats.behindPct);
@@ -44,7 +45,9 @@ export function renderProgressPanel(stats) {
   const sub = document.getElementById("progSub");
   if (sub) {
     sub.textContent = hasData
-      ? `${fmt(stats.behind)} components behind schedule`
+      ? context.scope
+        ? `${context.scope} · ${fmt(stats.behind)} behind`
+        : `${fmt(stats.behind)} components behind schedule`
       : "Status unavailable";
     sub.classList.toggle("is-behind", hasData && stats.behind > 0);
   }

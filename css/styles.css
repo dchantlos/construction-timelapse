@@ -490,6 +490,25 @@ body {
   text-shadow: 0 0 8px rgba(74, 222, 128, 0.4);
 }
 
+/* Isolate / filter glyph on each progress-panel layer row */
+.layer-iso {
+  flex-shrink: 0;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--text-faint);
+  opacity: 0.5;
+  transition: color 0.25s ease, opacity 0.25s ease, text-shadow 0.25s ease;
+}
+.layer-list li:hover .layer-iso {
+  opacity: 0.9;
+  color: var(--accent);
+}
+.layer-list li.is-isolated .layer-iso {
+  opacity: 1;
+  color: var(--accent);
+  text-shadow: var(--glow-cyan);
+}
+
 /* Construction Layers header + reset control */
 .layers__head {
   display: flex;

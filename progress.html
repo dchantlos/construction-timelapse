@@ -7,7 +7,7 @@
 
     <!-- ArcGIS dark base theme (we override most of it in styles.css) -->
     <link rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css" />
-    <link rel="stylesheet" href="./css/styles.css?v=21" />
+    <link rel="stylesheet" href="./css/styles.css?v=22" />
 
     <!-- ESM import map: load @arcgis/core straight from the CDN -->
     <script type="importmap">
@@ -96,6 +96,15 @@
         </div>
       </section>
 
+      <!-- Isolate & filter by building layer -->
+      <section class="layers">
+        <div class="layers__head">
+          <span class="kicker">Filter by Layer</span>
+          <button id="progResetLayers" class="btn-reset" type="button" title="Show all layers">Reset</button>
+        </div>
+        <ul id="progLayerList" class="layer-list"></ul>
+      </section>
+
       <!-- Real construction-status breakdown (CStatus) -->
       <section class="layers">
         <div class="layers__head">
@@ -142,6 +151,6 @@
       <span>Powered by Esri</span>
     </a>
 
-    <script type="module" src="./js/progress.js?v=2"></script>
+    <script type="module" src="./js/progress.js?v=3"></script>
   </body>
 </html>
