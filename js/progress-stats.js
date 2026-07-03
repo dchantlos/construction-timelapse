@@ -8,7 +8,7 @@
 // =============================================================================
 
 import esriRequest from "@arcgis/core/request.js";
-import { PROGRESS_STATUS } from "./config.js?v=1";
+import { PROGRESS_STATUS } from "./config.js?v=2";
 
 /**
  * Derive the I3S layer-resource URL (…/SceneServer/layers/N) for a SceneLayer,

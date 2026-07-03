@@ -6,11 +6,12 @@
 // how many components have actually slipped behind.
 // =============================================================================
 
-import { createView } from "./scene.js?v=1";
-import { createLayerVisibility } from "./visibility.js?v=1";
-import { aggregateConstructionStatus } from "./progress-stats.js?v=1";
-import { renderProgressPanel } from "./progress-panel.js?v=1";
-import { PROGRESS_WEBSCENE_ID } from "./config.js?v=1";
+import { createView } from "./scene.js?v=2";
+import { createLayerVisibility } from "./visibility.js?v=2";
+import { createSpin } from "./spin.js?v=2";
+import { aggregateConstructionStatus } from "./progress-stats.js?v=2";
+import { renderProgressPanel } from "./progress-panel.js?v=2";
+import { PROGRESS_WEBSCENE_ID } from "./config.js?v=2";
 
 /** Surface any error directly on the boot veil so failures are never silent. */
 function showBootError(message) {
@@ -56,6 +57,9 @@ async function boot() {
 
   // Custom navigation controls.
   wireNavControls(view);
+
+  // Bottom-center turntable orbit (no timeline on this view).
+  createSpin(view);
 
   // Real construction status vs. planned schedule. Failures here must not blank
   // the whole view — fall back to an empty panel that reads "unavailable".

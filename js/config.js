@@ -80,8 +80,8 @@ export const PROGRESS_STATUS = {
   behindValues: ["Scheduled_10_Days", "Scheduled_11_to_30_Days"],
   buckets: [
     { value: "Installed", label: "Installed", color: "#4ade80" },
-    { value: "Scheduled_10_Days", label: "Due within 10 days", color: "#facc15" },
-    { value: "Scheduled_11_to_30_Days", label: "Due in 11\u201330 days", color: "#fb923c" },
+    { value: "Scheduled_10_Days", label: "Due within 10 days", color: "#3b82f6" },
+    { value: "Scheduled_11_to_30_Days", label: "Due in 11–30 days", color: "#c1440e" },
     { value: "Scheduled_31_Plus_Days", label: "Scheduled 31+ days", color: "#64748b" }
   ]
 };

@@ -718,6 +718,16 @@ body {
   box-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.7);
 }
 
+/* Compact bottom-center dock holding just the Spin orbit toggle (progress view) */
+.spin-dock {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+}
+
 /* The TimeSlider runs headlessly as the time engine — keep its DOM out of view. */
 .time-engine,
 .esri-time-slider {
