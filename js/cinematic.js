@@ -4,6 +4,36 @@
 
 import TimeExtent from "@arcgis/core/time/TimeExtent.js";
 
+// 3D object layer types whose combined extent frames the physical building.
+const BUILDING_LAYER_TYPES = new Set([
+  "scene",
+  "building-scene",
+  "integrated-mesh"
+]);
+
+/**
+ * Union the full extents of the scene's 3D building layers and return the
+ * centroid (a Point carrying z at mid-height) so the camera orbits the
+ * building itself rather than whatever sits under screen-center. Returns null
+ * when no 3D layer has resolved an extent yet, letting callers fall back.
+ * @param {import("@arcgis/core/views/SceneView").default} view
+ * @returns {import("@arcgis/core/geometry/Point").default | null}
+ */
+function buildingCenter(view) {
+  let union = null;
+  view.map?.allLayers.forEach((layer) => {
+    if (!BUILDING_LAYER_TYPES.has(layer.type)) return;
+    const extent = layer.fullExtent;
+    if (!extent) return;
+    try {
+      union = union ? union.union(extent) : extent.clone();
+    } catch (err) {
+      console.warn("cinematic: skipped a layer extent while centering", layer?.title, err);
+    }
+  });
+  return union ? union.center : null;
+}
+
 /**
  * Couples a manually interpolated time progression with a smooth camera orbit
  * so the building appears to assemble itself while the camera circles it, and
@@ -92,7 +122,9 @@ export function createCinematic(view, timeSlider, fullTimeExtent) {
   function start() {
     playing = true;
     lastTs = 0;
-    orbitCenter = view.center.clone();
+    // Orbit around the building's 3D centroid so it stays screen-centered;
+    // fall back to the view center if layer extents aren't ready yet.
+    orbitCenter = buildingCenter(view) ?? view.center.clone();
     heading = view.camera.heading;
 
     // Restart from the beginning if we're already at the end.
