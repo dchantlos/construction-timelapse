@@ -8,11 +8,11 @@
 // =============================================================================
 
 import esriRequest from "@arcgis/core/request.js";
-import { PROGRESS_STATUS } from "./config.js?v=4";
+import { PROGRESS_STATUS } from "./config.js?v=5";
 
-/** Context/basemap layers that carry no construction status — hidden from the
- *  progress panel aggregate stats and its "Filter by Layer" list. */
-const EXCLUDED_LAYERS = new Set(["constructionobjects", "places", "labels", "buildings"]);
+/** Non-construction basemap/context layers to hide from the progress panel's
+ *  aggregate stats and its "Filter by Layer" list. */
+const EXCLUDED_LAYERS = new Set(["constructionobjects", "buildings"]);
 
 /** Normalize a layer title for exclusion matching (drops "(Current)", ws, case). */
 function normalizeTitle(title = "") {
@@ -20,6 +20,13 @@ function normalizeTitle(title = "") {
     .replace(/\s*\(current\)\s*$/i, "")
     .replace(/[\s_]/g, "")
     .toLowerCase();
+}
+
+/** True for context layers with no CStatus — the excluded set plus any
+ *  "Places"/"Labels" variant (e.g. the combined "Places and Labels" ref layer). */
+function isExcludedLayer(title) {
+  const n = normalizeTitle(title);
+  return EXCLUDED_LAYERS.has(n) || n.includes("place") || n.includes("label");
 }
 
 /**
@@ -117,7 +124,7 @@ export function summarizeStatus(counts) {
 export async function collectConstructionStatus(scene) {
   const sceneLayers = scene.allLayers
     .filter((layer) => layer.type === "scene")
-    .filter((layer) => !EXCLUDED_LAYERS.has(normalizeTitle(layer.title)))
+    .filter((layer) => !isExcludedLayer(layer.title))
     .toArray();
 
   const layers = await Promise.all(

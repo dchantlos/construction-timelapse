@@ -6,13 +6,13 @@
 // how many components have actually slipped behind.
 // =============================================================================
 
-import { createView } from "./scene.js?v=4";
-import { createLayerVisibility } from "./visibility.js?v=4";
-import { createSpin } from "./spin.js?v=4";
-import { collectConstructionStatus } from "./progress-stats.js?v=4";
-import { renderProgressPanel } from "./progress-panel.js?v=4";
-import { createProgressLayers } from "./progress-layers.js?v=4";
-import { PROGRESS_WEBSCENE_ID } from "./config.js?v=4";
+import { createView } from "./scene.js?v=5";
+import { createLayerVisibility } from "./visibility.js?v=5";
+import { createSpin } from "./spin.js?v=5";
+import { collectConstructionStatus } from "./progress-stats.js?v=5";
+import { renderProgressPanel } from "./progress-panel.js?v=5";
+import { createProgressLayers } from "./progress-layers.js?v=5";
+import { PROGRESS_WEBSCENE_ID } from "./config.js?v=5";
 
 /** Surface any error directly on the boot veil so failures are never silent. */
 function showBootError(message) {

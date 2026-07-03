@@ -9,7 +9,7 @@ import { createView, resolveTimeExtent } from "./scene.js";
 import { createDashboard } from "./dashboard.js";
 import { createLayerControl } from "./layers.js";
 import { createLayerVisibility } from "./visibility.js";
-import { createCinematic } from "./cinematic.js?v=17";
+import { createCinematic } from "./cinematic.js?v=18";
 import { createAssistant } from "./assistant.js?v=23";
 import { createInteraction } from "./interaction.js";
 import { TIME_STEP } from "./config.js";
@@ -104,6 +104,9 @@ async function boot() {
 
   // --- Custom navigation controls --------------------------------------------
   wireNavControls(view);
+
+  // Autoplay the cinematic sequence (timeline + camera orbit) on first visit.
+  cinematic.start();
 }
 
 /** Hook the minimalist right-hand nav buttons up to the SceneView. */
