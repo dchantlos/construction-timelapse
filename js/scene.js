@@ -16,11 +16,13 @@ esriConfig.assetsPath = "https://js.arcgis.com/5.1/@arcgis/core/assets";
  * Build the WebScene + SceneView, strip the default UI chrome and switch on
  * dramatic sun lighting with shadows.
  *
+ * @param {string} [webSceneId=WEBSCENE_ID] Portal item id to open. Defaults to
+ *   the time-enabled planned-schedule scene; the progress view passes its own.
  * @returns {{ scene: WebScene, view: SceneView }}
  */
-export function createView() {
+export function createView(webSceneId = WEBSCENE_ID) {
   const scene = new WebScene({
-    portalItem: { id: WEBSCENE_ID, portal: { url: PORTAL_URL } }
+    portalItem: { id: webSceneId, portal: { url: PORTAL_URL } }
   });
 
   const view = new SceneView({

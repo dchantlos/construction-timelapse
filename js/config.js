@@ -53,3 +53,35 @@ export const TIME_STEP = { value: 11, unit: "days" };
 
 /** Neon highlight color used for the selected building component. */
 export const HIGHLIGHT_COLOR = [56, 226, 234]; // cyan glow
+
+// -----------------------------------------------------------------------------
+// Current-progress view — real construction status measured against the plan
+// -----------------------------------------------------------------------------
+
+/** Portal item id of the WebScene rendered by real construction status (no time). */
+export const PROGRESS_WEBSCENE_ID = "e413d34ae0ed4c2da9243e4898666080";
+
+/**
+ * Where the *planned* schedule says the build should be at the simulated
+ * "current" date, as a percent complete. The progress view compares this target
+ * against how many components have actually slipped behind schedule.
+ */
+export const PLANNED_PROGRESS_PCT = 60;
+
+/**
+ * The real construction-status field carried by the "(Current)" building layers
+ * and the buckets surfaced on the progress panel. `behindValues` are the near-
+ * term statuses that should already have been built by the planned date but
+ * haven't — i.e. the schedule slippage.
+ */
+export const PROGRESS_STATUS = {
+  field: "CStatus",
+  installedValue: "Installed",
+  behindValues: ["Scheduled_10_Days", "Scheduled_11_to_30_Days"],
+  buckets: [
+    { value: "Installed", label: "Installed", color: "#4ade80" },
+    { value: "Scheduled_10_Days", label: "Due within 10 days", color: "#facc15" },
+    { value: "Scheduled_11_to_30_Days", label: "Due in 11\u201330 days", color: "#fb923c" },
+    { value: "Scheduled_31_Plus_Days", label: "Scheduled 31+ days", color: "#64748b" }
+  ]
+};
