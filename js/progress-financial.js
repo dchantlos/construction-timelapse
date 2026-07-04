@@ -8,7 +8,12 @@
 // the live CStatus summary so the money always tracks the real progress.
 // =============================================================================
 
-import { PLANNED_PROGRESS_PCT, FINANCIALS } from "./config.js?v=11";
+import { PLANNED_PROGRESS_PCT, FINANCIALS } from "./config.js?v=12";
+import {
+  refreshRiskContext,
+  wireDrillDownModal,
+  openDrillDownModal,
+} from "./progress-drilldown.js?v=12";
 
 /** Circumference of the SVG ring (2πr, r=52) — matches .ring__bar dasharray. */
 const RING_CIRCUMFERENCE = 327;
@@ -30,20 +35,6 @@ const RISK_LAYERS = {
   delayed: "delayed_components",
   pending: "pending_change_orders",
 };
-
-/** Fake line-item breakdown behind the "Delayed Components Cost" drill-down. */
-const DELAYED_BREAKDOWN = [
-  { label: "Column C4 \u00b7 Level 12", amount: 2400 },
-  { label: "Slab S2 \u00b7 Level 12", amount: 15000 },
-  { label: "Beam B7 \u00b7 Level 11", amount: 8200 },
-  { label: "Curtain Wall Panel \u00b7 Level 10", amount: 46500 },
-  { label: "MEP Riser \u00b7 Level 09", amount: 122000 },
-  { label: "Column C1 \u00b7 Level 08", amount: 3100 },
-  { label: "Slab S5 \u00b7 Level 07", amount: 19800 },
-  { label: "Facade Bracket Set \u00b7 Level 06", amount: 54000 },
-  { label: "Stair Core STR \u00b7 Level 05", amount: 88000 },
-  { label: "Beam B3 \u00b7 Level 04", amount: 6900 },
-];
 
 /** Latest count-up targets, refreshed each render, replayed on first reveal. */
 const countTargets = { finCostToDate: 0, finNet: 0 };
@@ -106,6 +97,22 @@ export function renderFinancialPanel(summary = {}) {
   setText("finComp", money(f.delayedComponentsCost));
   setText("finCompSub", `Value of ${count(behind)} overdue components on map`);
   setText("finChange", money(f.pendingChangeOrders));
+
+  // Feed the themed drill-down windows with the live totals + subtitles.
+  refreshRiskContext({
+    schedule: {
+      total: delayImpact,
+      sub: `${daysBehind} critical-path day${daysBehind === 1 ? "" : "s"} behind schedule`,
+    },
+    delayed: {
+      total: f.delayedComponentsCost,
+      sub: `${count(behind)} overdue components on the 3D map`,
+    },
+    pending: {
+      total: f.pendingChangeOrders,
+      sub: "Submitted CORs not yet in the contract sum",
+    },
+  });
 
   // --- Header subtitle -------------------------------------------------------
   setText(
@@ -269,47 +276,9 @@ function wireRiskFilters() {
       });
     }
 
-    // The delayed-components card also opens a drill-down breakdown.
-    if (id === "delayed") openDrillDownModal();
+    // Every risk card drills into its own themed detail window.
+    openDrillDownModal(id);
   });
-}
-
-/**
- * Populate (once) and wire the "Delayed Components" drill-down modal: close
- * button, footer button, backdrop click, and Escape all dismiss it.
- */
-function wireDrillDownModal() {
-  const modal = document.getElementById("finModal");
-  if (!modal) return;
-
-  const list = document.getElementById("finModalList");
-  if (list && !list.childElementCount) {
-    for (const row of DELAYED_BREAKDOWN) {
-      const li = document.createElement("li");
-      const label = document.createElement("span");
-      label.textContent = row.label;
-      const amount = document.createElement("strong");
-      amount.textContent = `-${money(row.amount)}`;
-      li.append(label, amount);
-      list.appendChild(li);
-    }
-  }
-
-  const close = () => {
-    modal.hidden = true;
-  };
-  for (const btn of modal.querySelectorAll("[data-modal-close]")) {
-    btn.addEventListener("click", close);
-  }
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && !modal.hidden) close();
-  });
-}
-
-/** Reveal the drill-down modal (fake data is populated once on wire-up). */
-function openDrillDownModal() {
-  const modal = document.getElementById("finModal");
-  if (modal) modal.hidden = false;
 }
 
 /**

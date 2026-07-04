@@ -24,7 +24,7 @@
 
     <!-- ArcGIS dark base theme (we override most of it in styles.css) -->
     <link rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css" />
-    <link rel="stylesheet" href="./css/styles.css?v=28" />
+    <link rel="stylesheet" href="./css/styles.css?v=29" />
 
     <!-- ESM import map: load @arcgis/core straight from the CDN -->
     <script type="importmap">
@@ -335,16 +335,20 @@
     <!-- ======================= DRILL-DOWN MODAL ======================= -->
     <div id="finModal" class="fin-modal" role="dialog" aria-modal="true" aria-labelledby="finModalTitle" hidden>
       <div class="fin-modal__backdrop" data-modal-close></div>
-      <div class="fin-modal__panel glass">
+      <div class="fin-modal__panel glass" id="finModalPanel" data-theme="amber">
         <div class="fin-modal__head">
           <div class="fin-modal__title-wrap">
-            <span class="fin-modal__icon" aria-hidden="true">&#9650;</span>
+            <span class="fin-modal__icon" id="finModalIcon" aria-hidden="true">&#9650;</span>
             <div>
-              <h3 id="finModalTitle">Delayed Components Breakdown</h3>
-              <span class="fin-modal__sub">238 overdue components &middot; $850,000</span>
+              <h3 id="finModalTitle">Risk Breakdown</h3>
+              <span class="fin-modal__sub" id="finModalSub">&nbsp;</span>
             </div>
           </div>
           <button class="panel-collapse" type="button" data-modal-close aria-label="Close breakdown">&#10005;</button>
+        </div>
+        <div class="fin-modal__total">
+          <span class="fin-modal__total-k" id="finModalTotalLabel">Total exposure</span>
+          <strong class="fin-modal__total-v" id="finModalTotal">&mdash;</strong>
         </div>
         <ul class="fin-modal__list" id="finModalList"></ul>
         <div class="fin-modal__foot">
@@ -354,6 +358,6 @@
       </div>
     </div>
 
-    <script type="module" src="./js/progress.js?v=11"></script>
+    <script type="module" src="./js/progress.js?v=12"></script>
   </body>
 </html>
