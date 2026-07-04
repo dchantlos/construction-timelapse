@@ -6,14 +6,15 @@
 // how many components have actually slipped behind.
 // =============================================================================
 
-import { createView } from "./scene.js?v=6";
-import { createLayerVisibility } from "./visibility.js?v=6";
-import { createSpin } from "./spin.js?v=6";
-import { collectConstructionStatus } from "./progress-stats.js?v=6";
-import { renderProgressPanel } from "./progress-panel.js?v=6";
-import { createProgressLayers } from "./progress-layers.js?v=6";
-import { createProgressInteraction } from "./progress-interaction.js?v=6";
-import { PROGRESS_WEBSCENE_ID } from "./config.js?v=6";
+import { createView } from "./scene.js?v=7";
+import { createLayerVisibility } from "./visibility.js?v=7";
+import { createSpin } from "./spin.js?v=7";
+import { collectConstructionStatus } from "./progress-stats.js?v=7";
+import { renderProgressPanel } from "./progress-panel.js?v=7";
+import { createProgressLayers } from "./progress-layers.js?v=7";
+import { createProgressInteraction } from "./progress-interaction.js?v=7";
+import { createSlice } from "./slice.js?v=7";
+import { PROGRESS_WEBSCENE_ID } from "./config.js?v=7";
 
 /** Surface any error directly on the boot veil so failures are never silent. */
 function showBootError(message) {
@@ -65,6 +66,9 @@ async function boot() {
 
   // Click a component to highlight it + show its real construction status.
   createProgressInteraction(view);
+
+  // Slice tool: cut an interactive plane through the model.
+  createSlice(view);
 
   // Real construction status vs. planned schedule. Failures here must not blank
   // the whole view — fall back to an empty panel that reads "unavailable".

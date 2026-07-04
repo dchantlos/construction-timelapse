@@ -24,7 +24,7 @@
 
     <!-- ArcGIS dark base theme (we override most of it in styles.css) -->
     <link rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css" />
-    <link rel="stylesheet" href="./css/styles.css?v=23" />
+    <link rel="stylesheet" href="./css/styles.css?v=24" />
 
     <!-- ESM import map: load @arcgis/core straight from the CDN -->
     <script type="importmap">
@@ -137,7 +137,18 @@
       <button class="nav-btn" id="zoomIn" title="Zoom in" aria-label="Zoom in">+</button>
       <button class="nav-btn" id="zoomOut" title="Zoom out" aria-label="Zoom out">–</button>
       <button class="nav-btn" id="resetView" title="Reset view" aria-label="Reset view">⟳</button>
+      <button class="nav-btn" id="sliceBtn" title="Slice through the model" aria-label="Slice tool" aria-pressed="false">◫</button>
     </div>
+
+    <!-- ======================= SLICE TOOL PANEL ======================= -->
+    <aside id="slicePanel" class="slice-panel glass" aria-label="Slice tool" aria-hidden="true">
+      <div class="slice-panel__head">
+        <span class="kicker">Slice Tool</span>
+        <button id="sliceClose" class="panel-collapse" type="button" aria-label="Close slice tool">✕</button>
+      </div>
+      <p class="slice-panel__hint">Click the model to drop a cut plane, then drag or tilt its handles to slice through the building.</p>
+      <div id="sliceContainer" class="slice-panel__widget"></div>
+    </aside>
 
     <!-- ======================= BOTTOM PLAYBACK + SCRUBBER ======================= -->
     <footer class="dock glass">
@@ -222,6 +233,6 @@
       </form>
     </section>
 
-    <script type="module" src="./js/app.js?v=26"></script>
+    <script type="module" src="./js/app.js?v=27"></script>
   </body>
 </html>

@@ -590,6 +590,60 @@ body {
 .nav-btn:active {
   transform: scale(0.94);
 }
+.nav-btn.is-active {
+  background: rgba(56, 226, 234, 0.2);
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 20px -4px var(--accent);
+}
+
+/* =============================================================================
+   Slice tool (interactive cut-plane through the 3D model)
+   ============================================================================= */
+.slice-panel {
+  position: absolute;
+  right: 84px;
+  top: 50%;
+  transform: translateY(-50%) translateX(12px);
+  z-index: 12;
+  width: 262px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+}
+.slice-panel.is-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(-50%) translateX(0);
+}
+.slice-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.slice-panel__hint {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text-faint);
+}
+.slice-panel__widget {
+  border-radius: 12px;
+  overflow: hidden;
+}
+/* Blend the embedded Esri Slice widget into the glass panel. */
+.slice-panel__widget .esri-widget,
+.slice-panel__widget .esri-slice {
+  background: transparent;
+  color: var(--text-dim);
+  box-shadow: none;
+}
 
 /* =============================================================================
    Layer visibility panel
@@ -1052,6 +1106,9 @@ body {
     max-height: 40vh;
   }
   .nav-stack {
+    display: none;
+  }
+  .slice-panel {
     display: none;
   }
   .dock {

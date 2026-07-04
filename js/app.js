@@ -12,6 +12,7 @@ import { createLayerVisibility } from "./visibility.js";
 import { createCinematic } from "./cinematic.js?v=20";
 import { createAssistant } from "./assistant.js?v=23";
 import { createInteraction } from "./interaction.js";
+import { createSlice } from "./slice.js";
 import { TIME_STEP } from "./config.js";
 
 /** Surface any error directly on the boot veil so failures are never silent. */
@@ -95,6 +96,9 @@ async function boot() {
   // --- Cinematic playback + interaction --------------------------------------
   const cinematic = createCinematic(view, timeSlider, fullTimeExtent);
   createInteraction(view);
+
+  // --- Slice tool (interactive cut-plane through the model) ------------------
+  createSlice(view);
 
   // --- Timeline assistant (local date/phrase command box) --------------------
   createAssistant({
