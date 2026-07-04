@@ -8,7 +8,7 @@
 // the live CStatus summary so the money always tracks the real progress.
 // =============================================================================
 
-import { PLANNED_PROGRESS_PCT, FINANCIALS } from "./config.js?v=10";
+import { PLANNED_PROGRESS_PCT, FINANCIALS } from "./config.js?v=11";
 
 /** Circumference of the SVG ring (2πr, r=52) — matches .ring__bar dasharray. */
 const RING_CIRCUMFERENCE = 327;
@@ -171,7 +171,10 @@ function wireOverlayPills() {
 /**
  * AIA billing button — a mocked idle → loading → success → idle state machine.
  * There is no billing backend in this demo; the delays stand in for the
- * geometry/cost analysis a real pay-application export would run.
+ * geometry/cost analysis a real pay-application export would run. On click it
+ * opens the standalone report page (report.html) in a new tab; the tab is
+ * opened synchronously inside the gesture so pop-up blockers allow it, and if
+ * the browser blocks it anyway we fall back to a direct CSV download.
  */
 function wireBillingButton() {
   const button = document.getElementById("finBilling");
@@ -184,19 +187,21 @@ function wireBillingButton() {
     button.classList.toggle("is-loading", state === "loading");
     button.classList.toggle("is-success", state === "success");
     button.disabled = state !== "idle";
-    if (state === "loading") label.textContent = "Analyzing 3D Geometry & Costs…";
-    else if (state === "success") label.textContent = "AIA G702 Generated - $5.41M";
+    if (state === "loading") label.textContent = "Compiling AIA G702 Report…";
+    else if (state === "success") label.textContent = "Report Opened - $5.41M Due";
     else label.textContent = idleLabel;
   };
 
   button.addEventListener("click", () => {
     if (button.disabled) return;
     while (timers.length) window.clearTimeout(timers.pop());
+    // Open synchronously (inside the user gesture) so it isn't pop-up blocked.
+    const reportWindow = window.open("report.html", "_blank");
+    if (!reportWindow) downloadAiaCsv(); // blocked — still hand over the data
     setState("loading");
     timers.push(
       window.setTimeout(() => {
         setState("success");
-        downloadAiaCsv();
         timers.push(window.setTimeout(() => setState("idle"), 3500));
       }, 2500)
     );
@@ -307,20 +312,32 @@ function openDrillDownModal() {
   if (modal) modal.hidden = false;
 }
 
-/** Generate a dummy AIA G702 pay-application CSV and download it client-side. */
+/**
+ * Fallback AIA G702 export used only when the report tab is pop-up blocked.
+ * Figures are computed from FINANCIALS so the summary reconciles exactly:
+ * work + materials = gross, less retainage = net.
+ */
 function downloadAiaCsv() {
+  const f = FINANCIALS;
+  const gross = f.draw.workCompleted + f.draw.materialsStored;
+  const retainage = gross * (f.draw.retainagePct / 100);
+  const net = gross - retainage;
   const csv = [
-    "Trade,Amount",
-    "Concrete,2000000",
-    "Steel,3415000",
-    "Retainage,-285000",
-    "Net Due,5415000",
+    "AIA G702 — Application for Payment",
+    `Billing Period,${f.draw.period}`,
+    "",
+    "Line,Amount",
+    `Work Completed This Period,${f.draw.workCompleted}`,
+    `Materials Presently Stored,${f.draw.materialsStored}`,
+    `Total Earned This Period,${gross}`,
+    `Less ${f.draw.retainagePct}% Retainage,-${retainage}`,
+    `Net Amount Due,${net}`,
   ].join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = "AIA_G702_Draw_April_2026.csv";
+  link.download = `AIA_G702_Draw_${f.draw.period.replace(/\s+/g, "_")}.csv`;
   document.body.appendChild(link);
   link.click();
   link.remove();

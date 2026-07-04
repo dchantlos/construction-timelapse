@@ -8,7 +8,7 @@
 // =============================================================================
 
 import esriRequest from "@arcgis/core/request.js";
-import { PROGRESS_STATUS } from "./config.js?v=10";
+import { PROGRESS_STATUS } from "./config.js?v=11";
 
 /** Non-construction basemap/context layers to hide from the progress panel's
  *  aggregate stats and its "Filter by Layer" list. */

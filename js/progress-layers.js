@@ -4,8 +4,8 @@
 // every panel metric (ring, behind, overdue, breakdown) to that layer alone.
 // =============================================================================
 
-import { summarizeStatus } from "./progress-stats.js?v=10";
-import { BUILDING_LAYERS } from "./config.js?v=10";
+import { summarizeStatus } from "./progress-stats.js?v=11";
+import { BUILDING_LAYERS } from "./config.js?v=11";
 
 const fmt = (n) => n.toLocaleString("en-US");
 

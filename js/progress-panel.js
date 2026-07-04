@@ -4,7 +4,7 @@
 // components that have slipped behind, and lists the full status breakdown.
 // =============================================================================
 
-import { PLANNED_PROGRESS_PCT, PROGRESS_STATUS } from "./config.js?v=10";
+import { PLANNED_PROGRESS_PCT, PROGRESS_STATUS } from "./config.js?v=11";
 
 /** Circumference of the SVG ring (2πr, r=52) — matches .ring__bar dasharray. */
 const RING_CIRCUMFERENCE = 327;

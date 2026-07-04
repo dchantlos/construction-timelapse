@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AIA G702 · Application for Payment · Meridian Tower</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* ===================================================================
+         AIA G702 / G703 — Application and Certificate for Payment
+         Standalone report page for the 4D Construction Monitor. Reads its
+         figures from js/config.js so every total reconciles with the panel.
+         =================================================================== */
+      :root {
+        --bg: #060912;
+        --ink: #e8eefc;
+        --ink-dim: #c2cfee;
+        --ink-faint: #8ea0c8;
+        --line: rgba(140, 170, 230, 0.14);
+        --line-soft: rgba(140, 170, 230, 0.08);
+        --glass: rgba(16, 22, 38, 0.62);
+        --glass-2: rgba(13, 18, 32, 0.72);
+        --cyan: #38e2ea;
+        --cyan-bright: #6bf0f5;
+        --violet: #7c5cff;
+        --mint: #4ade80;
+        --amber: #fbbf24;
+        --rose: #fb7185;
+        --font: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--font);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      body {
+        position: relative;
+        padding: 40px 20px 72px;
+        background:
+          radial-gradient(60% 45% at 15% 0%, rgba(56, 226, 234, 0.12), transparent 60%),
+          radial-gradient(55% 45% at 100% 8%, rgba(124, 92, 255, 0.14), transparent 60%),
+          radial-gradient(80% 60% at 50% 120%, rgba(56, 226, 234, 0.06), transparent 70%),
+          var(--bg);
+        background-attachment: fixed;
+      }
+
+      /* ---------- Document shell ---------- */
+      .doc {
+        max-width: 980px;
+        margin: 0 auto;
+        background: linear-gradient(180deg, rgba(20, 27, 46, 0.72), rgba(11, 16, 29, 0.82));
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        box-shadow: 0 40px 120px -40px rgba(0, 0, 0, 0.9);
+        overflow: hidden;
+        opacity: 0;
+        transform: translateY(14px);
+        transition: opacity 0.6s ease, transform 0.6s ease;
+      }
+      .doc.is-revealed {
+        opacity: 1;
+        transform: none;
+      }
+
+      /* ---------- Letterhead ---------- */
+      .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 26px 34px;
+        border-bottom: 1px solid var(--line);
+        background: linear-gradient(180deg, rgba(56, 226, 234, 0.06), transparent);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+      .brand__mark {
+        width: 46px;
+        height: 46px;
+        border-radius: 13px;
+        display: grid;
+        place-items: center;
+        font-size: 22px;
+        font-weight: 800;
+        color: #04121a;
+        background: linear-gradient(145deg, var(--cyan-bright), var(--cyan) 55%, var(--violet));
+        box-shadow: 0 10px 26px -8px rgba(56, 226, 234, 0.6);
+      }
+      .brand__name {
+        font-size: 19px;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+      }
+      .brand__sub {
+        font-size: 12px;
+        color: var(--ink-faint);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        margin-top: 2px;
+      }
+      .head__badges {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 6px;
+      }
+      .pill {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 5px 11px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        color: var(--ink-dim);
+        background: rgba(9, 13, 24, 0.6);
+      }
+      .pill--cyan {
+        color: var(--cyan-bright);
+        border-color: rgba(56, 226, 234, 0.4);
+        background: rgba(56, 226, 234, 0.1);
+      }
+
+      /* ---------- Title band ---------- */
+      .title {
+        padding: 30px 34px 6px;
+      }
+      .title h1 {
+        margin: 0;
+        font-size: 30px;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+      }
+      .title p {
+        margin: 8px 0 0;
+        color: var(--ink-faint);
+        font-size: 13px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 18px 34px 4px;
+      }
+      .meta__chip {
+        font-size: 12.5px;
+        color: var(--ink-dim);
+        background: rgba(9, 13, 24, 0.55);
+        border: 1px solid var(--line-soft);
+        border-radius: 10px;
+        padding: 8px 12px;
+      }
+      .meta__chip b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      /* ---------- Hero net-due ---------- */
+      .hero {
+        margin: 22px 34px 4px;
+        padding: 24px 28px;
+        border: 1px solid rgba(56, 226, 234, 0.28);
+        border-radius: 18px;
+        background:
+          radial-gradient(120% 140% at 100% 0%, rgba(56, 226, 234, 0.14), transparent 60%),
+          linear-gradient(180deg, rgba(14, 30, 40, 0.7), rgba(10, 16, 28, 0.6));
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        flex-wrap: wrap;
+      }
+      .hero__label {
+        font-size: 12px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--cyan-bright);
+        font-weight: 600;
+      }
+      .hero__value {
+        font-size: 52px;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        line-height: 1;
+        margin-top: 8px;
+        font-variant-numeric: tabular-nums;
+        text-shadow: 0 0 30px rgba(56, 226, 234, 0.25);
+      }
+      .hero__note {
+        font-size: 12.5px;
+        color: var(--ink-faint);
+        margin-top: 10px;
+      }
+      .stamp {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        padding: 12px 18px;
+        border-radius: 14px;
+        border: 1px solid rgba(74, 222, 128, 0.4);
+        background: rgba(74, 222, 128, 0.12);
+        color: var(--mint);
+        font-weight: 700;
+        font-size: 14px;
+      }
+      .stamp__dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--mint);
+        box-shadow: 0 0 10px var(--mint);
+      }
+
+      /* ---------- Section headings ---------- */
+      .section {
+        padding: 26px 34px 4px;
+      }
+      .section__title {
+        font-size: 12px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin: 0 0 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .section__title::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--line-soft);
+      }
+
+      /* ---------- G703 table ---------- */
+      table.g703 {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+      .g703 thead th {
+        text-align: left;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        font-weight: 600;
+        padding: 0 14px 12px;
+        border-bottom: 1px solid var(--line);
+      }
+      .g703 th.num,
+      .g703 td.num {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      .g703 tbody td {
+        padding: 13px 14px;
+        border-bottom: 1px solid var(--line-soft);
+        color: var(--ink-dim);
+      }
+      .g703 tbody tr:hover td {
+        background: rgba(56, 226, 234, 0.04);
+      }
+      .g703 td.desc {
+        color: var(--ink);
+        font-weight: 500;
+      }
+      .g703 .amount {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .g703 tr.materials td {
+        color: var(--ink-dim);
+        font-style: italic;
+      }
+
+      /* ---------- Reconciliation totals ---------- */
+      .totals {
+        margin: 18px 0 6px;
+        margin-left: auto;
+        width: min(420px, 100%);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        overflow: hidden;
+      }
+      .totals__row {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 18px;
+        font-size: 14px;
+        color: var(--ink-dim);
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .totals__row span.v {
+        font-variant-numeric: tabular-nums;
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .totals__row.retain span.v {
+        color: var(--rose);
+      }
+      .totals__row.net {
+        border-bottom: none;
+        background: rgba(56, 226, 234, 0.09);
+        padding: 15px 18px;
+      }
+      .totals__row.net span:first-child {
+        font-weight: 700;
+        color: var(--ink);
+      }
+      .totals__row.net span.v {
+        font-size: 20px;
+        font-weight: 800;
+        color: var(--cyan-bright);
+      }
+
+      /* ---------- Stat cards ---------- */
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 14px;
+      }
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 15px;
+        padding: 16px 17px;
+        background: linear-gradient(180deg, rgba(18, 25, 43, 0.6), rgba(10, 15, 27, 0.5));
+      }
+      .card__k {
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .card__v {
+        font-size: 24px;
+        font-weight: 800;
+        margin-top: 8px;
+        font-variant-numeric: tabular-nums;
+      }
+      .card__note {
+        font-size: 12px;
+        margin-top: 6px;
+        color: var(--ink-faint);
+      }
+      .card__note.up {
+        color: var(--rose);
+      }
+      .card__note.good {
+        color: var(--mint);
+      }
+      .bar {
+        margin-top: 11px;
+        height: 6px;
+        border-radius: 4px;
+        background: rgba(140, 170, 230, 0.16);
+        overflow: hidden;
+      }
+      .bar > i {
+        display: block;
+        height: 100%;
+        border-radius: 4px;
+        background: linear-gradient(90deg, var(--cyan), var(--violet));
+        width: 0;
+        transition: width 1.1s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      /* ---------- Risk row ---------- */
+      .risks {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 14px;
+      }
+      .risk {
+        border: 1px solid var(--line);
+        border-left-width: 3px;
+        border-radius: 13px;
+        padding: 15px 16px;
+        background: rgba(11, 16, 29, 0.55);
+      }
+      .risk.rose {
+        border-left-color: var(--rose);
+      }
+      .risk.amber {
+        border-left-color: var(--amber);
+      }
+      .risk.cyan {
+        border-left-color: var(--cyan);
+      }
+      .risk__k {
+        font-size: 12px;
+        color: var(--ink-faint);
+      }
+      .risk__v {
+        font-size: 20px;
+        font-weight: 800;
+        margin-top: 6px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* ---------- Actions ---------- */
+      .actions {
+        position: sticky;
+        bottom: 16px;
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin: 30px 34px 6px;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        padding: 13px 22px;
+        border-radius: 13px;
+        font-size: 14px;
+        font-weight: 700;
+        font-family: inherit;
+        cursor: pointer;
+        border: 1px solid var(--line);
+        color: var(--ink);
+        background: rgba(14, 20, 34, 0.85);
+        backdrop-filter: blur(8px);
+        transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      }
+      .btn:hover {
+        transform: translateY(-2px);
+      }
+      .btn--primary {
+        color: #04121a;
+        border-color: transparent;
+        background: linear-gradient(145deg, var(--cyan-bright), var(--cyan) 60%, var(--violet));
+        box-shadow: 0 14px 30px -12px rgba(56, 226, 234, 0.6);
+      }
+      .btn--primary:hover {
+        box-shadow: 0 18px 40px -12px rgba(56, 226, 234, 0.75);
+      }
+      .btn--ghost:hover {
+        border-color: rgba(56, 226, 234, 0.4);
+      }
+
+      /* ---------- Footer ---------- */
+      .foot {
+        padding: 22px 34px 30px;
+        border-top: 1px solid var(--line);
+        margin-top: 20px;
+        color: var(--ink-faint);
+        font-size: 12px;
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      .foot b {
+        color: var(--ink-dim);
+      }
+
+      /* ---------- Loading splash ---------- */
+      .splash {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        display: grid;
+        place-items: center;
+        background: var(--bg);
+        transition: opacity 0.5s ease;
+      }
+      .splash.is-gone {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .splash__inner {
+        text-align: center;
+      }
+      .spinner {
+        width: 46px;
+        height: 46px;
+        margin: 0 auto 18px;
+        border-radius: 50%;
+        border: 3px solid rgba(56, 226, 234, 0.18);
+        border-top-color: var(--cyan);
+        animation: spin 0.8s linear infinite;
+      }
+      .splash__text {
+        font-size: 13px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* ---------- Print / PDF ---------- */
+      @media print {
+        body {
+          background: #fff;
+          color: #0b1220;
+          padding: 0;
+        }
+        .splash,
+        .actions {
+          display: none !important;
+        }
+        .doc {
+          box-shadow: none;
+          border: none;
+          background: #fff;
+          color: #0b1220;
+          opacity: 1;
+          transform: none;
+        }
+        .head,
+        .hero,
+        .card,
+        .risk,
+        .totals,
+        .meta__chip {
+          background: #fff !important;
+          border-color: #d6deec !important;
+          color: #0b1220 !important;
+        }
+        .hero__label,
+        .section__title,
+        .card__k,
+        .brand__sub {
+          color: #55627d !important;
+        }
+        .hero__value,
+        .brand__name,
+        .title h1,
+        .card__v,
+        .risk__v,
+        .g703 td.desc,
+        .totals__row.net span.v {
+          color: #0b1220 !important;
+          text-shadow: none !important;
+        }
+      }
+
+      @media (max-width: 620px) {
+        .hero__value {
+          font-size: 40px;
+        }
+        .head,
+        .title,
+        .meta,
+        .section,
+        .hero,
+        .actions {
+          padding-left: 20px;
+          padding-right: 20px;
+          margin-left: 16px;
+          margin-right: 16px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="splash" id="splash">
+      <div class="splash__inner">
+        <div class="spinner"></div>
+        <div class="splash__text">Compiling AIA G702…</div>
+      </div>
+    </div>
+
+    <main class="doc" id="doc">
+      <header class="head">
+        <div class="brand">
+          <div class="brand__mark">&#9650;</div>
+          <div>
+            <div class="brand__name">Meridian Tower</div>
+            <div class="brand__sub">Downtown Core District</div>
+          </div>
+        </div>
+        <div class="head__badges">
+          <span class="pill pill--cyan">AIA Document G702</span>
+          <span class="pill">Application No. 07</span>
+        </div>
+      </header>
+
+      <div class="title">
+        <h1>Application &amp; Certificate for Payment</h1>
+        <p>Continuation Sheet · AIA Document G703</p>
+      </div>
+
+      <div class="meta">
+        <span class="meta__chip">Billing Period <b id="mPeriod">—</b></span>
+        <span class="meta__chip">Issued <b id="mIssued">—</b></span>
+        <span class="meta__chip">Contract <b id="mContract">—</b></span>
+        <span class="meta__chip">To Owner <b>Meridian Development Partners</b></span>
+      </div>
+
+      <section class="hero">
+        <div>
+          <div class="hero__label">Net Amount Due This Application</div>
+          <div class="hero__value" id="heroNet">$0</div>
+          <div class="hero__note" id="heroNote">—</div>
+        </div>
+        <div class="stamp"><span class="stamp__dot"></span> Certified for Payment</div>
+      </section>
+
+      <section class="section">
+        <h2 class="section__title">Continuation Sheet — Work This Period</h2>
+        <table class="g703">
+          <thead>
+            <tr>
+              <th>Description of Work</th>
+              <th class="num">Scheduled Value</th>
+              <th class="num">Completed This Period</th>
+            </tr>
+          </thead>
+          <tbody id="g703Body"></tbody>
+        </table>
+
+        <div class="totals">
+          <div class="totals__row">
+            <span>Total Earned This Period</span><span class="v" id="tGross">—</span>
+          </div>
+          <div class="totals__row retain">
+            <span id="tRetainLabel">Less Retainage</span><span class="v" id="tRetain">—</span>
+          </div>
+          <div class="totals__row net">
+            <span>Net Amount Due</span><span class="v" id="tNet">—</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2 class="section__title">Project Health — Earned Value</h2>
+        <div class="cards">
+          <div class="card">
+            <div class="card__k">Original Contract</div>
+            <div class="card__v" id="cContract">—</div>
+            <div class="card__note">Lump-sum GMP</div>
+          </div>
+          <div class="card">
+            <div class="card__k">Cost to Date</div>
+            <div class="card__v" id="cCost">—</div>
+            <div class="card__note" id="cCostNote">—</div>
+            <div class="bar"><i id="cCostBar"></i></div>
+          </div>
+          <div class="card">
+            <div class="card__k">Est. at Completion</div>
+            <div class="card__v" id="cEac">—</div>
+            <div class="card__note up" id="cEacNote">—</div>
+          </div>
+          <div class="card">
+            <div class="card__k">Cost Performance (CPI)</div>
+            <div class="card__v" id="cCpi">—</div>
+            <div class="card__note" id="cCpiNote">—</div>
+          </div>
+          <div class="card">
+            <div class="card__k">Schedule Performance (SPI)</div>
+            <div class="card__v" id="cSpi">—</div>
+            <div class="card__note" id="cSpiNote">—</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2 class="section__title">Open Risk &amp; Variance</h2>
+        <div class="risks">
+          <div class="risk rose">
+            <div class="risk__k">Delay Penalty Exposure</div>
+            <div class="risk__v" id="rDelay">—</div>
+          </div>
+          <div class="risk amber">
+            <div class="risk__k">Delayed Components (overdue value)</div>
+            <div class="risk__v" id="rDelayed">—</div>
+          </div>
+          <div class="risk cyan">
+            <div class="risk__k">Pending Change Orders</div>
+            <div class="risk__v" id="rCo">—</div>
+          </div>
+        </div>
+      </section>
+
+      <div class="actions">
+        <button class="btn btn--primary" id="btnCsv">&#8595;&nbsp; Download CSV</button>
+        <button class="btn btn--ghost" id="btnPrint">&#128424;&nbsp; Print / Save PDF</button>
+      </div>
+
+      <footer class="foot">
+        <span>Generated by <b>4D Construction Monitor</b> · <span id="fStamp">—</span></span>
+        <span>Illustrative demo data — not a certified pay application.</span>
+      </footer>
+    </main>
+
+    <script type="module">
+      import { FINANCIALS } from "./js/config.js?v=11";
+
+      const PROJECT = "Meridian Tower";
+      const APP_NO = "07";
+      const f = FINANCIALS;
+
+      // ---- Reconciling draw math (single source: config.js) ----------------
+      const gross = f.draw.workCompleted + f.draw.materialsStored;
+      const retainage = gross * (f.draw.retainagePct / 100);
+      const net = gross - retainage;
+      const overrun = f.estAtCompletion - f.contractValue;
+
+      // Work-this-period split — fractions sum to 1 so the rows always total
+      // f.draw.workCompleted exactly (last row absorbs any rounding).
+      const lineDefs = [
+        { desc: "Div 03 — Concrete & Foundations", scheduled: 32_000_000, frac: 0.3 },
+        { desc: "Div 05 — Structural Steel", scheduled: 41_000_000, frac: 0.36 },
+        { desc: "Div 08 — Curtain Wall & Envelope", scheduled: 22_000_000, frac: 0.2 },
+        { desc: "Div 23 — MEP Rough-in", scheduled: 18_000_000, frac: 0.14 },
+      ];
+      let allocated = 0;
+      lineDefs.forEach((it, i) => {
+        it.amount =
+          i === lineDefs.length - 1
+            ? f.draw.workCompleted - allocated
+            : Math.round(f.draw.workCompleted * it.frac);
+        allocated += it.amount;
+      });
+
+      // ---- Formatting helpers ----------------------------------------------
+      const usd = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0,
+      });
+      const money = (n) => usd.format(Math.round(n));
+      const compact = (n) => {
+        const a = Math.abs(n);
+        if (a >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
+        if (a >= 1_000) return `$${Math.round(n / 1_000)}k`;
+        return money(n);
+      };
+      const issued = new Date().toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+      const setText = (id, t) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = t;
+      };
+
+      // ---- Populate static text --------------------------------------------
+      setText("mPeriod", f.draw.period);
+      setText("mIssued", issued);
+      setText("mContract", compact(f.contractValue));
+      setText("fStamp", issued);
+      setText("heroNote", `${money(gross)} earned · less ${f.draw.retainagePct}% retainage`);
+
+      setText("tGross", money(gross));
+      setText("tRetainLabel", `Less ${f.draw.retainagePct}% Retainage`);
+      setText("tRetain", `(${money(retainage)})`);
+      setText("tNet", money(net));
+
+      setText("cContract", money(f.contractValue));
+      setText("cCost", money(f.costToDate));
+      setText("cCostNote", `${f.budgetExpendedPct.toFixed(1)}% of contract expended`);
+      setText("cEac", money(f.estAtCompletion));
+      setText(
+        "cEacNote",
+        overrun >= 0 ? `▲ ${compact(overrun)} over budget` : `▼ ${compact(-overrun)} under budget`
+      );
+      document.getElementById("cEacNote").className =
+        "card__note " + (overrun >= 0 ? "up" : "good");
+      setText("cCpi", f.cpi.toFixed(2));
+      setText("cCpiNote", f.cpi >= 1 ? "On or under budget" : "Earning below cost");
+      setText("cSpi", f.spi.toFixed(2));
+      setText("cSpiNote", f.spi >= 1 ? "On or ahead of plan" : "Behind planned schedule");
+
+      setText("rDelay", `${compact(f.dailyLiquidatedDamages * 14)}/mo`);
+      setText("rDelayed", money(f.delayedComponentsCost));
+      setText("rCo", money(f.pendingChangeOrders));
+
+      // ---- G703 continuation rows ------------------------------------------
+      const body = document.getElementById("g703Body");
+      const rowHtml = (desc, sched, amt, cls = "") =>
+        `<tr class="${cls}"><td class="desc">${desc}</td>` +
+        `<td class="num">${sched === null ? "—" : money(sched)}</td>` +
+        `<td class="num amount">${money(amt)}</td></tr>`;
+      body.innerHTML =
+        lineDefs.map((it) => rowHtml(it.desc, it.scheduled, it.amount)).join("") +
+        rowHtml("Materials Presently Stored", null, f.draw.materialsStored, "materials");
+
+      // ---- CSV export (reconciling) ----------------------------------------
+      function buildCsv() {
+        const rows = [
+          ["AIA G702/G703 — Application and Certificate for Payment"],
+          ["Project", PROJECT],
+          ["Application No.", APP_NO],
+          ["Billing Period", f.draw.period],
+          ["Issued", issued],
+          [],
+          ["Description of Work", "Scheduled Value", "Completed This Period"],
+          ...lineDefs.map((it) => [it.desc, it.scheduled, it.amount]),
+          ["Materials Presently Stored", "", f.draw.materialsStored],
+          [],
+          ["Total Earned This Period", "", gross],
+          [`Less ${f.draw.retainagePct}% Retainage`, "", -retainage],
+          ["Net Amount Due This Application", "", net],
+        ];
+        return rows.map((r) => r.join(",")).join("\n");
+      }
+
+      document.getElementById("btnCsv").addEventListener("click", () => {
+        const blob = new Blob([buildCsv()], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `AIA_G702_Draw_${f.draw.period.replace(/\s+/g, "_")}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+      });
+
+      document.getElementById("btnPrint").addEventListener("click", () => window.print());
+
+      // ---- Count-up + reveal ------------------------------------------------
+      function countUp(id, target, duration = 1500) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const ease = (t) => 1 - Math.pow(1 - t, 3);
+        let start = null;
+        const step = (ts) => {
+          if (start === null) start = ts;
+          const p = Math.min((ts - start) / duration, 1);
+          el.textContent = money(target * ease(p));
+          if (p < 1) requestAnimationFrame(step);
+          else el.textContent = money(target);
+        };
+        requestAnimationFrame(step);
+      }
+
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.getElementById("splash").classList.add("is-gone");
+          document.getElementById("doc").classList.add("is-revealed");
+          countUp("heroNet", net, 1600);
+          const bar = document.getElementById("cCostBar");
+          if (bar) requestAnimationFrame(() => (bar.style.width = `${f.budgetExpendedPct}%`));
+        }, 850);
+      });
+    </script>
+  </body>
+</html>
