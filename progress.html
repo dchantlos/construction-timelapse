@@ -24,7 +24,7 @@
 
     <!-- ArcGIS dark base theme (we override most of it in styles.css) -->
     <link rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css" />
-    <link rel="stylesheet" href="./css/styles.css?v=24" />
+    <link rel="stylesheet" href="./css/styles.css?v=25" />
 
     <!-- ESM import map: load @arcgis/core straight from the CDN -->
     <script type="importmap">
@@ -74,62 +74,190 @@
 
     <!-- ======================= LEFT PROGRESS PANEL ======================= -->
     <aside class="dashboard dashboard--progress glass">
-      <div class="dashboard__head dashboard__head--stack">
-        <h2>Construction Progress</h2>
-        <span class="dashboard__sub" id="progSub">Real-world status</span>
+      <!-- 4D / 5D view switch -->
+      <div class="dash-toggle" role="tablist" aria-label="Dashboard view">
+        <button id="viewSchedule" class="dash-toggle__btn is-active" type="button" role="tab" aria-selected="true">
+          Schedule <span class="dash-toggle__d">4D</span>
+        </button>
+        <button id="viewFinancial" class="dash-toggle__btn" type="button" role="tab" aria-selected="false">
+          Financials <span class="dash-toggle__d">5D</span>
+        </button>
       </div>
 
-      <!-- Scheduled target ring + effective (schedule-adjusted) progress -->
-      <section class="ring-card">
-        <div class="ring">
-          <svg viewBox="0 0 120 120">
-            <circle class="ring__bg" cx="60" cy="60" r="52" />
-            <circle class="ring__bar" id="progRing" cx="60" cy="60" r="52" />
-          </svg>
-          <div class="ring__label">
-            <span id="progPlannedPct">60%</span>
-            <small>Scheduled</small>
+      <!-- ---------- Schedule (4D) view ---------- -->
+      <div id="scheduleView" class="dash-view">
+        <div class="dashboard__head dashboard__head--stack">
+          <h2>Construction Progress</h2>
+          <span class="dashboard__sub" id="progSub">Real-world status</span>
+        </div>
+
+        <!-- Scheduled target ring + effective (schedule-adjusted) progress -->
+        <section class="ring-card">
+          <div class="ring">
+            <svg viewBox="0 0 120 120">
+              <circle class="ring__bg" cx="60" cy="60" r="52" />
+              <circle class="ring__bar" id="progRing" cx="60" cy="60" r="52" />
+            </svg>
+            <div class="ring__label">
+              <span id="progPlannedPct">60%</span>
+              <small>Scheduled</small>
+            </div>
           </div>
-        </div>
-        <div class="ring-card__meta">
-          <span class="kicker">Effective Progress</span>
-          <strong id="progEffective">—</strong>
-        </div>
-      </section>
+          <div class="ring-card__meta">
+            <span class="kicker">Effective Progress</span>
+            <strong id="progEffective">—</strong>
+          </div>
+        </section>
 
-      <!-- Schedule-slippage metrics -->
-      <section class="metrics">
-        <div class="metric">
-          <span class="kicker">Behind</span>
-          <strong id="progBehindPct" class="is-behind">—</strong>
-        </div>
-        <div class="metric">
-          <span class="kicker">Overdue</span>
-          <strong id="progOverdue">—</strong>
-        </div>
-        <div class="metric">
-          <span class="kicker">Total</span>
-          <strong id="progTotal">—</strong>
-        </div>
-      </section>
+        <!-- Schedule-slippage metrics -->
+        <section class="metrics">
+          <div class="metric">
+            <span class="kicker">Behind</span>
+            <strong id="progBehindPct" class="is-behind">—</strong>
+          </div>
+          <div class="metric">
+            <span class="kicker">Overdue</span>
+            <strong id="progOverdue">—</strong>
+          </div>
+          <div class="metric">
+            <span class="kicker">Total</span>
+            <strong id="progTotal">—</strong>
+          </div>
+        </section>
 
-      <!-- Real construction-status breakdown (CStatus) -->
-      <section class="layers">
-        <div class="layers__head">
-          <span class="kicker">Status Breakdown</span>
-          <span class="kicker" id="progInstalledPct">—</span>
-        </div>
-        <ul id="progBreakdown" class="status-list"></ul>
-      </section>
+        <!-- Real construction-status breakdown (CStatus) -->
+        <section class="layers">
+          <div class="layers__head">
+            <span class="kicker">Status Breakdown</span>
+            <span class="kicker" id="progInstalledPct">—</span>
+          </div>
+          <ul id="progBreakdown" class="status-list"></ul>
+        </section>
 
-      <!-- Isolate & filter by building layer -->
-      <section class="layers">
-        <div class="layers__head">
-          <span class="kicker">Filter by Layer</span>
-          <button id="progResetLayers" class="btn-reset" type="button" title="Show all layers">Reset</button>
+        <!-- Isolate & filter by building layer -->
+        <section class="layers">
+          <div class="layers__head">
+            <span class="kicker">Filter by Layer</span>
+            <button id="progResetLayers" class="btn-reset" type="button" title="Show all layers">Reset</button>
+          </div>
+          <ul id="progLayerList" class="layer-list"></ul>
+        </section>
+      </div>
+
+      <!-- ---------- Financials (5D) view ---------- -->
+      <div id="financialView" class="dash-view is-inactive">
+        <div class="dashboard__head dashboard__head--stack">
+          <h2>Financial Progress <span class="fin-badge">5D</span></h2>
+          <span class="dashboard__sub is-behind" id="finSub">— delay penalty</span>
         </div>
-        <ul id="progLayerList" class="layer-list"></ul>
-      </section>
+
+        <!-- Budget expended vs effective schedule progress -->
+        <section class="ring-card">
+          <div class="ring">
+            <svg viewBox="0 0 120 120">
+              <circle class="ring__bg" cx="60" cy="60" r="52" />
+              <circle class="ring__bar ring__bar--cost" id="finRingCost" cx="60" cy="60" r="52" />
+              <circle class="ring__bar ring__bar--over" id="finRingOver" cx="60" cy="60" r="52" />
+            </svg>
+            <div class="ring__label">
+              <span id="finExpendedPct">60.5%</span>
+              <small>Budget Expended</small>
+            </div>
+          </div>
+          <ul class="fin-lines">
+            <li>
+              <span class="kicker">Contract Value</span>
+              <strong id="finContract">$145,000,000</strong>
+            </li>
+            <li>
+              <span class="kicker">Cost to Date</span>
+              <strong id="finCostToDate">$87,725,000</strong>
+            </li>
+            <li>
+              <span class="kicker">Est. at Completion</span>
+              <strong id="finEac" class="is-over">$147,200,000</strong>
+              <em class="fin-note" id="finEacNote">▲ $2.2M over budget</em>
+            </li>
+          </ul>
+        </section>
+
+        <!-- EVM health check -->
+        <section class="metrics metrics--evm">
+          <div class="metric">
+            <span class="kicker">CPI · Cost</span>
+            <strong id="finCpi" class="is-over">0.89</strong>
+            <span class="metric__sub">Earning $0.89 per $1 spent</span>
+          </div>
+          <div class="metric">
+            <span class="kicker">SPI · Schedule</span>
+            <strong id="finSpi" class="is-warn">0.90</strong>
+            <span class="metric__sub">54% effective vs 60% planned</span>
+          </div>
+        </section>
+
+        <!-- Current billing draw -->
+        <section class="fin-section">
+          <div class="layers__head">
+            <span class="kicker">Current Draw · <span id="finDrawPeriod">April 2026</span></span>
+          </div>
+          <ul class="fin-bill">
+            <li><span>Work Completed</span><strong id="finWork">$4,500,000</strong></li>
+            <li><span>Materials Stored</span><strong id="finMaterials">$1,200,000</strong></li>
+            <li><span>Less Retainage (5%)</span><strong id="finRetainage" class="is-muted">-$285,000</strong></li>
+            <li class="fin-bill__total"><span>Net Payment Due</span><strong id="finNet">$5,415,000</strong></li>
+          </ul>
+          <button id="finBilling" class="fin-btn" type="button">
+            <svg class="fin-btn__icon" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+              <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z" />
+              <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                d="M14 3v5h5 M9 13h6 M9 17h4" />
+            </svg>
+            <span class="fin-btn__label">Generate AIA Billing Report</span>
+          </button>
+        </section>
+
+        <!-- Risk & variance -->
+        <section class="fin-section">
+          <div class="layers__head"><span class="kicker">Risk &amp; Variance</span></div>
+          <ul class="fin-risk">
+            <li>
+              <span class="fin-risk__dot" style="--dot:#fb7185"></span>
+              <div class="fin-risk__body">
+                <span class="fin-risk__label">Schedule Delay Impact</span>
+                <span class="fin-risk__sub" id="finDelaySub">Penalty for 14 days behind schedule</span>
+              </div>
+              <strong class="fin-risk__val is-over" id="finDelay">-$140,000</strong>
+            </li>
+            <li>
+              <span class="fin-risk__dot" style="--dot:#facc15"></span>
+              <div class="fin-risk__body">
+                <span class="fin-risk__label">Delayed Components Cost</span>
+                <span class="fin-risk__sub" id="finCompSub">Value of 238 overdue components on map</span>
+              </div>
+              <strong class="fin-risk__val is-warn" id="finComp">$850,000</strong>
+            </li>
+            <li>
+              <span class="fin-risk__dot" style="--dot:#38e2ea"></span>
+              <div class="fin-risk__body">
+                <span class="fin-risk__label">Pending Change Orders</span>
+                <span class="fin-risk__sub">Awaiting owner approval</span>
+              </div>
+              <strong class="fin-risk__val is-cyan" id="finChange">$425,000</strong>
+            </li>
+          </ul>
+        </section>
+
+        <!-- 3D map cost overlays -->
+        <section class="fin-section">
+          <div class="layers__head"><span class="kicker">Filter 3D Map by Cost</span></div>
+          <div class="fin-overlays" id="finOverlays" role="group" aria-label="Cost overlay">
+            <button class="fin-pill is-active" type="button" data-overlay="budget" aria-pressed="true">Budget vs. Actual</button>
+            <button class="fin-pill" type="button" data-overlay="billing" aria-pressed="false">Current Billing Cycle</button>
+            <button class="fin-pill" type="button" data-overlay="risk" aria-pressed="false">Financial Risk Zones</button>
+          </div>
+        </section>
+      </div>
     </aside>
 
     <!-- ======================= LAYER VISIBILITY PANEL ======================= -->
@@ -193,6 +321,6 @@
       <span>Powered by Esri</span>
     </a>
 
-    <script type="module" src="./js/progress.js?v=7"></script>
+    <script type="module" src="./js/progress.js?v=8"></script>
   </body>
 </html>

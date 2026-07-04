@@ -91,3 +91,38 @@ export const PROGRESS_STATUS = {
     { value: "Scheduled_31_Plus_Days", label: "Scheduled 31+ days", color: "#64748b" }
   ]
 };
+
+// -----------------------------------------------------------------------------
+// 5D cost model — translates the 4D schedule slippage into dollars
+// -----------------------------------------------------------------------------
+
+/**
+ * Financial figures for the "Financials (5D)" panel. The fixed contract values,
+ * EVM indices and the current pay-application draw are project constants; the
+ * schedule-driven risk numbers (delay penalty, count of overdue components) are
+ * recomputed at render time from the live CStatus summary so the 5D view stays
+ * tied to the real 4D progress.
+ *
+ * Derived checks (kept exact against the source figures):
+ *   budgetExpendedPct = costToDate / contractValue = 60.5%
+ *   EAC overrun       = estAtCompletion − contractValue = $2.2M
+ *   netPaymentDue     = (workCompleted + materialsStored) × (1 − retainage) = $5,415,000
+ *   delayPenalty      = daysBehind × dailyLiquidatedDamages ≈ 14 × $10k = $140,000
+ */
+export const FINANCIALS = {
+  contractValue: 145_000_000,
+  costToDate: 87_725_000,
+  estAtCompletion: 147_200_000,
+  budgetExpendedPct: 60.5, // cost expended as a % of contract (doughnut fill)
+  cpi: 0.89, // Cost Performance Index — earning $0.89 per $1 spent
+  spi: 0.9, // Schedule Performance Index — 54% effective vs 60% planned
+  dailyLiquidatedDamages: 10_000, // $/day penalty applied to days behind schedule
+  delayedComponentsCost: 850_000, // installed value of the overdue components
+  pendingChangeOrders: 425_000, // change orders awaiting owner approval
+  draw: {
+    period: "April 2026",
+    workCompleted: 4_500_000,
+    materialsStored: 1_200_000,
+    retainagePct: 5
+  }
+};

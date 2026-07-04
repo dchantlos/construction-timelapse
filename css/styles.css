@@ -555,6 +555,331 @@ body {
 }
 
 /* =============================================================================
+   Dashboard view switch (Schedule 4D ↔ Financials 5D)
+   ============================================================================= */
+.dash-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--glass-border-soft);
+}
+.dash-toggle__btn {
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--text-faint);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  padding: 8px 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+.dash-toggle__btn:hover {
+  color: var(--text);
+}
+.dash-toggle__btn.is-active {
+  color: var(--accent-bright);
+  background: rgba(56, 226, 234, 0.16);
+  border-color: rgba(56, 226, 234, 0.45);
+  box-shadow: 0 0 16px -6px var(--accent);
+}
+.dash-toggle__d {
+  font-size: 9px;
+  font-weight: 800;
+  opacity: 0.7;
+  padding: 1px 4px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.dash-toggle__btn.is-active .dash-toggle__d {
+  background: rgba(56, 226, 234, 0.22);
+  opacity: 1;
+}
+
+/* Stacked views inside the dashboard — only one is shown at a time. */
+.dash-view {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.dash-view.is-inactive {
+  display: none;
+}
+
+/* =============================================================================
+   Financials (5D) panel
+   ============================================================================= */
+.fin-badge {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--accent-bright);
+  background: rgba(56, 226, 234, 0.14);
+  border: 1px solid rgba(56, 226, 234, 0.4);
+  border-radius: 6px;
+  padding: 1px 5px;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
+/* Executive doughnut — blue cost fill + red overrun sliver */
+.ring__bar--cost {
+  stroke: #3b82f6;
+  filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.55));
+  stroke-dasharray: 0 327;
+  stroke-dashoffset: 0;
+}
+.ring__bar--over {
+  stroke: var(--danger);
+  filter: drop-shadow(0 0 6px rgba(251, 113, 133, 0.6));
+  stroke-dasharray: 0 327;
+  stroke-dashoffset: 0;
+}
+
+/* "Big three" contract figures beside the doughnut */
+.fin-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  flex: 1;
+  min-width: 0;
+}
+.fin-lines li {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.fin-lines strong {
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+  color: var(--text);
+}
+.fin-note {
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--danger);
+  letter-spacing: 0.02em;
+}
+
+/* EVM health check — two indices side by side */
+.metrics--evm {
+  grid-template-columns: repeat(2, 1fr);
+}
+.metrics--evm .metric {
+  padding: 12px;
+}
+.metrics--evm .metric strong {
+  font-size: 22px;
+  margin-top: 5px;
+}
+.metric__sub {
+  display: block;
+  margin-top: 5px;
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--text-faint);
+}
+
+/* Financial value tints */
+.fin-lines .is-over,
+.metric strong.is-over,
+.fin-risk__val.is-over {
+  color: var(--danger);
+  text-shadow: 0 0 12px rgba(251, 113, 133, 0.35);
+}
+.metric strong.is-warn,
+.fin-risk__val.is-warn {
+  color: #fbbf24;
+  text-shadow: 0 0 12px rgba(251, 191, 36, 0.28);
+}
+.fin-risk__val.is-cyan {
+  color: var(--accent-bright);
+  text-shadow: var(--glow-cyan);
+}
+
+.fin-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Current billing draw / pay application */
+.fin-bill {
+  list-style: none;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--glass-border-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.fin-bill li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+.fin-bill strong {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--text);
+}
+.fin-bill .is-muted {
+  color: var(--text-faint);
+  font-weight: 500;
+}
+.fin-bill__total {
+  margin-top: 2px;
+  padding-top: 10px;
+  border-top: 1px solid var(--glass-border);
+}
+.fin-bill__total span {
+  color: var(--text);
+  font-weight: 600;
+}
+.fin-bill__total strong {
+  font-size: 18px;
+  font-weight: 800;
+  color: #34d399;
+  text-shadow: 0 0 14px rgba(52, 211, 153, 0.4);
+}
+
+/* Generate AIA billing button */
+.fin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  font-family: var(--font);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--accent-bright);
+  background: rgba(13, 18, 32, 0.6);
+  border: 1px solid rgba(56, 226, 234, 0.32);
+  border-radius: 11px;
+  padding: 11px 14px;
+  cursor: pointer;
+  transition: all 0.22s ease;
+}
+.fin-btn:hover {
+  background: rgba(56, 226, 234, 0.1);
+  border-color: var(--accent);
+  box-shadow: 0 0 20px -6px var(--accent);
+  transform: translateY(-1px);
+}
+.fin-btn:active {
+  transform: translateY(0) scale(0.99);
+}
+.fin-btn.is-busy {
+  opacity: 0.75;
+  cursor: progress;
+}
+.fin-btn__icon {
+  flex-shrink: 0;
+}
+
+/* Risk & variance — schedule slippage translated to dollars */
+.fin-risk {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.fin-risk li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--glass-border-soft);
+}
+.fin-risk__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dot, var(--accent));
+  box-shadow: 0 0 8px var(--dot, var(--accent));
+  align-self: start;
+  margin-top: 4px;
+}
+.fin-risk__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.fin-risk__label {
+  font-size: 12.5px;
+  color: var(--text);
+  font-weight: 600;
+}
+.fin-risk__sub {
+  font-size: 10px;
+  color: var(--text-faint);
+  line-height: 1.35;
+}
+.fin-risk__val {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* 3D map cost overlays */
+.fin-overlays {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.fin-pill {
+  font-family: var(--font);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-faint);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--glass-border-soft);
+  border-radius: 999px;
+  padding: 7px 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.fin-pill:hover {
+  color: var(--text);
+  border-color: rgba(56, 226, 234, 0.35);
+}
+.fin-pill.is-active {
+  color: var(--accent-bright);
+  background: rgba(56, 226, 234, 0.16);
+  border-color: rgba(56, 226, 234, 0.5);
+  box-shadow: 0 0 16px -6px var(--accent);
+}
+
+/* =============================================================================
    Right custom nav controls
    ============================================================================= */
 .nav-stack {

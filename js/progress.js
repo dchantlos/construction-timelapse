@@ -6,15 +6,16 @@
 // how many components have actually slipped behind.
 // =============================================================================
 
-import { createView } from "./scene.js?v=7";
-import { createLayerVisibility } from "./visibility.js?v=7";
-import { createSpin } from "./spin.js?v=7";
-import { collectConstructionStatus } from "./progress-stats.js?v=7";
-import { renderProgressPanel } from "./progress-panel.js?v=7";
-import { createProgressLayers } from "./progress-layers.js?v=7";
-import { createProgressInteraction } from "./progress-interaction.js?v=7";
-import { createSlice } from "./slice.js?v=7";
-import { PROGRESS_WEBSCENE_ID } from "./config.js?v=7";
+import { createView } from "./scene.js?v=8";
+import { createLayerVisibility } from "./visibility.js?v=8";
+import { createSpin } from "./spin.js?v=8";
+import { collectConstructionStatus } from "./progress-stats.js?v=8";
+import { renderProgressPanel } from "./progress-panel.js?v=8";
+import { createProgressLayers } from "./progress-layers.js?v=8";
+import { createProgressInteraction } from "./progress-interaction.js?v=8";
+import { createSlice } from "./slice.js?v=8";
+import { renderFinancialPanel, createFinancialControls } from "./progress-financial.js?v=8";
+import { PROGRESS_WEBSCENE_ID } from "./config.js?v=8";
 
 /** Surface any error directly on the boot veil so failures are never silent. */
 function showBootError(message) {
@@ -70,11 +71,15 @@ async function boot() {
   // Slice tool: cut an interactive plane through the model.
   createSlice(view);
 
+  // Wire the Schedule (4D) ↔ Financials (5D) view toggle and its controls.
+  createFinancialControls();
+
   // Real construction status vs. planned schedule. Failures here must not blank
   // the whole view — fall back to an empty panel that reads "unavailable".
   try {
     const data = await collectConstructionStatus(scene);
     renderProgressPanel(data.summary);
+    renderFinancialPanel(data.summary);
     // Per-layer isolate: filters the render and every metric to one layer.
     createProgressLayers(scene, data, (summary, scope) =>
       renderProgressPanel(summary, { scope })
@@ -89,6 +94,7 @@ async function boot() {
       installed: 0,
       installedPct: 0
     });
+    renderFinancialPanel({});
   }
 }
 
