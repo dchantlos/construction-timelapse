@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <title>Sign in · Construction Timelapse</title>
+    <meta name="robots" content="noindex, nofollow" />
+
+    <style>
+      /* Design tokens mirrored from css/styles.css so this page is self-contained. */
+      :root {
+        --bg: #060912;
+        --glass: rgba(16, 22, 38, 0.55);
+        --glass-strong: rgba(13, 18, 32, 0.82);
+        --glass-border: rgba(140, 170, 230, 0.18);
+        --text: #e8eefc;
+        --text-dim: #c2cfee;
+        --text-faint: #aab6d4;
+        --label: #d1d5db;
+        --accent: #38e2ea;
+        --accent-2: #7c5cff;
+        --danger: #fb7185;
+        --radius: 18px;
+        --font: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Full-bleed centered stage with an atmospheric backdrop. */
+      .stage {
+        position: relative;
+        min-height: 100%;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        overflow: hidden;
+        background: radial-gradient(circle at 50% 38%, #0b1224 0%, #04060d 72%);
+      }
+
+      /* Soft neon color blobs drifting behind the card. */
+      .aura {
+        position: absolute;
+        inset: -20% -10% 0;
+        pointer-events: none;
+        background:
+          radial-gradient(38% 32% at 22% 26%, rgba(56, 226, 234, 0.22), transparent 70%),
+          radial-gradient(40% 34% at 82% 30%, rgba(124, 92, 255, 0.22), transparent 72%),
+          radial-gradient(50% 40% at 50% 100%, rgba(56, 226, 234, 0.1), transparent 70%);
+        filter: blur(8px);
+        animation: drift 16s ease-in-out infinite alternate;
+      }
+
+      /* Faint vignette to seat the card in the scene. */
+      .stage::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(120% 90% at 50% 20%, transparent 55%, rgba(2, 4, 10, 0.6) 100%);
+      }
+
+      .login {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        max-width: 380px;
+        padding: 34px 32px 28px;
+        border-radius: var(--radius);
+        background: var(--glass);
+        backdrop-filter: blur(22px) saturate(140%);
+        -webkit-backdrop-filter: blur(22px) saturate(140%);
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 30px 70px -28px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        animation: rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+
+      /* ---------- Brand ---------- */
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 18px;
+      }
+      .brand__mark {
+        position: relative;
+        width: 40px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        flex: none;
+      }
+      .brand__ring {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        border: 1.5px solid var(--accent);
+        border-right-color: transparent;
+        border-bottom-color: transparent;
+        opacity: 0.75;
+        animation: spin 6s linear infinite;
+      }
+      .brand__core {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 14px 2px rgba(56, 226, 234, 0.65);
+      }
+      .brand__text h1 {
+        margin: 2px 0 0;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+      }
+      .kicker {
+        display: block;
+        font-size: 10px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--accent);
+        font-weight: 700;
+      }
+
+      .lede {
+        margin: 0 0 22px;
+        font-size: 13px;
+        line-height: 1.5;
+        color: var(--text-dim);
+      }
+
+      /* ---------- Form ---------- */
+      .field {
+        display: block;
+        margin-bottom: 14px;
+      }
+      .field__label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--label);
+        font-weight: 600;
+      }
+      input[type="text"],
+      input[type="password"] {
+        width: 100%;
+        padding: 12px 14px;
+        font: inherit;
+        font-size: 14px;
+        color: var(--text);
+        background: rgba(8, 12, 22, 0.6);
+        border: 1px solid var(--glass-border);
+        border-radius: 12px;
+        outline: none;
+        transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+      }
+      input::placeholder {
+        color: var(--text-faint);
+        opacity: 0.75;
+      }
+      input:focus {
+        border-color: rgba(56, 226, 234, 0.8);
+        background: rgba(10, 15, 28, 0.75);
+        box-shadow: 0 0 0 3px rgba(56, 226, 234, 0.16);
+      }
+
+      .pw {
+        position: relative;
+        display: block;
+      }
+      .pw input {
+        padding-right: 46px;
+      }
+      .pw__toggle {
+        position: absolute;
+        top: 50%;
+        right: 8px;
+        transform: translateY(-50%);
+        width: 32px;
+        height: 32px;
+        display: grid;
+        place-items: center;
+        padding: 0;
+        font-size: 15px;
+        line-height: 1;
+        color: var(--text-faint);
+        background: transparent;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: color 0.18s ease, background 0.18s ease;
+      }
+      .pw__toggle:hover {
+        color: var(--text);
+        background: rgba(140, 170, 230, 0.12);
+      }
+      .pw__toggle.is-on {
+        color: var(--accent);
+      }
+
+      .error {
+        margin: 2px 0 14px;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--danger);
+      }
+      .error[hidden] {
+        display: none;
+      }
+
+      .btn {
+        width: 100%;
+        margin-top: 6px;
+        padding: 13px 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        color: #041016;
+        background: linear-gradient(135deg, var(--accent), #58e9ef 55%, var(--accent-2));
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        box-shadow: 0 12px 28px -12px rgba(56, 226, 234, 0.7);
+        transition: transform 0.12s ease, box-shadow 0.18s ease, filter 0.18s ease, opacity 0.18s ease;
+      }
+      .btn__icon {
+        font-size: 16px;
+        transition: transform 0.18s ease;
+      }
+      .btn:hover {
+        filter: brightness(1.05);
+        box-shadow: 0 16px 34px -12px rgba(56, 226, 234, 0.85);
+      }
+      .btn:hover .btn__icon {
+        transform: translateX(3px);
+      }
+      .btn:active {
+        transform: translateY(1px);
+      }
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: progress;
+      }
+
+      .foot {
+        margin: 22px 0 0;
+        text-align: center;
+        font-size: 11.5px;
+        letter-spacing: 0.03em;
+        color: var(--text-faint);
+      }
+
+      /* ---------- Motion ---------- */
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(14px) scale(0.98);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      @keyframes drift {
+        from {
+          transform: translate3d(-2%, -1%, 0) scale(1);
+        }
+        to {
+          transform: translate3d(3%, 2%, 0) scale(1.06);
+        }
+      }
+      .shake {
+        animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+      }
+      @keyframes shake {
+        10%, 90% { transform: translateX(-1px); }
+        20%, 80% { transform: translateX(2px); }
+        30%, 50%, 70% { transform: translateX(-5px); }
+        40%, 60% { transform: translateX(5px); }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .aura,
+        .brand__ring,
+        .login,
+        .shake {
+          animation: none;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="stage">
+      <div class="aura" aria-hidden="true"></div>
+
+      <main class="login" role="dialog" aria-labelledby="loginTitle">
+        <div class="brand">
+          <div class="brand__mark" aria-hidden="true">
+            <span class="brand__ring"></span>
+            <span class="brand__core"></span>
+          </div>
+          <div class="brand__text">
+            <span class="kicker">Private Preview</span>
+            <h1 id="loginTitle">Construction Timelapse</h1>
+          </div>
+        </div>
+
+        <p class="lede">Sign in to explore the 4D construction twin.</p>
+
+        <form id="loginForm" autocomplete="on" novalidate>
+          <label class="field">
+            <span class="field__label">Username</span>
+            <input
+              id="username"
+              name="username"
+              type="text"
+              autocomplete="username"
+              autocapitalize="none"
+              autocorrect="off"
+              spellcheck="false"
+              placeholder="Enter username"
+              required
+              autofocus
+            />
+          </label>
+
+          <label class="field">
+            <span class="field__label">Password</span>
+            <span class="pw">
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                placeholder="Enter password"
+                required
+              />
+              <button type="button" class="pw__toggle" id="pwToggle" aria-label="Show password" title="Show password">
+                &#128065;
+              </button>
+            </span>
+          </label>
+
+          <p class="error" id="error" role="alert" aria-live="assertive" hidden>
+            Incorrect username or password.
+          </p>
+
+          <button type="submit" class="btn" id="submitBtn">
+            <span class="btn__label">Enter</span>
+            <span class="btn__icon" aria-hidden="true">&#8594;</span>
+          </button>
+        </form>
+
+        <p class="foot">&#128274; Private preview access only.</p>
+      </main>
+    </div>
+
+    <script>
+      /* =============================================================================
+         Client-side access gate for the Construction Timelapse preview.
+
+         IMPORTANT: this is a lightweight curtain, NOT real security. The credential
+         check runs in the browser and the ArcGIS layers remain publicly reachable
+         via their service URLs. It only keeps casual visitors out of the UI.
+
+         The password is never stored in plaintext here — we compare the SHA-256
+         digest of "username:password" against the constant below.
+         ============================================================================= */
+      const EXPECTED_HASH = "1394fa77d9c0318717d570b463e1318e7c3daeab76a12f28fe2724ff9cc405c0";
+      const DESTINATION = "./index.html";
+
+      // Already authenticated in this tab session? Skip straight to the app.
+      try {
+        if (sessionStorage.getItem("ct_auth") === "granted") {
+          location.replace(DESTINATION);
+        }
+      } catch (err) {
+        /* storage blocked (private mode) — just show the form */
+      }
+
+      const form = document.getElementById("loginForm");
+      const userEl = document.getElementById("username");
+      const passEl = document.getElementById("password");
+      const errEl = document.getElementById("error");
+      const submitBtn = document.getElementById("submitBtn");
+      const pwToggle = document.getElementById("pwToggle");
+
+      // Show / hide password.
+      pwToggle.addEventListener("click", () => {
+        const reveal = passEl.type === "password";
+        passEl.type = reveal ? "text" : "password";
+        pwToggle.classList.toggle("is-on", reveal);
+        pwToggle.setAttribute("aria-label", reveal ? "Hide password" : "Show password");
+        pwToggle.setAttribute("title", reveal ? "Hide password" : "Show password");
+        passEl.focus();
+      });
+
+      async function sha256Hex(text) {
+        const bytes = new TextEncoder().encode(text);
+        const digest = await crypto.subtle.digest("SHA-256", bytes);
+        return Array.from(new Uint8Array(digest))
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        errEl.hidden = true;
+        submitBtn.disabled = true;
+
+        const user = userEl.value.trim();
+        const pass = passEl.value;
+
+        let granted = false;
+        try {
+          const hash = await sha256Hex(user + ":" + pass);
+          granted = hash === EXPECTED_HASH;
+        } catch (err) {
+          console.warn("Credential check failed:", err);
+        }
+
+        if (granted) {
+          try {
+            sessionStorage.setItem("ct_auth", "granted");
+          } catch (err) {
+            /* storage blocked — proceed anyway; the guard will re-prompt next visit */
+          }
+          location.replace(DESTINATION);
+          return;
+        }
+
+        submitBtn.disabled = false;
+        errEl.hidden = false;
+        form.classList.remove("shake");
+        void form.offsetWidth; // force reflow so the animation can replay
+        form.classList.add("shake");
+        passEl.select();
+      });
+    </script>
+  </body>
+</html>

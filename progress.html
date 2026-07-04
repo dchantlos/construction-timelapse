@@ -3,6 +3,23 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+
+    <!-- ===================== ACCESS GUARD (client-side gate) =====================
+         Bounces visitors to the login page unless this browser session has
+         authenticated. This is a lightweight curtain, NOT real security — the
+         ArcGIS layers remain publicly reachable via their service URLs. -->
+    <script>
+      (function () {
+        try {
+          if (sessionStorage.getItem("ct_auth") !== "granted") {
+            location.replace("./login.html");
+          }
+        } catch (err) {
+          location.replace("./login.html");
+        }
+      })();
+    </script>
+
     <title>Current Construction Progress · ArcGIS</title>
 
     <!-- ArcGIS dark base theme (we override most of it in styles.css) -->
