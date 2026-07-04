@@ -24,7 +24,7 @@
 
     <!-- ArcGIS dark base theme (we override most of it in styles.css) -->
     <link rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css" />
-    <link rel="stylesheet" href="./css/styles.css?v=27" />
+    <link rel="stylesheet" href="./css/styles.css?v=28" />
 
     <!-- ESM import map: load @arcgis/core straight from the CDN -->
     <script type="importmap">
@@ -332,6 +332,28 @@
       <span>Powered by Esri</span>
     </a>
 
-    <script type="module" src="./js/progress.js?v=9"></script>
+    <!-- ======================= DRILL-DOWN MODAL ======================= -->
+    <div id="finModal" class="fin-modal" role="dialog" aria-modal="true" aria-labelledby="finModalTitle" hidden>
+      <div class="fin-modal__backdrop" data-modal-close></div>
+      <div class="fin-modal__panel glass">
+        <div class="fin-modal__head">
+          <div class="fin-modal__title-wrap">
+            <span class="fin-modal__icon" aria-hidden="true">&#9650;</span>
+            <div>
+              <h3 id="finModalTitle">Delayed Components Breakdown</h3>
+              <span class="fin-modal__sub">238 overdue components &middot; $850,000</span>
+            </div>
+          </div>
+          <button class="panel-collapse" type="button" data-modal-close aria-label="Close breakdown">&#10005;</button>
+        </div>
+        <ul class="fin-modal__list" id="finModalList"></ul>
+        <div class="fin-modal__foot">
+          <span class="fin-modal__synced">&#9679; Synced to 3D map geometry</span>
+          <button class="fin-modal__close-btn" type="button" data-modal-close>Close</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="./js/progress.js?v=10"></script>
   </body>
 </html>

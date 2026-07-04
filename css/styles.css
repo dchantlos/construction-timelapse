@@ -979,6 +979,145 @@ body {
 }
 
 /* =============================================================================
+   Drill-down modal (delayed components breakdown)
+   ============================================================================= */
+.fin-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.fin-modal[hidden] {
+  display: none;
+}
+.fin-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.62);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.fin-modal__panel {
+  position: relative;
+  width: 420px;
+  max-width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 16px;
+  animation: fin-modal-in 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+@keyframes fin-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.fin-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--glass-border-soft);
+}
+.fin-modal__title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.fin-modal__icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+  font-size: 13px;
+}
+.fin-modal__head h3 {
+  margin: 0;
+  font-size: 13.5px;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+.fin-modal__sub {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+}
+.fin-modal__list {
+  list-style: none;
+  margin: 0;
+  padding: 10px;
+  max-height: 288px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(140, 170, 230, 0.35) transparent;
+}
+.fin-modal__list::-webkit-scrollbar {
+  width: 6px;
+}
+.fin-modal__list::-webkit-scrollbar-thumb {
+  background: rgba(140, 170, 230, 0.25);
+  border-radius: 999px;
+}
+.fin-modal__list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  color: var(--text-dim);
+  transition: background 0.2s ease;
+}
+.fin-modal__list li:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.fin-modal__list strong {
+  font-variant-numeric: tabular-nums;
+  color: var(--danger);
+}
+.fin-modal__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-top: 1px solid var(--glass-border-soft);
+}
+.fin-modal__synced {
+  font-size: 10.5px;
+  color: var(--accent-bright);
+}
+.fin-modal__close-btn {
+  padding: 7px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border-soft);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.fin-modal__close-btn:hover {
+  border-color: var(--accent);
+  background: rgba(56, 226, 234, 0.1);
+  color: var(--accent-bright);
+}
+
+/* =============================================================================
    Right custom nav controls
    ============================================================================= */
 .nav-stack {

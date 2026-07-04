@@ -7,7 +7,7 @@
 // planned-sequencing view.
 // =============================================================================
 
-import { BUILDING_LAYERS, PROGRESS_STATUS } from "./config.js?v=9";
+import { BUILDING_LAYERS, PROGRESS_STATUS } from "./config.js?v=10";
 
 // Friendly label + colour for each CStatus value, keyed for O(1) lookup.
 const STATUS_BY_VALUE = new Map(PROGRESS_STATUS.buckets.map((b) => [b.value, b]));

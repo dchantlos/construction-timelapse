@@ -8,7 +8,7 @@
 // the live CStatus summary so the money always tracks the real progress.
 // =============================================================================
 
-import { PLANNED_PROGRESS_PCT, FINANCIALS } from "./config.js?v=9";
+import { PLANNED_PROGRESS_PCT, FINANCIALS } from "./config.js?v=10";
 
 /** Circumference of the SVG ring (2πr, r=52) — matches .ring__bar dasharray. */
 const RING_CIRCUMFERENCE = 327;
@@ -23,6 +23,30 @@ function compact(n) {
   if (abs >= 1_000) return `$${Math.round(n / 1_000)}k`;
   return money(n);
 }
+
+/** Map a risk-card id to the mock ArcGIS layer the UI would highlight. */
+const RISK_LAYERS = {
+  schedule: "schedule_delay",
+  delayed: "delayed_components",
+  pending: "pending_change_orders",
+};
+
+/** Fake line-item breakdown behind the "Delayed Components Cost" drill-down. */
+const DELAYED_BREAKDOWN = [
+  { label: "Column C4 \u00b7 Level 12", amount: 2400 },
+  { label: "Slab S2 \u00b7 Level 12", amount: 15000 },
+  { label: "Beam B7 \u00b7 Level 11", amount: 8200 },
+  { label: "Curtain Wall Panel \u00b7 Level 10", amount: 46500 },
+  { label: "MEP Riser \u00b7 Level 09", amount: 122000 },
+  { label: "Column C1 \u00b7 Level 08", amount: 3100 },
+  { label: "Slab S5 \u00b7 Level 07", amount: 19800 },
+  { label: "Facade Bracket Set \u00b7 Level 06", amount: 54000 },
+  { label: "Stair Core STR \u00b7 Level 05", amount: 88000 },
+  { label: "Beam B3 \u00b7 Level 04", amount: 6900 },
+];
+
+/** Latest count-up targets, refreshed each render, replayed on first reveal. */
+const countTargets = { finCostToDate: 0, finNet: 0 };
 
 /**
  * Populate the Financials (5D) panel from an aggregated CStatus summary.
@@ -69,6 +93,8 @@ export function renderFinancialPanel(summary = {}) {
   setText("finMaterials", money(f.draw.materialsStored));
   setText("finRetainage", `-${money(retainage)}`);
   setText("finNet", money(net));
+  countTargets.finCostToDate = f.costToDate;
+  countTargets.finNet = net;
 
   // --- Risk & variance (tie the headline penalty to real schedule slip) ------
   const delayImpact = daysBehind * f.dailyLiquidatedDamages;
@@ -98,6 +124,7 @@ export function createFinancialControls() {
   wireOverlayPills();
   wireRiskFilters();
   wireBillingButton();
+  wireDrillDownModal();
 }
 
 /** Toggle the left dashboard between the schedule and financial views. */
@@ -108,6 +135,7 @@ function wireViewToggle() {
   const financialView = document.getElementById("financialView");
   if (!btnSchedule || !btnFinancial || !scheduleView || !financialView) return;
 
+  let countsPlayed = false;
   const show = (financial) => {
     financialView.classList.toggle("is-inactive", !financial);
     scheduleView.classList.toggle("is-inactive", financial);
@@ -115,6 +143,10 @@ function wireViewToggle() {
     btnSchedule.classList.toggle("is-active", !financial);
     btnFinancial.setAttribute("aria-selected", String(financial));
     btnSchedule.setAttribute("aria-selected", String(!financial));
+    if (financial && !countsPlayed) {
+      countsPlayed = true;
+      playCountUps();
+    }
   };
 
   btnSchedule.addEventListener("click", () => show(false));
@@ -164,6 +196,7 @@ function wireBillingButton() {
     timers.push(
       window.setTimeout(() => {
         setState("success");
+        downloadAiaCsv();
         timers.push(window.setTimeout(() => setState("idle"), 3500));
       }, 2500)
     );
@@ -221,7 +254,99 @@ function wireRiskFilters() {
     const id = card.dataset.risk;
     active = active === id ? null : id;
     apply();
+
+    // Simulated map command — proves the panel is wired to drive the 3D viewer.
+    if (active) {
+      console.log({
+        action: "HIGHLIGHT_GEOMETRY",
+        layer: RISK_LAYERS[active] ?? active,
+        camera_pan: true,
+      });
+    }
+
+    // The delayed-components card also opens a drill-down breakdown.
+    if (id === "delayed") openDrillDownModal();
   });
+}
+
+/**
+ * Populate (once) and wire the "Delayed Components" drill-down modal: close
+ * button, footer button, backdrop click, and Escape all dismiss it.
+ */
+function wireDrillDownModal() {
+  const modal = document.getElementById("finModal");
+  if (!modal) return;
+
+  const list = document.getElementById("finModalList");
+  if (list && !list.childElementCount) {
+    for (const row of DELAYED_BREAKDOWN) {
+      const li = document.createElement("li");
+      const label = document.createElement("span");
+      label.textContent = row.label;
+      const amount = document.createElement("strong");
+      amount.textContent = `-${money(row.amount)}`;
+      li.append(label, amount);
+      list.appendChild(li);
+    }
+  }
+
+  const close = () => {
+    modal.hidden = true;
+  };
+  for (const btn of modal.querySelectorAll("[data-modal-close]")) {
+    btn.addEventListener("click", close);
+  }
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !modal.hidden) close();
+  });
+}
+
+/** Reveal the drill-down modal (fake data is populated once on wire-up). */
+function openDrillDownModal() {
+  const modal = document.getElementById("finModal");
+  if (modal) modal.hidden = false;
+}
+
+/** Generate a dummy AIA G702 pay-application CSV and download it client-side. */
+function downloadAiaCsv() {
+  const csv = [
+    "Trade,Amount",
+    "Concrete,2000000",
+    "Steel,3415000",
+    "Retainage,-285000",
+    "Net Due,5415000",
+  ].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "AIA_G702_Draw_April_2026.csv";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+/** Replay the headline figures counting up from $0 (called on first reveal). */
+function playCountUps() {
+  animateCountUp("finCostToDate", countTargets.finCostToDate);
+  animateCountUp("finNet", countTargets.finNet);
+}
+
+/** Ease-out count-up animation from 0 to `target`, formatted as currency. */
+function animateCountUp(id, target, duration = 2000) {
+  const el = document.getElementById(id);
+  if (!el || !(target > 0)) return;
+  const easeOut = (t) => 1 - Math.pow(1 - t, 3);
+  let startTs = null;
+  const step = (ts) => {
+    if (startTs === null) startTs = ts;
+    const progress = Math.min((ts - startTs) / duration, 1);
+    el.textContent = money(target * easeOut(progress));
+    if (progress < 1) requestAnimationFrame(step);
+    else el.textContent = money(target);
+  };
+  requestAnimationFrame(step);
 }
 
 function setText(id, text) {
