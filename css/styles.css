@@ -255,9 +255,9 @@ body {
 .dashboard {
   position: absolute;
   top: 98px;
-  left: 18px;
+  right: 18px;
   z-index: 10;
-  width: 312px;
+  width: 344px;
   max-height: calc(100vh - 220px);
   padding: 20px;
   display: flex;
@@ -270,7 +270,7 @@ body {
    scrollbar (its breakdown + isolate list are taller than the home dashboard). */
 .dashboard--progress {
   max-height: calc(100vh - 108px);
-  gap: 15px;
+  gap: 13px;
 }
 .dashboard--progress .status-list {
   gap: 9px;
@@ -609,7 +609,7 @@ body {
 .dash-view {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 13px;
 }
 .dash-view.is-inactive {
   display: none;
@@ -652,7 +652,7 @@ body {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 7px;
   flex: 1;
   min-width: 0;
 }
@@ -680,7 +680,7 @@ body {
   grid-template-columns: repeat(2, 1fr);
 }
 .metrics--evm .metric {
-  padding: 12px;
+  padding: 10px;
 }
 .metrics--evm .metric strong {
   font-size: 22px;
@@ -983,7 +983,7 @@ body {
    ============================================================================= */
 .nav-stack {
   position: absolute;
-  right: 18px;
+  left: 18px;
   top: 50%;
   transform: translateY(-50%);
   z-index: 10;
@@ -1026,9 +1026,9 @@ body {
    ============================================================================= */
 .slice-panel {
   position: absolute;
-  right: 84px;
+  left: 84px;
   top: 50%;
-  transform: translateY(-50%) translateX(12px);
+  transform: translateY(-50%) translateX(-12px);
   z-index: 12;
   width: 262px;
   padding: 16px;
@@ -1075,7 +1075,7 @@ body {
 .layers-panel {
   position: absolute;
   top: 98px;
-  right: 18px;
+  left: 18px;
   z-index: 11;
   width: 216px;
   max-height: calc(50vh - 80px);
@@ -1348,7 +1348,7 @@ body {
 .esri-badge {
   position: absolute;
   bottom: 24px;
-  right: 18px;
+  left: 18px;
   z-index: 10;
   display: flex;
   align-items: center;
