@@ -790,24 +790,60 @@ body {
 .fin-btn:active {
   transform: translateY(0) scale(0.99);
 }
-.fin-btn.is-busy {
-  opacity: 0.75;
+.fin-btn:disabled {
+  cursor: default;
+}
+.fin-btn.is-loading,
+.fin-btn.is-loading:hover {
+  background: #1e293b;
+  border-color: rgba(148, 163, 184, 0.35);
+  color: #cbd5e1;
+  box-shadow: none;
+  transform: none;
   cursor: progress;
+}
+.fin-btn.is-success,
+.fin-btn.is-success:hover {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.5);
+  color: #34d399;
+  font-weight: 800;
+  box-shadow: 0 0 20px -6px rgba(52, 211, 153, 0.55);
+  transform: none;
 }
 .fin-btn__icon {
   flex-shrink: 0;
 }
+.fin-btn__icon--spin,
+.fin-btn__icon--check {
+  display: none;
+}
+.fin-btn.is-loading .fin-btn__icon--file,
+.fin-btn.is-success .fin-btn__icon--file {
+  display: none;
+}
+.fin-btn.is-loading .fin-btn__icon--spin {
+  display: inline-block;
+  animation: fin-spin 0.8s linear infinite;
+}
+.fin-btn.is-success .fin-btn__icon--check {
+  display: inline-block;
+}
+@keyframes fin-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
-/* Risk & variance — schedule slippage translated to dollars */
+/* Risk & variance — schedule slippage translated to dollars; each card also
+   toggles a mocked 3D-map overlay filter. */
 .fin-risk {
-  list-style: none;
-  margin: 0;
-  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
-.fin-risk li {
+.fin-risk__card {
+  width: 100%;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
@@ -816,6 +852,69 @@ body {
   border-radius: 11px;
   background: rgba(255, 255, 255, 0.025);
   border: 1px solid var(--glass-border-soft);
+  font-family: var(--font);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.fin-risk__card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(140, 170, 230, 0.28);
+}
+.fin-risk__card[data-risk="schedule"].is-active {
+  background: rgba(244, 63, 94, 0.1);
+  border-color: rgba(244, 63, 94, 0.5);
+  box-shadow: 0 0 15px rgba(244, 63, 94, 0.15);
+}
+.fin-risk__card[data-risk="delayed"].is-active {
+  background: rgba(251, 191, 36, 0.1);
+  border-color: rgba(251, 191, 36, 0.5);
+  box-shadow: 0 0 15px rgba(251, 191, 36, 0.15);
+}
+.fin-risk__card[data-risk="pending"].is-active {
+  background: rgba(34, 211, 238, 0.1);
+  border-color: rgba(34, 211, 238, 0.5);
+  box-shadow: 0 0 15px rgba(34, 211, 238, 0.15);
+}
+.fin-risk__banner {
+  margin: 4px 2px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+.fin-risk__banner[hidden] {
+  display: none;
+}
+.fin-risk__banner::before {
+  content: "";
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+  animation: fin-pulse 1.4s ease-in-out infinite;
+}
+.fin-risk__banner.is-rose {
+  color: #fb7185;
+}
+.fin-risk__banner.is-amber {
+  color: #fbbf24;
+}
+.fin-risk__banner.is-cyan {
+  color: var(--accent-bright);
+}
+@keyframes fin-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
 }
 .fin-risk__dot {
   width: 8px;

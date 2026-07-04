@@ -24,7 +24,7 @@
 
     <!-- ArcGIS dark base theme (we override most of it in styles.css) -->
     <link rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css" />
-    <link rel="stylesheet" href="./css/styles.css?v=25" />
+    <link rel="stylesheet" href="./css/styles.css?v=26" />
 
     <!-- ESM import map: load @arcgis/core straight from the CDN -->
     <script type="importmap">
@@ -207,11 +207,21 @@
             <li class="fin-bill__total"><span>Net Payment Due</span><strong id="finNet">$5,415,000</strong></li>
           </ul>
           <button id="finBilling" class="fin-btn" type="button">
-            <svg class="fin-btn__icon" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+            <svg class="fin-btn__icon fin-btn__icon--file" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
               <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
                 d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z" />
               <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
                 d="M14 3v5h5 M9 13h6 M9 17h4" />
+            </svg>
+            <svg class="fin-btn__icon fin-btn__icon--spin" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+              <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                d="M21 12a9 9 0 1 1-6.219-8.56" />
+            </svg>
+            <svg class="fin-btn__icon fin-btn__icon--check" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+              <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                d="M22 4 12 14.01l-3-3" />
             </svg>
             <span class="fin-btn__label">Generate AIA Billing Report</span>
           </button>
@@ -220,32 +230,33 @@
         <!-- Risk & variance -->
         <section class="fin-section">
           <div class="layers__head"><span class="kicker">Risk &amp; Variance</span></div>
-          <ul class="fin-risk">
-            <li>
+          <div class="fin-risk" id="finRisks" role="group" aria-label="Isolate financial risk on the 3D map">
+            <button class="fin-risk__card" type="button" data-risk="schedule" aria-pressed="false">
               <span class="fin-risk__dot" style="--dot:#fb7185"></span>
-              <div class="fin-risk__body">
+              <span class="fin-risk__body">
                 <span class="fin-risk__label">Schedule Delay Impact</span>
                 <span class="fin-risk__sub" id="finDelaySub">Penalty for 14 days behind schedule</span>
-              </div>
+              </span>
               <strong class="fin-risk__val is-over" id="finDelay">-$140,000</strong>
-            </li>
-            <li>
+            </button>
+            <button class="fin-risk__card" type="button" data-risk="delayed" aria-pressed="false">
               <span class="fin-risk__dot" style="--dot:#facc15"></span>
-              <div class="fin-risk__body">
+              <span class="fin-risk__body">
                 <span class="fin-risk__label">Delayed Components Cost</span>
                 <span class="fin-risk__sub" id="finCompSub">Value of 238 overdue components on map</span>
-              </div>
+              </span>
               <strong class="fin-risk__val is-warn" id="finComp">$850,000</strong>
-            </li>
-            <li>
+            </button>
+            <button class="fin-risk__card" type="button" data-risk="pending" aria-pressed="false">
               <span class="fin-risk__dot" style="--dot:#38e2ea"></span>
-              <div class="fin-risk__body">
+              <span class="fin-risk__body">
                 <span class="fin-risk__label">Pending Change Orders</span>
                 <span class="fin-risk__sub">Awaiting owner approval</span>
-              </div>
+              </span>
               <strong class="fin-risk__val is-cyan" id="finChange">$425,000</strong>
-            </li>
-          </ul>
+            </button>
+          </div>
+          <p class="fin-risk__banner" id="finRiskBanner" role="status" hidden></p>
         </section>
 
         <!-- 3D map cost overlays -->
@@ -321,6 +332,6 @@
       <span>Powered by Esri</span>
     </a>
 
-    <script type="module" src="./js/progress.js?v=8"></script>
+    <script type="module" src="./js/progress.js?v=9"></script>
   </body>
 </html>

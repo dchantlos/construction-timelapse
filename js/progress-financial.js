@@ -8,7 +8,7 @@
 // the live CStatus summary so the money always tracks the real progress.
 // =============================================================================
 
-import { PLANNED_PROGRESS_PCT, FINANCIALS } from "./config.js?v=8";
+import { PLANNED_PROGRESS_PCT, FINANCIALS } from "./config.js?v=9";
 
 /** Circumference of the SVG ring (2πr, r=52) — matches .ring__bar dasharray. */
 const RING_CIRCUMFERENCE = 327;
@@ -90,11 +90,13 @@ export function renderFinancialPanel(summary = {}) {
 
 /**
  * Wire the one-time interactions: the Schedule (4D) ↔ Financials (5D) view
- * toggle, the cost-overlay pill group, and the AIA billing button.
+ * toggle, the cost-overlay pill group, the risk-filter cards, and the AIA
+ * billing button.
  */
 export function createFinancialControls() {
   wireViewToggle();
   wireOverlayPills();
+  wireRiskFilters();
   wireBillingButton();
 }
 
@@ -134,23 +136,91 @@ function wireOverlayPills() {
   });
 }
 
-/** Acknowledge the AIA billing action (no billing backend in this demo). */
+/**
+ * AIA billing button — a mocked idle → loading → success → idle state machine.
+ * There is no billing backend in this demo; the delays stand in for the
+ * geometry/cost analysis a real pay-application export would run.
+ */
 function wireBillingButton() {
   const button = document.getElementById("finBilling");
   const label = button?.querySelector(".fin-btn__label");
   if (!button || !label) return;
-  const original = label.textContent;
+  const idleLabel = label.textContent;
+  const timers = [];
+
+  const setState = (state) => {
+    button.classList.toggle("is-loading", state === "loading");
+    button.classList.toggle("is-success", state === "success");
+    button.disabled = state !== "idle";
+    if (state === "loading") label.textContent = "Analyzing 3D Geometry & Costs…";
+    else if (state === "success") label.textContent = "AIA G702 Generated - $5.41M";
+    else label.textContent = idleLabel;
+  };
+
   button.addEventListener("click", () => {
-    if (button.classList.contains("is-busy")) return;
-    button.classList.add("is-busy");
-    label.textContent = "Preparing draw…";
-    window.setTimeout(() => {
-      label.textContent = "AIA G702/G703 ready";
+    if (button.disabled) return;
+    while (timers.length) window.clearTimeout(timers.pop());
+    setState("loading");
+    timers.push(
       window.setTimeout(() => {
-        label.textContent = original;
-        button.classList.remove("is-busy");
-      }, 1600);
-    }, 1000);
+        setState("success");
+        timers.push(window.setTimeout(() => setState("idle"), 3500));
+      }, 2500)
+    );
+  });
+}
+
+/**
+ * Risk & variance cards double as mutually-exclusive 3D-map filters. Selecting
+ * a card highlights it and reveals a status banner naming the overlay; clicking
+ * the active card again clears the filter. (Map wiring is mocked for the demo.)
+ */
+function wireRiskFilters() {
+  const group = document.getElementById("finRisks");
+  const banner = document.getElementById("finRiskBanner");
+  if (!group || !banner) return;
+
+  const BANNERS = {
+    schedule: {
+      text: "Map Overlay Active: Isolating critical path schedule impacts…",
+      tone: "is-rose",
+    },
+    delayed: {
+      text: "Map Overlay Active: Highlighting 238 overdue components…",
+      tone: "is-amber",
+    },
+    pending: {
+      text: "Map Overlay Active: Viewing geometry for pending CORs…",
+      tone: "is-cyan",
+    },
+  };
+
+  let active = null;
+
+  const apply = () => {
+    for (const card of group.querySelectorAll(".fin-risk__card")) {
+      const on = card.dataset.risk === active;
+      card.classList.toggle("is-active", on);
+      card.setAttribute("aria-pressed", String(on));
+    }
+    banner.classList.remove("is-rose", "is-amber", "is-cyan");
+    const meta = active ? BANNERS[active] : null;
+    if (meta) {
+      banner.textContent = meta.text;
+      banner.classList.add(meta.tone);
+      banner.hidden = false;
+    } else {
+      banner.textContent = "";
+      banner.hidden = true;
+    }
+  };
+
+  group.addEventListener("click", (event) => {
+    const card = event.target.closest(".fin-risk__card");
+    if (!card) return;
+    const id = card.dataset.risk;
+    active = active === id ? null : id;
+    apply();
   });
 }
 
