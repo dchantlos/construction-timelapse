@@ -24,7 +24,7 @@
 
     <!-- ArcGIS dark base theme (we override most of it in styles.css) -->
     <link rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css" />
-    <link rel="stylesheet" href="./css/styles.css?v=30" />
+    <link rel="stylesheet" href="./css/styles.css?v=31" />
 
     <!-- ESM import map: load @arcgis/core straight from the CDN -->
     <script type="importmap">
@@ -268,6 +268,10 @@
             <button class="fin-pill" type="button" data-overlay="risk" aria-pressed="false">Financial Risk Zones</button>
           </div>
           <p class="fin-overlay-note" id="finOverlayNote" role="status" style="margin:8px 2px 0;font-size:12px;line-height:1.5;color:var(--muted,#94a3b8);">Every component shaded by budget status — earned value in green, over-budget risk in rust.</p>
+          <button class="fin-clear" id="finClearFilters" type="button" title="Reset the 3D map to your initial view">
+            <span class="fin-clear__icon" aria-hidden="true">⟲</span>
+            <span>Clear filters — show initial view</span>
+          </button>
         </section>
       </div>
     </aside>
@@ -359,6 +363,6 @@
       </div>
     </div>
 
-    <script type="module" src="./js/progress.js?v=13"></script>
+    <script type="module" src="./js/progress.js?v=14"></script>
   </body>
 </html>

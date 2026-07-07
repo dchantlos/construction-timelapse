@@ -78,6 +78,14 @@ async function boot() {
   // "Filter 3D Map by Cost" pills recolor the building components in 3D.
   createCostOverlays(scene);
 
+  // "Clear filters" — return the 3D map to its initial view (budget lens, all layers).
+  document.getElementById("finClearFilters")?.addEventListener("click", () => {
+    document
+      .querySelector('#finOverlays .fin-pill[data-overlay="budget"]')
+      ?.click();
+    document.getElementById("progResetLayers")?.click();
+  });
+
   // Real construction status vs. planned schedule. Failures here must not blank
   // the whole view — fall back to an empty panel that reads "unavailable".
   try {
