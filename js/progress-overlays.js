@@ -74,6 +74,10 @@ const OVERLAY_NOTES = {
     "Red and amber zones flag schedule slippage exposed to liquidated-damage penalties."
 };
 
+/** Caption shown when no cost lens is applied — the initial real-status view. */
+const CLEARED_NOTE =
+  "Showing real construction status — pick a cost lens above to recolor the model.";
+
 /**
  * Context / basemap layers carry no CStatus, so they must never be recolored.
  * Mirrors the exclusion set used by progress-stats.js.
@@ -96,26 +100,58 @@ function isBuildingLayer(title = "") {
  * components in the 3D scene. Visual pill state (the active highlight) is owned
  * separately by wireOverlayPills(); this owns the map effect and the caption.
  *
+ * Returns a { clear } handle that restores the model's original published
+ * symbology (the real construction-status render) and deselects every pill —
+ * i.e. the initial view, NOT the budget lens.
+ *
  * @param {import("@arcgis/core/WebScene").default} scene
+ * @returns {{ clear: () => void } | undefined}
  */
 export function createCostOverlays(scene) {
   const group = document.getElementById("finOverlays");
-  if (!group) return;
+  if (!group) return undefined;
 
   const note = document.getElementById("finOverlayNote");
   const layers = scene.allLayers
     .filter((layer) => layer.type === "scene" && isBuildingLayer(layer.title))
     .toArray();
 
+  // Remember each layer's published renderer (the initial real-status symbology)
+  // so "Clear filters" can restore it exactly, instead of a cost lens.
+  const original = new Map();
+  const remember = (layer) => {
+    if (!original.has(layer)) original.set(layer, layer.renderer ?? null);
+  };
+  for (const layer of layers) layer.when(() => remember(layer)).catch(() => {});
+
   const apply = (overlay) => {
-    const renderer = OVERLAY_RENDERERS[overlay] ?? OVERLAY_RENDERERS.budget;
-    // Clone per layer — a renderer instance is owned by a single layer.
-    for (const layer of layers) layer.renderer = renderer.clone();
+    const renderer = OVERLAY_RENDERERS[overlay];
+    if (!renderer) return;
+    for (const layer of layers) {
+      remember(layer); // capture the original before the first overwrite
+      layer.renderer = renderer.clone(); // clone — a renderer is owned by one layer
+    }
     if (note && OVERLAY_NOTES[overlay]) note.textContent = OVERLAY_NOTES[overlay];
+  };
+
+  /** Restore the published real-status symbology and deselect every pill. */
+  const clear = () => {
+    for (const layer of layers) {
+      if (!original.has(layer)) continue;
+      const orig = original.get(layer);
+      layer.renderer = orig ? orig.clone() : null;
+    }
+    for (const pill of group.querySelectorAll(".fin-pill")) {
+      pill.classList.remove("is-active");
+      pill.setAttribute("aria-pressed", "false");
+    }
+    if (note) note.textContent = CLEARED_NOTE;
   };
 
   group.addEventListener("click", (event) => {
     const pill = event.target.closest(".fin-pill");
     if (pill) apply(pill.dataset.overlay);
   });
+
+  return { clear };
 }

@@ -15,7 +15,7 @@ import { createProgressLayers } from "./progress-layers.js?v=12";
 import { createProgressInteraction } from "./progress-interaction.js?v=12";
 import { createSlice } from "./slice.js?v=12";
 import { renderFinancialPanel, createFinancialControls } from "./progress-financial.js?v=12";
-import { createCostOverlays } from "./progress-overlays.js?v=13";
+import { createCostOverlays } from "./progress-overlays.js?v=14";
 import { PROGRESS_WEBSCENE_ID } from "./config.js?v=12";
 
 /** Surface any error directly on the boot veil so failures are never silent. */
@@ -76,13 +76,12 @@ async function boot() {
   createFinancialControls();
 
   // "Filter 3D Map by Cost" pills recolor the building components in 3D.
-  createCostOverlays(scene);
+  const overlays = createCostOverlays(scene);
 
-  // "Clear filters" — return the 3D map to its initial view (budget lens, all layers).
+  // "Clear filters" — restore the model's original real-status symbology and
+  // reset any layer isolation, returning to the initial view.
   document.getElementById("finClearFilters")?.addEventListener("click", () => {
-    document
-      .querySelector('#finOverlays .fin-pill[data-overlay="budget"]')
-      ?.click();
+    overlays?.clear();
     document.getElementById("progResetLayers")?.click();
   });
 

@@ -263,11 +263,11 @@
         <section class="fin-section">
           <div class="layers__head"><span class="kicker">Filter 3D Map by Cost</span></div>
           <div class="fin-overlays" id="finOverlays" role="group" aria-label="Cost overlay">
-            <button class="fin-pill is-active" type="button" data-overlay="budget" aria-pressed="true">Budget vs. Actual</button>
+            <button class="fin-pill" type="button" data-overlay="budget" aria-pressed="false">Budget vs. Actual</button>
             <button class="fin-pill" type="button" data-overlay="billing" aria-pressed="false">Current Billing Cycle</button>
             <button class="fin-pill" type="button" data-overlay="risk" aria-pressed="false">Financial Risk Zones</button>
           </div>
-          <p class="fin-overlay-note" id="finOverlayNote" role="status" style="margin:8px 2px 0;font-size:12px;line-height:1.5;color:var(--muted,#94a3b8);">Every component shaded by budget status — earned value in green, over-budget risk in rust.</p>
+          <p class="fin-overlay-note" id="finOverlayNote" role="status" style="margin:8px 2px 0;font-size:12px;line-height:1.5;color:var(--muted,#94a3b8);">Showing real construction status — pick a cost lens above to recolor the model.</p>
           <button class="fin-clear" id="finClearFilters" type="button" title="Reset the 3D map to your initial view">
             <span class="fin-clear__icon" aria-hidden="true">⟲</span>
             <span>Clear filters — show initial view</span>
@@ -363,6 +363,6 @@
       </div>
     </div>
 
-    <script type="module" src="./js/progress.js?v=14"></script>
+    <script type="module" src="./js/progress.js?v=15"></script>
   </body>
 </html>
