@@ -15,6 +15,7 @@ import { createProgressLayers } from "./progress-layers.js?v=12";
 import { createProgressInteraction } from "./progress-interaction.js?v=12";
 import { createSlice } from "./slice.js?v=12";
 import { renderFinancialPanel, createFinancialControls } from "./progress-financial.js?v=12";
+import { createCostOverlays } from "./progress-overlays.js?v=13";
 import { PROGRESS_WEBSCENE_ID } from "./config.js?v=12";
 
 /** Surface any error directly on the boot veil so failures are never silent. */
@@ -73,6 +74,9 @@ async function boot() {
 
   // Wire the Schedule (4D) ↔ Financials (5D) view toggle and its controls.
   createFinancialControls();
+
+  // "Filter 3D Map by Cost" pills recolor the building components in 3D.
+  createCostOverlays(scene);
 
   // Real construction status vs. planned schedule. Failures here must not blank
   // the whole view — fall back to an empty panel that reads "unavailable".
