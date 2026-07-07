@@ -2,7 +2,7 @@
 // interaction.js — hitTest → neon highlight + custom glass tooltip
 // =============================================================================
 
-import { BUILDING_LAYERS, PHASES } from "./config.js";
+import { BUILDING_LAYERS, PHASES, FALLBACK_TIME_EXTENT } from "./config.js";
 
 /**
  * Replace the default Esri popup with a custom click experience: clicking a
@@ -15,7 +15,7 @@ export function createInteraction(view) {
   const tip = document.getElementById("tooltip");
   const tipTag = document.getElementById("tipTag");
   const tipTitle = document.getElementById("tipTitle");
-  const tipStatus = document.getElementById("tipStatus");
+  const tipScheduled = document.getElementById("tipScheduled");
   const tipPhase = document.getElementById("tipPhase");
 
   let highlightHandle = null;
@@ -44,34 +44,44 @@ export function createInteraction(view) {
     tip.style.top = `${Math.max(pad, top)}px`;
   }
 
-  /** Derive a friendly layer label + mock status for a hit graphic. */
+  /** Format a layer's normalized start position (0..1) as its scheduled install date. */
+  function scheduledDate(startAt) {
+    const { start, end } = FALLBACK_TIME_EXTENT;
+    const ms = start.getTime() + startAt * (end.getTime() - start.getTime());
+    return new Date(ms).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric"
+    });
+  }
+
+  /** Derive a friendly layer label + scheduled install date for a hit graphic. */
   function describe(graphic) {
     const rawTitle = graphic?.layer?.title ?? graphic?.layer?.id ?? "Component";
     const match = BUILDING_LAYERS.find((l) =>
       rawTitle.toLowerCase().includes(l.id.toLowerCase())
     );
 
-    // Non-sequence context layers (e.g. Construction_Objects) aren't building
-    // components — show neutral site-context info instead of a fake phase.
+    // Non-sequence context layers (e.g. Construction_Objects) aren't part of the
+    // build sequence — they're already on site, so there's no scheduled date.
     if (!match) {
       return {
         tag: "Site Context",
         label: rawTitle.replace(/_/g, " "),
-        status: "On Site",
+        scheduled: "On site",
         phaseName: "—",
         color: "#38e2ea"
       };
     }
 
-    // Mock status/phase derived from where the layer sits in the sequence.
+    // Scheduled install date + phase derived from the layer's place in the plan.
     const phaseName =
       PHASES.find((p) => match.startAt < p.until)?.name ?? PHASES.at(-1).name;
-    const status = match.startAt < 0.5 ? "Installed" : "Recently Built";
 
     return {
       tag: "Building Component",
       label: match.label,
-      status,
+      scheduled: scheduledDate(match.startAt),
       phaseName,
       color: match.color
     };
@@ -111,7 +121,7 @@ export function createInteraction(view) {
     tipTag.textContent = info.tag;
     tipTag.style.color = info.color;
     tipTitle.textContent = info.label;
-    tipStatus.textContent = info.status;
+    tipScheduled.textContent = info.scheduled;
     tipPhase.textContent = info.phaseName;
 
     tip.classList.add("is-visible");
