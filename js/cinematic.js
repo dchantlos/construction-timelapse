@@ -3,6 +3,53 @@
 // =============================================================================
 
 import TimeExtent from "@arcgis/core/time/TimeExtent.js";
+import * as reactiveUtils from "@arcgis/core/core/reactiveUtils.js";
+
+/**
+ * Resolve once the SceneView has stopped streaming tiles and stayed idle for a
+ * short quiet period — i.e. everything is loaded and the picture is stable.
+ * `view.updating` flickers on/off as tiles arrive, so we debounce it: the orbit
+ * only begins once the true building center exists, preventing the pivot (and
+ * the whole orbit) from landing way off. A hard cap guarantees the animation
+ * still starts on slow connections.
+ *
+ * @param {import("@arcgis/core/views/SceneView").default} view
+ * @param {{ quietMs?: number, maxWaitMs?: number }} [opts]
+ * @returns {Promise<void>}
+ */
+function whenSceneIdle(view, { quietMs = 600, maxWaitMs = 10000 } = {}) {
+  return new Promise((resolve) => {
+    let quietTimer = null;
+    let capTimer = null;
+    let handle = null;
+    let settled = false;
+
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      if (quietTimer) clearTimeout(quietTimer);
+      if (capTimer) clearTimeout(capTimer);
+      handle?.remove();
+      resolve();
+    };
+
+    capTimer = setTimeout(finish, maxWaitMs);
+    handle = reactiveUtils.watch(
+      () => view.updating,
+      (updating) => {
+        if (updating) {
+          if (quietTimer) {
+            clearTimeout(quietTimer);
+            quietTimer = null;
+          }
+        } else if (!quietTimer) {
+          quietTimer = setTimeout(finish, quietMs);
+        }
+      },
+      { initial: true }
+    );
+  });
+}
 
 /**
  * Couples a manually interpolated time progression with a smooth camera orbit
@@ -89,19 +136,30 @@ export function createCinematic(view, timeSlider, fullTimeExtent) {
     rafId = requestAnimationFrame(frame);
   }
 
-  function start() {
+  async function start() {
     playing = true;
     lastTs = 0;
+
+    // Reflect the playing state immediately so the button stays responsive
+    // while we wait for the scene to finish loading below.
+    btn.classList.add("is-playing");
+    icon.textContent = "\u275A\u275A";
+    label.textContent = "Pause";
+
+    // Let the whole scene stream in before locking the orbit pivot: reading
+    // view.center while tiles are still loading puts the pivot in the wrong
+    // place and throws the entire orbit way off. Wait for the view to settle,
+    // then capture the true building center.
+    await whenSceneIdle(view);
+    if (!playing) return; // user paused during the load wait
+
     orbitCenter = view.center.clone();
     heading = view.camera.heading;
 
     // Restart from the beginning if we're already at the end.
     if (+timeSlider.timeExtent?.end >= endMs) elapsed = 0;
 
-    btn.classList.add("is-playing");
-    icon.textContent = "\u275A\u275A";
-    label.textContent = "Pause";
-
+    if (rafId) cancelAnimationFrame(rafId); // guard against a double-start
     rafId = requestAnimationFrame(frame);
   }
 
