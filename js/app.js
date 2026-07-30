@@ -13,7 +13,7 @@ import { createCinematic } from "./cinematic.js?v=21";
 import { createAssistant } from "./assistant.js?v=23";
 import { createInteraction } from "./interaction.js?v=1";
 import { createSlice } from "./slice.js";
-import { createAudit } from "./audit.js?v=1";
+import { createAudit } from "./audit.js?v=3";
 import { TIME_STEP } from "./config.js";
 
 /** Surface any error directly on the boot veil so failures are never silent. */

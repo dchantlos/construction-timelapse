@@ -24,7 +24,7 @@
 
     <!-- ArcGIS dark base theme (we override most of it in styles.css) -->
     <link rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css" />
-    <link rel="stylesheet" href="./css/styles.css?v=32" />
+    <link rel="stylesheet" href="./css/styles.css?v=33" />
 
     <!-- ESM import map: load @arcgis/core straight from the CDN -->
     <script type="importmap">
@@ -153,8 +153,11 @@
 
     <!-- ======================= IDS MODEL AUDIT PANEL ======================= -->
     <aside id="auditPanel" class="audit-panel glass" aria-label="IDS model audit" aria-hidden="true">
-      <div class="audit-panel__head">
-        <span class="kicker">buildingSMART IDS</span>
+      <div class="audit-panel__head" title="Drag to move">
+        <span class="audit-panel__handle">
+          <span class="audit-panel__grip" aria-hidden="true">⠿</span>
+          <span class="kicker">buildingSMART IDS</span>
+        </span>
         <button id="auditClose" class="panel-collapse" type="button" aria-label="Close IDS audit">✕</button>
       </div>
       <div id="auditBody" class="audit-body"></div>
@@ -243,7 +246,7 @@
       </form>
     </section>
 
-    <script type="module" src="./js/app.js?v=30"></script>
+    <script type="module" src="./js/app.js?v=32"></script>
     <script type="module" src="./js/help.js?v=2"></script>
   </body>
 </html>

@@ -10,7 +10,7 @@
 // =============================================================================
 
 import esriRequest from "@arcgis/core/request.js";
-import { loadIds } from "./ids.js";
+import { parseIds } from "./ids.js";
 import {
   IDS_URL,
   IFC_ENTITY_LAYERS,
@@ -393,7 +393,73 @@ function renderSpec(spec, onFocus) {
   return card;
 }
 
-function renderResult(result, container, onFocus) {
+function renderSetup({ activeIds, onView, onDownload, onUpload, onRun }) {
+  const wrap = elt("div", "audit-setup");
+  wrap.append(elt("span", "kicker", "openBIM validation"));
+  wrap.append(elt("h2", "audit-setup__title", "Audit this model against an IDS"));
+  wrap.append(
+    elt(
+      "p",
+      "audit-setup__intro",
+      "An IDS (Information Delivery Specification) is buildingSMART's openBIM standard for defining the information a model must contain. Review the specification below, then run the audit to check this model against it."
+    )
+  );
+
+  // Active specification card + view / download actions.
+  const card = elt("div", "audit-source");
+  card.append(elt("span", "audit-source__icon", "▤"));
+  const meta = elt("div", "audit-source__meta");
+  meta.append(elt("span", "audit-source__name", activeIds.name));
+  meta.append(
+    elt(
+      "span",
+      "audit-source__tag",
+      activeIds.isDefault ? "Bundled example · IDS 1.0" : "Uploaded · IDS 1.0"
+    )
+  );
+  card.append(meta);
+  const actions = elt("div", "audit-source__actions");
+  const viewBtn = elt("button", "audit-btn audit-btn--ghost", "View");
+  viewBtn.type = "button";
+  viewBtn.title = "Open the IDS in a new browser tab";
+  viewBtn.addEventListener("click", onView);
+  const dlBtn = elt("button", "audit-btn audit-btn--ghost", "Download");
+  dlBtn.type = "button";
+  dlBtn.title = "Download the IDS file";
+  dlBtn.addEventListener("click", onDownload);
+  actions.append(viewBtn, dlBtn);
+  card.append(actions);
+  wrap.append(card);
+
+  // Upload your own IDS (optional).
+  const upload = elt("label", "audit-upload");
+  const input = elt("input");
+  input.type = "file";
+  input.accept = ".ids,.xml,application/xml,text/xml";
+  input.className = "audit-upload__input";
+  input.addEventListener("change", () => {
+    if (input.files && input.files[0]) onUpload(input.files[0]);
+  });
+  upload.append(input, elt("span", "audit-upload__btn", "⭱  Upload your own IDS…"));
+  wrap.append(upload);
+
+  const note = elt(
+    "p",
+    "audit-upload__note",
+    "Optional — supply your project's IDS to audit against your own requirements."
+  );
+  note.id = "auditUploadNote";
+  wrap.append(note);
+
+  const run = elt("button", "audit-btn audit-btn--primary", "Run audit ▸");
+  run.type = "button";
+  run.addEventListener("click", onRun);
+  wrap.append(run);
+
+  return wrap;
+}
+
+function renderResult(result, container, onFocus, opts = {}) {
   container.textContent = "";
   container.append(renderSummary(result));
 
@@ -402,19 +468,60 @@ function renderResult(result, container, onFocus) {
   container.append(list);
 
   const foot = elt("div", "audit-foot");
-  const link = elt("a", "audit-foot__link", "View the IDS file");
-  link.href = IDS_URL;
-  link.target = "_blank";
-  link.rel = "noopener";
-  foot.append(link);
+  const row = elt("div", "audit-foot__actions");
+  const again = elt("button", "audit-btn audit-btn--ghost", "‹ Audit another IDS");
+  again.type = "button";
+  again.addEventListener("click", () => opts.onReset?.());
+  const viewBtn = elt("button", "audit-btn audit-btn--ghost", "View IDS");
+  viewBtn.type = "button";
+  viewBtn.addEventListener("click", () => opts.onView?.());
+  row.append(again, viewBtn);
+  foot.append(row);
   foot.append(
     elt(
       "p",
       "audit-foot__note",
-      "Audited live against the published scene-service statistics — element counts per property, per layer."
+      `Audited “${opts.idsName ?? "the IDS"}” live against the published scene-service statistics — element counts per property, per layer.`
     )
   );
   container.append(foot);
+}
+
+/** Enable dragging a panel by its header (mirrors the floating Help window). */
+function enableDrag(panel, head) {
+  if (!panel || !head) return;
+  let dragging = false;
+  let offsetX = 0;
+  let offsetY = 0;
+
+  head.addEventListener("pointerdown", (e) => {
+    if (e.target.closest("#auditClose")) return; // let the close button work
+    const rect = panel.getBoundingClientRect();
+    panel.style.left = `${rect.left}px`;
+    panel.style.top = `${rect.top}px`;
+    panel.style.right = "auto";
+    panel.style.bottom = "auto";
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+    dragging = true;
+    panel.classList.add("is-dragging");
+    head.setPointerCapture?.(e.pointerId);
+  });
+  window.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    const w = panel.offsetWidth;
+    const h = panel.offsetHeight;
+    const x = Math.max(8, Math.min(window.innerWidth - w - 8, e.clientX - offsetX));
+    const y = Math.max(8, Math.min(window.innerHeight - h - 8, e.clientY - offsetY));
+    panel.style.left = `${x}px`;
+    panel.style.top = `${y}px`;
+  });
+  window.addEventListener("pointerup", (e) => {
+    if (!dragging) return;
+    dragging = false;
+    panel.classList.remove("is-dragging");
+    head.releasePointerCapture?.(e.pointerId);
+  });
 }
 
 // ---------- public wiring ----------------------------------------------------
@@ -436,6 +543,7 @@ export function createAudit({ scene, view, layerControl }) {
   if (!button || !panel || !body) {
     return { open() {}, close() {}, toggle() {} };
   }
+  const head = panel.querySelector(".audit-panel__head");
 
   // Title → loaded SceneLayer lookup for the building layers named in the IDS.
   const layerByTitle = new Map();
@@ -444,8 +552,10 @@ export function createAudit({ scene, view, layerControl }) {
     if (layer) layerByTitle.set(title, layer);
   }
 
+  const DEFAULT_IDS_NAME = IDS_URL.split("/").pop() || "specification.ids";
+  let activeIds = { name: DEFAULT_IDS_NAME, url: IDS_URL, text: null, isDefault: true };
   let isOpen = false;
-  let hasRun = false;
+  let shown = false;
 
   function focusLayer(title) {
     const layer = layerByTitle.get(title);
@@ -456,13 +566,89 @@ export function createAudit({ scene, view, layerControl }) {
     }
   }
 
-  async function run() {
+  // Make sure we have the IDS text in hand — fetch the bundled file on first
+  // use, then keep it so View / Download / Run all share the one copy.
+  async function ensureIdsText() {
+    if (activeIds.text == null && activeIds.url) {
+      const res = await fetch(activeIds.url);
+      if (!res.ok) {
+        throw new Error(`could not load ${activeIds.name} (HTTP ${res.status})`);
+      }
+      activeIds.text = await res.text();
+    }
+    return activeIds.text ?? "";
+  }
+
+  // An IDS is XML, so hand the browser an application/xml blob — that renders
+  // inline in a new tab instead of downloading (the dev server labels the .ids
+  // extension as a generic binary type, which would otherwise force a download).
+  function idsBlobUrl(text) {
+    return URL.createObjectURL(new Blob([text], { type: "application/xml" }));
+  }
+
+  async function viewIds() {
+    try {
+      const url = idsBlobUrl(await ensureIdsText());
+      window.open(url, "_blank", "noopener");
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch (err) {
+      console.error("Could not open the IDS", err);
+      if (activeIds.url) window.open(activeIds.url, "_blank", "noopener");
+    }
+  }
+
+  async function downloadIds() {
+    const url = idsBlobUrl(await ensureIdsText());
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = activeIds.name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }
+
+  async function handleUpload(file) {
+    const note = document.getElementById("auditUploadNote");
+    try {
+      const text = await file.text();
+      parseIds(text); // validate — throws if it is not a valid IDS
+      activeIds = { name: file.name, url: null, text, isDefault: false };
+      showSetup();
+    } catch (err) {
+      if (note) {
+        note.textContent = `That doesn't look like a valid IDS — ${err.message}.`;
+        note.classList.add("is-error");
+      }
+    }
+  }
+
+  function showSetup() {
+    body.scrollTop = 0;
+    body.textContent = "";
+    body.append(
+      renderSetup({
+        activeIds,
+        onView: viewIds,
+        onDownload: downloadIds,
+        onUpload: handleUpload,
+        onRun: runNow
+      })
+    );
+  }
+
+  async function runNow() {
+    body.scrollTop = 0;
     body.textContent = "";
     body.append(elt("div", "audit-loading", "Auditing the model against the IDS…"));
     try {
-      const idsModel = await loadIds(IDS_URL);
+      const idsModel = parseIds(await ensureIdsText());
       const result = await runAudit(idsModel, layerByTitle);
-      renderResult(result, body, focusLayer);
+      renderResult(result, body, focusLayer, {
+        onView: viewIds,
+        onReset: showSetup,
+        idsName: activeIds.name
+      });
     } catch (err) {
       console.error("IDS audit failed", err);
       body.textContent = "";
@@ -471,6 +657,10 @@ export function createAudit({ scene, view, layerControl }) {
         elt("strong", null, "Could not run the audit."),
         elt("p", null, err?.message ?? String(err))
       );
+      const back = elt("button", "audit-btn audit-btn--ghost", "‹ Back");
+      back.type = "button";
+      back.addEventListener("click", showSetup);
+      msg.append(back);
       body.append(msg);
     }
   }
@@ -482,11 +672,13 @@ export function createAudit({ scene, view, layerControl }) {
     button.setAttribute("aria-pressed", String(isOpen));
     panel.classList.toggle("is-open", isOpen);
     panel.setAttribute("aria-hidden", String(!isOpen));
-    if (isOpen && !hasRun) {
-      hasRun = true;
-      run();
+    if (isOpen && !shown) {
+      shown = true;
+      showSetup();
     }
   }
+
+  enableDrag(panel, head);
 
   button.addEventListener("click", () => setOpen(!isOpen));
   closeBtn?.addEventListener("click", () => setOpen(false));

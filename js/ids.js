@@ -122,22 +122,23 @@ function parseRequirements(specEl) {
 }
 
 /**
- * Fetch and parse the IDS document at `url`.
+ * Parse IDS XML text into the plain JS model. Throws if the text is not
+ * well-formed XML or is not a buildingSMART IDS document.
  *
- * @param {string} url
- * @returns {Promise<{ info: object, specifications: Array<object> }>}
+ * @param {string} text
+ * @returns {{ info: object, specifications: Array<object> }}
  */
-export async function loadIds(url) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Could not load IDS (${res.status})`);
-  const text = await res.text();
-
+export function parseIds(text) {
   const doc = new DOMParser().parseFromString(text, "application/xml");
   if (doc.getElementsByTagName("parsererror").length) {
-    throw new Error("IDS file is not well-formed XML");
+    throw new Error("the file is not well-formed XML");
   }
 
   const root = doc.documentElement;
+  if (!root || root.localName !== "ids") {
+    throw new Error("the file is not a buildingSMART IDS document");
+  }
+
   const infoEl = firstByLocal(root, "info");
   const info = {
     title: textOf(firstByLocal(infoEl, "title")) || "Information Delivery Specification",
@@ -163,4 +164,16 @@ export async function loadIds(url) {
     }));
 
   return { info, specifications };
+}
+
+/**
+ * Fetch and parse the IDS document at `url`.
+ *
+ * @param {string} url
+ * @returns {Promise<{ info: object, specifications: Array<object> }>}
+ */
+export async function loadIds(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Could not load IDS (${res.status})`);
+  return parseIds(await res.text());
 }
