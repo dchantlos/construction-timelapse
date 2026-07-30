@@ -34,7 +34,11 @@ export const HELP_CONTENT = {
       },
       {
         q: "Navigate the model (right)",
-        a: "<ul><li><strong>+ / –</strong> zoom, <strong>⟳</strong> reset the camera to home.</li><li><strong>◫ Slice</strong> — drop a cut-plane and drag its handles to look straight inside the building.</li></ul>"
+        a: "<ul><li><strong>+ / –</strong> zoom, <strong>⟳</strong> reset the camera to home.</li><li><strong>◫ Slice</strong> — drop a cut-plane and drag its handles to look straight inside the building.</li><li><strong>☑ Audit</strong> — validate the model against the buildingSMART IDS (see below).</li></ul>"
+      },
+      {
+        q: "Audit the model (☑ IDS)",
+        a: "Open the <strong>☑ IDS audit</strong> from the right-hand controls to check the live model against a <strong>buildingSMART IDS</strong> — an openBIM Information Delivery Specification. Each requirement (GlobalId, naming, predefined type, 4D scheduling, fire rating, thermal U-value, classification…) is scored <strong style=\"color:#4ade80\">pass</strong> / <strong style=\"color:#f6c445\">partial</strong> / <strong style=\"color:#fb7185\">fail</strong> against the real element data. Expand any specification for the per-layer breakdown, then click a layer to isolate it in 3D."
       },
       {
         q: "Ask the timeline (✨)",

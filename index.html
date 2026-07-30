@@ -24,7 +24,7 @@
 
     <!-- ArcGIS dark base theme (we override most of it in styles.css) -->
     <link rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css" />
-    <link rel="stylesheet" href="./css/styles.css?v=31" />
+    <link rel="stylesheet" href="./css/styles.css?v=32" />
 
     <!-- ESM import map: load @arcgis/core straight from the CDN -->
     <script type="importmap">
@@ -138,6 +138,7 @@
       <button class="nav-btn" id="zoomOut" title="Zoom out" aria-label="Zoom out">–</button>
       <button class="nav-btn" id="resetView" title="Reset view" aria-label="Reset view">⟳</button>
       <button class="nav-btn" id="sliceBtn" title="Slice through the model" aria-label="Slice tool" aria-pressed="false">◫</button>
+      <button class="nav-btn" id="auditBtn" title="Audit the model against the IDS" aria-label="IDS model audit" aria-pressed="false">☑</button>
     </div>
 
     <!-- ======================= SLICE TOOL PANEL ======================= -->
@@ -148,6 +149,15 @@
       </div>
       <p class="slice-panel__hint">Click the model to drop a cut plane, then drag or tilt its handles to slice through the building.</p>
       <div id="sliceContainer" class="slice-panel__widget"></div>
+    </aside>
+
+    <!-- ======================= IDS MODEL AUDIT PANEL ======================= -->
+    <aside id="auditPanel" class="audit-panel glass" aria-label="IDS model audit" aria-hidden="true">
+      <div class="audit-panel__head">
+        <span class="kicker">buildingSMART IDS</span>
+        <button id="auditClose" class="panel-collapse" type="button" aria-label="Close IDS audit">✕</button>
+      </div>
+      <div id="auditBody" class="audit-body"></div>
     </aside>
 
     <!-- ======================= BOTTOM PLAYBACK + SCRUBBER ======================= -->
@@ -233,7 +243,7 @@
       </form>
     </section>
 
-    <script type="module" src="./js/app.js?v=29"></script>
-    <script type="module" src="./js/help.js?v=1"></script>
+    <script type="module" src="./js/app.js?v=30"></script>
+    <script type="module" src="./js/help.js?v=2"></script>
   </body>
 </html>

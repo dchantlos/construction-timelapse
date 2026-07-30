@@ -2020,3 +2020,383 @@ body {
     width: auto;
   }
 }
+
+/* =============================================================================
+   IDS model audit (buildingSMART openBIM validation)
+   ============================================================================= */
+.audit-panel {
+  position: absolute;
+  right: 74px;
+  top: 96px;
+  z-index: 13;
+  width: 372px;
+  max-width: calc(100vw - 108px);
+  max-height: calc(100dvh - 210px);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateX(16px);
+  transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+}
+.audit-panel.is-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(0);
+}
+.audit-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--glass-border-soft);
+}
+.audit-body {
+  padding: 14px 16px 16px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56, 226, 234, 0.4) transparent;
+}
+.audit-body::-webkit-scrollbar {
+  width: 6px;
+}
+.audit-body::-webkit-scrollbar-thumb {
+  background: rgba(56, 226, 234, 0.35);
+  border-radius: 999px;
+}
+
+/* Loading / error states */
+.audit-loading,
+.audit-error {
+  color: var(--text-dim);
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 8px 2px;
+}
+.audit-error strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--danger);
+}
+
+/* Summary header */
+.audit-summary {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.audit-score {
+  --pct: 0;
+  position: relative;
+  width: 74px;
+  height: 74px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  background: conic-gradient(
+    var(--accent) calc(var(--pct) * 1%),
+    rgba(255, 255, 255, 0.08) calc(var(--pct) * 1%)
+  );
+}
+.audit-score::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  background: var(--glass-strong);
+}
+.audit-score strong {
+  position: relative;
+  font-size: 19px;
+  font-variant-numeric: tabular-nums;
+}
+.audit-score small {
+  position: relative;
+  display: block;
+  font-size: 8.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.audit-summary__meta {
+  min-width: 0;
+}
+.audit-panel__title {
+  margin: 2px 0 4px;
+  font-size: 15px;
+  line-height: 1.25;
+}
+.audit-summary__sub {
+  margin: 0 0 8px;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+.audit-tally {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.audit-tally__item {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.audit-tally__item strong {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.audit-tally__item--pass strong {
+  color: var(--accent-3);
+}
+.audit-tally__item--partial strong {
+  color: #f6c445;
+}
+.audit-tally__item--fail strong {
+  color: var(--danger);
+}
+
+/* Status chips + dots */
+.audit-chip {
+  flex-shrink: 0;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+.audit-chip--pass {
+  color: var(--accent-3);
+  background: rgba(74, 222, 128, 0.12);
+  border-color: rgba(74, 222, 128, 0.4);
+}
+.audit-chip--partial {
+  color: #f6c445;
+  background: rgba(246, 196, 69, 0.12);
+  border-color: rgba(246, 196, 69, 0.4);
+}
+.audit-chip--fail {
+  color: var(--danger);
+  background: rgba(251, 113, 133, 0.12);
+  border-color: rgba(251, 113, 133, 0.4);
+}
+.audit-chip--na {
+  color: var(--text-faint);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--glass-border-soft);
+}
+.audit-dot,
+.audit-req__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.audit-dot--pass,
+.audit-req__dot.is-pass {
+  background: var(--accent-3);
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.5);
+}
+.audit-dot--partial,
+.audit-req__dot.is-partial {
+  background: #f6c445;
+  box-shadow: 0 0 8px rgba(246, 196, 69, 0.5);
+}
+.audit-dot--fail,
+.audit-req__dot.is-fail {
+  background: var(--danger);
+  box-shadow: 0 0 8px rgba(251, 113, 133, 0.5);
+}
+
+/* Specification cards */
+.audit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.audit-spec {
+  border-radius: 12px;
+  border: 1px solid var(--glass-border-soft);
+  background: rgba(255, 255, 255, 0.025);
+  overflow: hidden;
+}
+.audit-spec__head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font);
+  color: var(--text);
+}
+.audit-spec__head:hover {
+  background: rgba(56, 226, 234, 0.06);
+}
+.audit-spec__heading {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.audit-spec__name {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.audit-spec__ratio {
+  font-size: 10.5px;
+  color: var(--text-faint);
+}
+.audit-spec__caret {
+  color: var(--text-faint);
+  font-size: 11px;
+  transition: transform 0.2s ease;
+}
+.audit-spec.is-open .audit-spec__caret {
+  transform: rotate(90deg);
+}
+.audit-spec__detail {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+.audit-spec.is-open .audit-spec__detail {
+  max-height: 960px;
+}
+.audit-spec__desc {
+  margin: 0 12px 8px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+.audit-spec__layers {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 10px 6px;
+}
+.audit-layer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 11.5px;
+  color: var(--text-dim);
+  text-align: left;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+.audit-layer:hover {
+  background: rgba(56, 226, 234, 0.1);
+  border-color: rgba(56, 226, 234, 0.25);
+  transform: translateX(2px);
+}
+.audit-layer__name {
+  flex: 1;
+  color: var(--text);
+}
+.audit-layer__entity {
+  font-size: 10px;
+  color: var(--text-faint);
+}
+.audit-layer__count {
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+
+/* Requirement evidence block */
+.audit-req-list {
+  padding: 8px 12px;
+  margin: 4px 10px 8px;
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.audit-req-list .kicker {
+  margin-bottom: 2px;
+}
+.audit-req {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+}
+.audit-req__label {
+  flex: 1;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.audit-req__evidence {
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.audit-spec__note {
+  margin: 0 12px 12px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-faint);
+}
+.audit-spec__note strong {
+  color: var(--accent-bright);
+}
+
+/* Footer */
+.audit-foot {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--glass-border-soft);
+}
+.audit-foot__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--accent-bright);
+  text-decoration: none;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(56, 226, 234, 0.28);
+  background: rgba(56, 226, 234, 0.08);
+}
+.audit-foot__link:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 12px -4px var(--accent);
+}
+.audit-foot__note {
+  margin: 8px 0 0;
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--text-faint);
+}
+
+@media (max-width: 720px) {
+  .audit-panel {
+    right: 14px;
+    left: 14px;
+    width: auto;
+    max-width: none;
+  }
+}

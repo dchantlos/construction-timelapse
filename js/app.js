@@ -13,6 +13,7 @@ import { createCinematic } from "./cinematic.js?v=21";
 import { createAssistant } from "./assistant.js?v=23";
 import { createInteraction } from "./interaction.js?v=1";
 import { createSlice } from "./slice.js";
+import { createAudit } from "./audit.js?v=1";
 import { TIME_STEP } from "./config.js";
 
 /** Surface any error directly on the boot veil so failures are never silent. */
@@ -99,6 +100,9 @@ async function boot() {
 
   // --- Slice tool (interactive cut-plane through the model) ------------------
   createSlice(view);
+
+  // --- IDS model audit (buildingSMART openBIM validation) --------------------
+  createAudit({ scene, view, layerControl });
 
   // --- Timeline assistant (local date/phrase command box) --------------------
   createAssistant({
