@@ -2029,7 +2029,7 @@ body {
   right: 74px;
   top: 96px;
   z-index: 13;
-  width: 372px;
+  width: 408px;
   max-width: calc(100vw - 108px);
   max-height: calc(100dvh - 210px);
   padding: 0;
@@ -2112,8 +2112,8 @@ body {
 .audit-score {
   --pct: 0;
   position: relative;
-  width: 74px;
-  height: 74px;
+  width: 92px;
+  height: 92px;
   flex-shrink: 0;
   border-radius: 50%;
   display: grid;
@@ -2127,20 +2127,21 @@ body {
 .audit-score::before {
   content: "";
   position: absolute;
-  inset: 6px;
+  inset: 7px;
   border-radius: 50%;
   background: var(--glass-strong);
 }
 .audit-score strong {
   position: relative;
-  font-size: 19px;
+  font-size: 23px;
   font-variant-numeric: tabular-nums;
 }
 .audit-score small {
   position: relative;
   display: block;
-  font-size: 8.5px;
-  letter-spacing: 0.06em;
+  margin-top: 1px;
+  font-size: 9.5px;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--text-faint);
 }
