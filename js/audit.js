@@ -17,6 +17,8 @@ import {
   IDS_FIELD_MAP,
   IDS_CLASSIFICATION_FIELDS
 } from "./config.js";
+import { exportBcf, guidOf } from "./bcfExport.js?v=1";
+import { createBcfHighlighter } from "./bcfViewer.js?v=1";
 
 // Pretty IFC class labels + a reverse (layer title → IFC entity) lookup so each
 // audited layer can be shown with its authentic IFC class name.
@@ -123,6 +125,26 @@ function requirementFields(req) {
   if (req.kind === "property") return [IDS_FIELD_MAP[req.baseName] ?? req.baseName];
   if (req.kind === "classification") return IDS_CLASSIFICATION_FIELDS.slice();
   return [];
+}
+
+/**
+ * SQL clause matching elements that FAIL this requirement — i.e. every candidate
+ * field is empty. Classification is an OR of fields, so failure is all-null.
+ */
+function requirementNullClause(req) {
+  const fields = requirementFields(req);
+  if (!fields.length) return null;
+  return `(${fields.map((f) => `${f} IS NULL`).join(" AND ")})`;
+}
+
+/**
+ * SQL where-clause selecting the elements that fail ANY required facet of a
+ * specification, so we can pull the genuine failing GlobalIds from the layer.
+ */
+function specFailingWhere(spec) {
+  const required = (spec.requirements ?? []).filter((r) => r.cardinality !== "optional");
+  const clauses = required.map(requirementNullClause).filter(Boolean);
+  return clauses.length ? clauses.join(" OR ") : null;
 }
 
 /** Human label for a requirement facet. */
@@ -343,7 +365,7 @@ function renderLayerRow(specLayer, onFocus) {
   return row;
 }
 
-function renderSpec(spec, onFocus) {
+function renderSpec(spec, onFocus, bcf) {
   const card = elt("div", `audit-spec audit-spec--${statusClass(spec.status)}`);
 
   const head = elt("button", "audit-spec__head");
@@ -382,6 +404,39 @@ function renderSpec(spec, onFocus) {
     const note = elt("p", "audit-spec__note");
     note.append(elt("strong", null, "Why: "), document.createTextNode(spec.instructions));
     detail.append(note);
+  }
+
+  // BCF issue actions — only meaningful when the spec has failing elements.
+  if (bcf && (spec.status === "fail" || spec.status === "partial")) {
+    const actions = elt("div", "audit-actions");
+
+    const wire = (btn, busyText, run) => {
+      btn.type = "button";
+      btn.addEventListener("click", async () => {
+        const label = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = busyText;
+        try {
+          await run(spec);
+        } catch (err) {
+          console.error(err);
+        } finally {
+          btn.textContent = label;
+          btn.disabled = false;
+        }
+      });
+    };
+
+    const hi = elt("button", "audit-actions__btn", "◎ Highlight failing in 3D");
+    hi.title = "Fly to and ghost-highlight the failing elements in the model";
+    wire(hi, "Locating…", bcf.onHighlight);
+
+    const ex = elt("button", "audit-actions__btn", "⭳ Export BCF issue");
+    ex.title = "Export a buildingSMART BCF 2.1 issue (.bcfzip) for this rule";
+    wire(ex, "Building…", bcf.onExport);
+
+    actions.append(hi, ex);
+    detail.append(actions);
   }
 
   head.addEventListener("click", () => {
@@ -464,7 +519,7 @@ function renderResult(result, container, onFocus, opts = {}) {
   container.append(renderSummary(result));
 
   const list = elt("div", "audit-list");
-  result.specs.forEach((spec) => list.append(renderSpec(spec, onFocus)));
+  result.specs.forEach((spec) => list.append(renderSpec(spec, onFocus, opts.bcf)));
   container.append(list);
 
   const foot = elt("div", "audit-foot");
@@ -476,6 +531,12 @@ function renderResult(result, container, onFocus, opts = {}) {
   viewBtn.type = "button";
   viewBtn.addEventListener("click", () => opts.onView?.());
   row.append(again, viewBtn);
+  if (opts.bcf?.onClear) {
+    const clear = elt("button", "audit-btn audit-btn--ghost", "Clear 3D highlight");
+    clear.type = "button";
+    clear.addEventListener("click", () => opts.bcf.onClear());
+    row.append(clear);
+  }
   foot.append(row);
   foot.append(
     elt(
@@ -552,6 +613,9 @@ export function createAudit({ scene, view, layerControl }) {
     if (layer) layerByTitle.set(title, layer);
   }
 
+  // BCF highlighter: fly-to + ghost the model + glow the failing elements.
+  const highlighter = createBcfHighlighter({ view });
+
   const DEFAULT_IDS_NAME = IDS_URL.split("/").pop() || "specification.ids";
   let activeIds = { name: DEFAULT_IDS_NAME, url: IDS_URL, text: null, isDefault: true };
   let isOpen = false;
@@ -564,6 +628,100 @@ export function createAudit({ scene, view, layerControl }) {
     if (layer.fullExtent) {
       view.goTo(layer.fullExtent, { duration: 900 }).catch(() => {});
     }
+  }
+
+  // ---- BCF: pull the real failing elements, then export / highlight them ----
+
+  /** Query each applicable layer for the elements that fail this spec. */
+  async function collectFailing(spec) {
+    const where = specFailingWhere(spec) || "1=1";
+    const elements = [];
+    const layers = [];
+    for (const specLayer of spec.layers) {
+      const layer = specLayer.layer;
+      if (!layer?.createQuery) continue;
+      layers.push(layer);
+      const query = layer.createQuery();
+      query.where = where;
+      query.outFields = ["GlobalId"];
+      query.returnGeometry = false;
+      query.num = 500;
+      try {
+        const { features } = await layer.queryFeatures(query);
+        for (const f of features) elements.push(f.attributes);
+      } catch (err) {
+        console.warn(`BCF: could not query failing elements on ${specLayer.title}`, err);
+      }
+    }
+    return { elements, layers };
+  }
+
+  /** "CT-S08 — Classification reference present" style label from a spec. */
+  function specRuleName(spec) {
+    const id = spec.identifier ? `${spec.identifier} — ` : "";
+    return `${id}${spec.name}`;
+  }
+
+  /** Union extent of the failing elements, used to frame the camera. */
+  async function failingExtent(spec, guids) {
+    if (!guids.length) return null;
+    const inList = guids.map((g) => `'${String(g).replace(/'/g, "''")}'`).join(",");
+    let union = null;
+    for (const specLayer of spec.layers) {
+      const layer = specLayer.layer;
+      if (!layer?.createQuery) continue;
+      const query = layer.createQuery();
+      query.where = `GlobalId IN (${inList})`;
+      try {
+        const { extent } = await layer.queryExtent(query);
+        if (extent) union = union ? union.union(extent) : extent.clone();
+      } catch {
+        /* layer doesn't support extent queries — ignore */
+      }
+    }
+    return union;
+  }
+
+  /** Export a BCF 2.1 issue (.bcfzip) for the failing elements of a spec. */
+  async function handleExport(spec) {
+    const { elements } = await collectFailing(spec);
+    await exportBcf({
+      failedElements: elements,
+      ruleName: specRuleName(spec),
+      view,
+      description:
+        `IDS specification “${spec.name}”. ` +
+        `${spec.compliant} of ${spec.applicable} applicable elements are compliant; ` +
+        `${elements.length} failing element(s) captured.`
+    });
+  }
+
+  /** Ghost the model, glow the failing elements, and frame them. */
+  async function handleHighlight(spec) {
+    const { elements, layers } = await collectFailing(spec);
+    const guids = [...new Set(elements.map(guidOf).filter(Boolean))];
+
+    highlighter.clear();
+    let matched = false;
+    for (const layer of layers) {
+      const { objectIds } = await highlighter.highlight({ layer, bcfData: { guids } });
+      matched = matched || objectIds.length > 0;
+    }
+
+    if (matched) {
+      const target = await failingExtent(spec, guids);
+      if (target) view.goTo(target, { duration: 1200 }).catch(() => {});
+    } else {
+      // Per-element queries aren't available — fall back to isolate + frame.
+      const first = spec.layers[0];
+      if (first) focusLayer(first.title);
+    }
+  }
+
+  /** Remove any BCF highlight and restore all layers. */
+  function handleClear() {
+    highlighter.clear();
+    layerControl.reset();
   }
 
   // Make sure we have the IDS text in hand — fetch the bundled file on first
@@ -647,7 +805,12 @@ export function createAudit({ scene, view, layerControl }) {
       renderResult(result, body, focusLayer, {
         onView: viewIds,
         onReset: showSetup,
-        idsName: activeIds.name
+        idsName: activeIds.name,
+        bcf: {
+          onExport: handleExport,
+          onHighlight: handleHighlight,
+          onClear: handleClear
+        }
       });
     } catch (err) {
       console.error("IDS audit failed", err);
