@@ -2133,15 +2133,18 @@ body {
 }
 .audit-score strong {
   position: relative;
-  font-size: 23px;
+  font-size: 22px;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 .audit-score small {
   position: relative;
   display: block;
-  margin-top: 1px;
-  font-size: 9.5px;
-  letter-spacing: 0.05em;
+  max-width: 58px;
+  margin-top: 3px;
+  font-size: 9px;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   color: var(--text-faint);
 }
