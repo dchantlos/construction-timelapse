@@ -2602,3 +2602,51 @@ body {
     max-width: none;
   }
 }
+
+/* On-screen caption naming what the active 3D audit review is showing. */
+.audit-review-caption {
+  position: absolute;
+  top: 96px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-width: min(620px, 72vw);
+  padding: 12px 20px;
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-border);
+  border-left: 3px solid var(--danger);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  color: var(--text);
+  font-family: var(--font);
+  text-align: center;
+  pointer-events: none;
+  z-index: 60;
+}
+.audit-review-caption__kicker {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-bright);
+}
+.audit-review-caption__title {
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--text);
+}
+.audit-review-caption__detail {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+@media (max-width: 720px) {
+  .audit-review-caption {
+    max-width: calc(100vw - 28px);
+  }
+}

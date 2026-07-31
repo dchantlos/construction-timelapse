@@ -7,13 +7,13 @@ import * as reactiveUtils from "@arcgis/core/core/reactiveUtils.js";
 
 import { createView, resolveTimeExtent } from "./scene.js";
 import { createDashboard } from "./dashboard.js";
-import { createLayerControl } from "./layers.js";
+import { createLayerControl } from "./layers.js?v=1";
 import { createLayerVisibility } from "./visibility.js";
 import { createCinematic } from "./cinematic.js?v=21";
 import { createAssistant } from "./assistant.js?v=23";
 import { createInteraction } from "./interaction.js?v=1";
 import { createSlice } from "./slice.js";
-import { createAudit } from "./audit.js?v=4";
+import { createAudit } from "./audit.js?v=14";
 import { TIME_STEP } from "./config.js";
 
 /** Surface any error directly on the boot veil so failures are never silent. */
@@ -69,8 +69,16 @@ async function boot() {
     // Fine 1-day stops keep cumulative filtering responsive while letting the
     // custom scrubber set arbitrary timeExtents without snapping back.
     stops: { interval: { value: 1, unit: "days" } },
-    labelFormatFunction: (value) =>
-      value?.toLocaleDateString("en-US", { month: "short", year: "2-digit" })
+    // The TimeSlider calls this with a single Date for min/max/tick labels but
+    // an array of Dates for the "extent" label — guard both so a stray array
+    // never throws (which the global error handler would surface on the veil).
+    labelFormatFunction: (value) => {
+      const fmt = (d) =>
+        d instanceof Date
+          ? d.toLocaleDateString("en-US", { month: "short", year: "2-digit" })
+          : d;
+      return Array.isArray(value) ? value.map(fmt).join(" – ") : fmt(value);
+    }
   });
 
   // --- Dashboard analytics + interactive layer isolation ---------------------

@@ -46,6 +46,19 @@ export function createLayerControl(scene) {
     return isolatedId;
   }
 
+  /**
+   * Spotlight one or more building layers by title: full opacity for those,
+   * ghost every other building layer. Cleared by reset().
+   * @param {string[]} titles
+   */
+  function spotlight(titles) {
+    isolatedId = null;
+    const keep = new Set(titles);
+    for (const layer of buildingLayers) {
+      layer.opacity = keep.has(layer.title) ? 1 : GHOST_OPACITY;
+    }
+  }
+
   /** Restore every building layer to its authored opacity. */
   function reset() {
     isolatedId = null;
@@ -54,5 +67,5 @@ export function createLayerControl(scene) {
     }
   }
 
-  return { isolate, reset };
+  return { isolate, spotlight, reset };
 }

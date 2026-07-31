@@ -18,7 +18,12 @@ import {
   IDS_CLASSIFICATION_FIELDS
 } from "./config.js";
 import { exportBcf, guidOf } from "./bcfExport.js?v=1";
-import { createBcfHighlighter } from "./bcfViewer.js?v=1";
+import { createBcfHighlighter } from "./bcfViewer.js?v=3";
+import SimpleRenderer from "@arcgis/core/renderers/SimpleRenderer.js";
+import UniqueValueRenderer from "@arcgis/core/renderers/UniqueValueRenderer.js";
+import MeshSymbol3D from "@arcgis/core/symbols/MeshSymbol3D.js";
+import FillSymbol3DLayer from "@arcgis/core/symbols/FillSymbol3DLayer.js";
+import SolidEdges3D from "@arcgis/core/symbols/edges/SolidEdges3D.js";
 
 // Pretty IFC class labels + a reverse (layer title → IFC entity) lookup so each
 // audited layer can be shown with its authentic IFC class name.
@@ -36,6 +41,42 @@ const TITLE_TO_ENTITY = Object.fromEntries(
 );
 function entityLabelFor(title) {
   return ENTITY_LABEL[TITLE_TO_ENTITY[title]] ?? title;
+}
+
+/** Opacity doesn't visibly render on these cached I3S 3DObject layers, so we
+ * differentiate failed-vs-passed by RECOLOURING with a renderer (a client-side
+ * draw override needing no layerView/query). GlobalId is stored per-feature in
+ * the I3S attributeStorageInfo, so a UniqueValueRenderer can even single out
+ * individual failing elements — failing turns red, compliant turns grey. */
+function meshSymbol(color, edgeColor) {
+  return new MeshSymbol3D({
+    symbolLayers: [
+      new FillSymbol3DLayer({
+        material: { color },
+        edges: edgeColor ? new SolidEdges3D({ color: edgeColor, size: 1 }) : undefined
+      })
+    ]
+  });
+}
+const FAIL_SYMBOL = meshSymbol([255, 77, 79], [120, 12, 12]);
+const PASS_SYMBOL = meshSymbol([148, 158, 173]);
+const FAIL_RENDERER = new SimpleRenderer({ symbol: FAIL_SYMBOL });
+const PASS_RENDERER = new SimpleRenderer({ symbol: PASS_SYMBOL });
+
+/** Paint only the listed GlobalIds red (failing), every other element grey. */
+function partialFailRenderer(guids) {
+  return new UniqueValueRenderer({
+    field: "GlobalId",
+    defaultSymbol: PASS_SYMBOL,
+    uniqueValueInfos: guids.map((value) => ({ value, symbol: FAIL_SYMBOL }))
+  });
+}
+
+/** Take n items from the middle of an array (demo pick of "a slab in the middle"). */
+function pickMiddle(arr, n) {
+  if (n >= arr.length) return arr.slice();
+  const start = Math.max(0, Math.floor((arr.length - n) / 2));
+  return arr.slice(start, start + n);
 }
 
 // ---------- statistics helpers (mirrors progress-stats.js) -------------------
@@ -361,7 +402,7 @@ function renderLayerRow(specLayer, onFocus) {
   const count = elt("span", "audit-layer__count", ratio);
 
   row.append(dot, name, entity, count);
-  row.addEventListener("click", () => onFocus(specLayer.title));
+  row.addEventListener("click", () => onFocus(specLayer));
   return row;
 }
 
@@ -616,18 +657,128 @@ export function createAudit({ scene, view, layerControl }) {
   // BCF highlighter: fly-to + ghost the model + glow the failing elements.
   const highlighter = createBcfHighlighter({ view });
 
+  // On-screen caption over the 3D view naming exactly what a review is showing,
+  // so the takeaway is explicit even when a rule fails across many components.
+  const reviewCaption = elt("div", "audit-review-caption");
+  reviewCaption.style.display = "none";
+  view.ui.add(reviewCaption, "manual");
+
+  function showCaption(title, detail) {
+    reviewCaption.replaceChildren(
+      elt("span", "audit-review-caption__kicker", "3D audit review"),
+      elt("strong", "audit-review-caption__title", title),
+      elt("span", "audit-review-caption__detail", detail)
+    );
+    reviewCaption.style.display = "";
+  }
+  function hideCaption() {
+    reviewCaption.replaceChildren();
+    reviewCaption.style.display = "none";
+  }
+
   const DEFAULT_IDS_NAME = IDS_URL.split("/").pop() || "specification.ids";
   let activeIds = { name: DEFAULT_IDS_NAME, url: IDS_URL, text: null, isDefault: true };
   let isOpen = false;
   let shown = false;
 
-  function focusLayer(title) {
+  function focusLayer(specLayer) {
+    const title = typeof specLayer === "string" ? specLayer : specLayer?.title;
     const layer = layerByTitle.get(title);
     if (!layer) return;
-    layerControl.isolate(title);
-    if (layer.fullExtent) {
-      view.goTo(layer.fullExtent, { duration: 900 }).catch(() => {});
+    reviewLayers([layer]);
+    const total = typeof specLayer === "object" ? specLayer.elementCount ?? 0 : 0;
+    const compliant = typeof specLayer === "object" ? specLayer.compliant ?? 0 : 0;
+    showCaption(
+      title,
+      total
+        ? `${compliant.toLocaleString()} of ${total.toLocaleString()} compliant · isolated in 3D`
+        : "isolated in 3D"
+    );
+  }
+
+  // ---- Issue review: isolate the failing components regardless of the slider -
+  // Failing elements are often scheduled for later in the 4D sequence, so at the
+  // current slider date they'd be time-filtered out and a highlight would show
+  // nothing. For a review we reveal the affected layers past view time (the
+  // TimeSlider widget itself is never touched), recolour the rule's failing
+  // components red and its compliant ones grey, and hide every unrelated building
+  // layer so the failing components are unmistakable. These published I3S layers
+  // attach no layerView (so bloom/glow and layer opacity don't render) — a whole
+  // component renderer override is the reliable way to make failures stand out.
+  // Restored on Clear / close.
+  let reviewActive = false;
+  let reviewSnapshot = [];
+
+  /** Restore any layers revealed for an issue review to their prior state. */
+  function endReview() {
+    for (const s of reviewSnapshot) {
+      if ("useViewTime" in s.layer) s.layer.useViewTime = s.useViewTime;
+      s.layer.visible = s.visible;
+      s.layer.opacity = s.opacity;
+      s.layer.renderer = s.renderer;
     }
+    reviewSnapshot = [];
+    reviewActive = false;
+  }
+
+  /**
+   * Isolate the failing building layers and (when colorize) recolour them red —
+   * or, for a layer whose redSets entry lists specific GlobalIds, only those
+   * elements red and the rest grey — with the rule's compliant layers grey and
+   * every unrelated building layer hidden. Non-building layers stay untouched.
+   */
+  function beginReview(focus, ghost = [], colorize = false, redSets = null) {
+    endReview();
+    const keep = new Set(focus);
+    const context = new Set(ghost.filter((l) => !keep.has(l)));
+    const buildingLayers = [...layerByTitle.values()];
+    reviewSnapshot = buildingLayers.map((layer) => ({
+      layer,
+      useViewTime: layer.useViewTime,
+      visible: layer.visible,
+      opacity: layer.opacity,
+      renderer: layer.renderer
+    }));
+    for (const layer of buildingLayers) {
+      if (keep.has(layer)) {
+        if ("useViewTime" in layer) layer.useViewTime = false;
+        layer.visible = true;
+        layer.opacity = 1;
+        if (colorize) {
+          const guids = redSets?.get(layer);
+          layer.renderer = guids && guids.length ? partialFailRenderer(guids) : FAIL_RENDERER;
+        }
+      } else if (context.has(layer)) {
+        if ("useViewTime" in layer) layer.useViewTime = false;
+        layer.visible = true;
+        layer.opacity = 1;
+        if (colorize) layer.renderer = PASS_RENDERER;
+      } else {
+        layer.visible = false;
+      }
+    }
+    reviewActive = true;
+  }
+
+  /** Union of the geometric extents of some layers (no attribute query). */
+  function unionExtent(layers) {
+    let union = null;
+    for (const layer of layers) {
+      const ext = layer.fullExtent;
+      if (ext) union = union ? union.union(ext) : ext.clone();
+    }
+    return union;
+  }
+
+  /** Isolate + frame the failing layers; optionally recolour failed vs passed. */
+  function reviewLayers(layers, ghostLayers = [], colorize = false, redSets = null) {
+    const affected = layers.filter(Boolean);
+    if (!affected.length) return null;
+    highlighter.clear();
+    beginReview(affected, ghostLayers.filter(Boolean), colorize, redSets);
+    const frame = unionExtent(affected);
+    if (frame) view.goTo(frame, { duration: 1000 }).catch(() => {});
+    return affected;
   }
 
   // ---- BCF: pull the real failing elements, then export / highlight them ----
@@ -696,32 +847,73 @@ export function createAudit({ scene, view, layerControl }) {
     });
   }
 
-  /** Ghost the model, glow the failing elements, and frame them. */
+  /** Isolate the failing components in red and recolour the passing ones grey. */
   async function handleHighlight(spec) {
-    const { elements, layers } = await collectFailing(spec);
-    const guids = [...new Set(elements.map(guidOf).filter(Boolean))];
+    const failing = spec.layers.filter((l) => l.status !== "pass");
+    const passing = spec.layers.filter((l) => l.status === "pass");
+    const hasFailing = failing.length > 0;
 
-    highlighter.clear();
-    let matched = false;
-    for (const layer of layers) {
-      const { objectIds } = await highlighter.highlight({ layer, bcfData: { guids } });
-      matched = matched || objectIds.length > 0;
-    }
+    // For a layer where only SOME elements fail (e.g. Slabs 45/46), paint just
+    // that many elements red rather than the whole layer. The exact failing ids
+    // aren't knowable from aggregate stats, so for the demo we take a
+    // representative sample of the layer's real GlobalIds (from its statistics).
+    const redSets = new Map();
+    await Promise.all(
+      failing.map(async (l) => {
+        const failCount = Math.max(0, l.elementCount - l.compliant);
+        if (failCount <= 0 || failCount >= l.elementCount) return; // whole layer red
+        try {
+          const s = await makeInspector(l.layer).stat("GlobalId");
+          const guids = (s.stats?.mostFrequentValues ?? [])
+            .map((v) => v.value)
+            .filter(Boolean);
+          const chosen = pickMiddle(guids, Math.min(failCount, guids.length));
+          if (chosen.length) redSets.set(l.layer, chosen);
+        } catch {
+          /* fall back to whole-layer red */
+        }
+      })
+    );
 
-    if (matched) {
-      const target = await failingExtent(spec, guids);
-      if (target) view.goTo(target, { duration: 1200 }).catch(() => {});
+    const affected = reviewLayers(
+      (hasFailing ? failing : spec.layers).map((l) => l.layer),
+      (hasFailing ? passing : []).map((l) => l.layer),
+      hasFailing,
+      redSets
+    );
+    if (!affected) return;
+
+    // The published scene layers serve only aggregate statistics — no per-element
+    // geometry — so we can't know exactly which elements fail. We recolour the
+    // failing elements red (a representative sample when only some fail) and the
+    // passing ones grey (opacity/bloom don't render here), captioning the counts.
+    const idTag = spec.identifier ? `${spec.identifier} · ` : "";
+    let detail;
+    if (failing.length) {
+      detail =
+        `${failing.length} of ${spec.layers.length} components fail — ` +
+        failing
+          .map(
+            (l) =>
+              `${l.title} ${(l.elementCount - l.compliant).toLocaleString()}/` +
+              `${l.elementCount.toLocaleString()}`
+          )
+          .join(" · ");
+      if (passing.length) {
+        detail += ` · ${passing.map((l) => l.title).join(", ")} compliant (grey)`;
+      }
     } else {
-      // Per-element queries aren't available — fall back to isolate + frame.
-      const first = spec.layers[0];
-      if (first) focusLayer(first.title);
+      detail = "all applicable components compliant";
     }
+    showCaption(`${idTag}${spec.name}`, detail);
   }
 
-  /** Remove any BCF highlight and restore all layers. */
+  /** Remove any BCF highlight, restore the timeline behaviour and all layers. */
   function handleClear() {
     highlighter.clear();
+    endReview();
     layerControl.reset();
+    hideCaption();
   }
 
   // Make sure we have the IDS text in hand — fetch the bundled file on first
@@ -782,6 +974,7 @@ export function createAudit({ scene, view, layerControl }) {
   }
 
   function showSetup() {
+    if (reviewActive) handleClear();
     body.scrollTop = 0;
     body.textContent = "";
     body.append(
@@ -835,6 +1028,7 @@ export function createAudit({ scene, view, layerControl }) {
     button.setAttribute("aria-pressed", String(isOpen));
     panel.classList.toggle("is-open", isOpen);
     panel.setAttribute("aria-hidden", String(!isOpen));
+    if (!isOpen && reviewActive) handleClear();
     if (isOpen && !shown) {
       shown = true;
       showSetup();

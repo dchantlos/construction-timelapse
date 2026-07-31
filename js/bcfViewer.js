@@ -30,6 +30,20 @@ const EXCLUDED_EFFECT = "opacity(0.2) grayscale(100%)";
 const sqlQuote = (v) => `'${String(v).replace(/'/g, "''")}'`;
 
 /**
+ * Resolve a layer's SceneLayerView without ever hanging. Some published I3S
+ * scene layers (no associated feature layer) never attach an independent
+ * layerView, so view.whenLayerView() can wait forever — race it against a
+ * timeout and return null so callers can degrade gracefully.
+ */
+function resolveLayerView(view, layer, timeout = 4000) {
+  if (!layer || typeof view?.whenLayerView !== "function") return Promise.resolve(null);
+  return Promise.race([
+    view.whenLayerView(layer).catch(() => null),
+    new Promise((resolve) => setTimeout(() => resolve(null), timeout))
+  ]);
+}
+
+/**
  * Create a highlighter bound to one SceneView. It tracks every layerView it
  * touches so a single clear() restores the whole model.
  *
@@ -74,7 +88,7 @@ export function createBcfHighlighter({ view }) {
     }
 
     // 2) Resolve the layerView and query the failing objectIds by GlobalId.
-    const lv = layerView ?? (layer ? await sceneView.whenLayerView(layer) : null);
+    const lv = layerView ?? (await resolveLayerView(sceneView, layer));
     if (!lv || !layer) return { objectIds: [], flew };
 
     let objectIds = [];
@@ -104,6 +118,25 @@ export function createBcfHighlighter({ view }) {
     return { objectIds, flew };
   }
 
+  /**
+   * Best-effort glow of entire failing layers when per-element data isn't
+   * published. A FeatureEffect with no filter applies its includedEffect to
+   * every feature, so the whole component blooms; dimming of the other layers
+   * is handled by the caller's opacity control. Degrades silently if an I3S
+   * layer never attaches a layerView. Undone by clear().
+   */
+  async function glowLayers(layers = [], { view: viewOverride } = {}) {
+    const sceneView = viewOverride ?? view;
+    await Promise.all(
+      layers.filter(Boolean).map(async (layer) => {
+        const lv = await resolveLayerView(sceneView, layer);
+        if (!lv) return;
+        lv.featureEffect = new FeatureEffect({ includedEffect: INCLUDED_EFFECT });
+        touched.add(lv);
+      })
+    );
+  }
+
   /** Remove every applied effect + highlight and restore the model. */
   function clear() {
     for (const lv of touched) lv.featureEffect = null;
@@ -112,5 +145,5 @@ export function createBcfHighlighter({ view }) {
     highlightHandles = [];
   }
 
-  return { highlight, clear };
+  return { highlight, glowLayers, clear };
 }
