@@ -61,21 +61,34 @@ const GAS_T = {
   ch4: [5, 25, 50] // ppm
 };
 
-// --- sensor placement (Web Mercator 102100 / 3857) ---------------------------
+// --- sensor placement ---------------------------------------------------------
+// Sensors are placed by ground offset (east/north metres) from the project
+// centre, then projected to Web Mercator (WKID 102100 / 3857). Web Mercator
+// inflates distance by sec(lat) ≈ 1.478 at this latitude, so ground offsets are
+// scaled by K to keep the real on-the-ground spacing correct.
+const CENTER_LON = 8.613895;
+const CENTER_LAT = 47.417128;
+const R_MAJOR = 6378137;
+const D2R = Math.PI / 180;
+const CX = R_MAJOR * CENTER_LON * D2R;
+const CY = R_MAJOR * Math.log(Math.tan(Math.PI / 4 + (CENTER_LAT * D2R) / 2));
+const K = 1 / Math.cos(CENTER_LAT * D2R);
+const withXY = (s) => ({ ...s, x: round(CX + s.e * K, 2), y: round(CY + s.n * K, 2) });
+
 const NOISE_SENSORS = [
-  { id: "NOISE-N", track: "b291e7be-9f14-44ed-87c1-0f02b8ca35b3", x: 958926.68, y: 6009858.11, ambient: 50, work: 82 },
-  { id: "NOISE-E", track: "7be9696e-9ace-4085-a81b-0b04c83955db", x: 958997.6, y: 6009801.97, ambient: 51, work: 84 },
-  { id: "NOISE-S", track: "b543d03f-a7d0-4faa-8507-0b3e31081e0b", x: 958926.68, y: 6009745.83, ambient: 49, work: 80 },
-  { id: "NOISE-W", track: "49a1ac8f-b89d-4356-8260-a3e73765a98a", x: 958855.76, y: 6009801.97, ambient: 50, work: 81 },
-  { id: "NOISE-NR1", track: "5c7eb3a5-3ace-49d5-b023-33009a594311", x: 959052.26, y: 6009905.39, ambient: 46, work: 66 },
-  { id: "NOISE-NR2", track: "a7b30385-932d-4325-b84b-ae6bdcc359e3", x: 958793.71, y: 6009720.71, ambient: 45, work: 63 },
-  { id: "NOISE-NR3", track: "74469165-c65c-4435-a387-36920379578d", x: 959103.97, y: 6009772.42, ambient: 47, work: 67 }
-];
+  { id: "NOISE-N", track: "b291e7be-9f14-44ed-87c1-0f02b8ca35b3", e: 8, n: 92, ambient: 50, work: 82 },
+  { id: "NOISE-E", track: "7be9696e-9ace-4085-a81b-0b04c83955db", e: 102, n: 12, ambient: 51, work: 84 },
+  { id: "NOISE-S", track: "b543d03f-a7d0-4faa-8507-0b3e31081e0b", e: -6, n: -88, ambient: 49, work: 80 },
+  { id: "NOISE-W", track: "49a1ac8f-b89d-4356-8260-a3e73765a98a", e: -98, n: -8, ambient: 50, work: 81 },
+  { id: "NOISE-NR1", track: "5c7eb3a5-3ace-49d5-b023-33009a594311", e: 180, n: 170, ambient: 46, work: 66 },
+  { id: "NOISE-NR2", track: "a7b30385-932d-4325-b84b-ae6bdcc359e3", e: -190, n: -160, ambient: 45, work: 63 },
+  { id: "NOISE-NR3", track: "74469165-c65c-4435-a387-36920379578d", e: 230, n: -30, ambient: 47, work: 67 }
+].map(withXY);
 const DUST_SENSORS = [
-  { id: "DUST-01", track: "ad65284f-6a8b-444e-a5f7-d0dcf56b61f9", x: 958941.45, y: 6009809.36, base: 20, work: 78 },
-  { id: "DUST-02", track: "5c5c7940-d07e-4e92-8670-ac35e6a7e956", x: 958991.69, y: 6009810.83, base: 18, work: 60 }
-];
-const GAS_SENSOR = { id: "GAS-01", track: "28dc49c7-651a-4c08-b646-470d8c332f4d", x: 958908.95, y: 6009828.56 };
+  { id: "DUST-01", track: "ad65284f-6a8b-444e-a5f7-d0dcf56b61f9", e: 15, n: 10, base: 20, work: 78 },
+  { id: "DUST-02", track: "5c5c7940-d07e-4e92-8670-ac35e6a7e956", e: 95, n: 25, base: 18, work: 60 }
+].map(withXY);
+const GAS_SENSOR = withXY({ id: "GAS-01", track: "28dc49c7-651a-4c08-b646-470d8c332f4d", e: -45, n: 55 });
 
 // --- generators (each metric eases toward its target with a small walk) ------
 function genNoise() {
