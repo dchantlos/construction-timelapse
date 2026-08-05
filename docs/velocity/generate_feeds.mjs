@@ -97,8 +97,8 @@ const NOISE_SENSORS = [
   { id: "NOISE-NR3", track: "74469165-c65c-4435-a387-36920379578d", e: 230, n: -30, ambient: 47, work: 67 }
 ].map(withXY);
 const DUST_SENSORS = [
-  { id: "DUST-01", track: "ad65284f-6a8b-444e-a5f7-d0dcf56b61f9", lon: 8.614674, lat: 47.417069, base: 20, work: 78 },
-  { id: "DUST-02", track: "5c5c7940-d07e-4e92-8670-ac35e6a7e956", lon: 8.612419, lat: 47.417299, base: 18, work: 60 }
+  { id: "DUST-01", track: "ad65284f-6a8b-444e-a5f7-d0dcf56b61f9", lon: 8.614752, lat: 47.417063, base: 20, work: 78 },
+  { id: "DUST-02", track: "5c5c7940-d07e-4e92-8670-ac35e6a7e956", lon: 8.612887, lat: 47.417212, base: 18, work: 60 }
 ].map(withLonLat);
 const GAS_SENSOR = withLonLat({ id: "GAS-01", track: "28dc49c7-651a-4c08-b646-470d8c332f4d", lon: 8.614571, lat: 47.417096 });
 const WIND_SENSOR = withLonLat({ id: "WIND-01", track: "40078e96-523d-429e-87f4-2c6f571355de", lon: 8.6128547, lat: 47.4174417, z: 582.35 });
