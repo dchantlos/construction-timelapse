@@ -6,7 +6,8 @@
 // columns carry Web Mercator Auxiliary Sphere X/Y in metres (WKID 102100 / 3857),
 // NOT degrees. Elevation is handled with Scene Viewer offsets, so there is no z
 // column. Timestamps span one representative weekday, local midnight → midnight
-// Europe/Zurich at 60 s cadence (1440 rows per sensor); Velocity loops the file.
+// Europe/Zurich at 60 s cadence (1440 rows per sensor), interleaved in time order
+// so every sensor/track reports each tick; Velocity loops the file.
 //
 // Run:  node docs/velocity/generate_feeds.mjs
 // =============================================================================
@@ -79,13 +80,16 @@ const GAS_SENSOR = { id: "GAS-01", track: "28dc49c7-651a-4c08-b646-470d8c332f4d"
 // --- generators (each metric eases toward its target with a small walk) ------
 function genNoise() {
   const rows = [["Timestamp", "SensorID", "TrackID", "Longitude", "Latitude", "NoiseCategory", "LAeq_dBA"]];
-  for (const s of NOISE_SENSORS) {
-    let v = null;
-    for (let i = 0; i < STEPS; i++) {
-      const hour = i / 60;
+  const state = new Map();
+  for (let i = 0; i < STEPS; i++) {
+    const hour = i / 60;
+    const ts = START_MS + i * STEP_MS;
+    for (const s of NOISE_SENSORS) {
       const target = s.ambient + (s.work - s.ambient) * activityAt(hour);
-      v = v == null ? target : clamp(v + (target - v) * 0.25 + rnd(0.8), 40, 95);
-      rows.push([START_MS + i * STEP_MS, s.id, s.track, s.x, s.y, NOISE_CATS[stepUp(v, NOISE_T)], round(v, 1)]);
+      const prev = state.get(s.id);
+      const v = prev == null ? target : clamp(prev + (target - prev) * 0.25 + rnd(0.8), 40, 95);
+      state.set(s.id, v);
+      rows.push([ts, s.id, s.track, s.x, s.y, NOISE_CATS[stepUp(v, NOISE_T)], round(v, 1)]);
     }
   }
   return rows;
@@ -93,13 +97,16 @@ function genNoise() {
 
 function genDust() {
   const rows = [["Timestamp", "SensorID", "TrackID", "Longitude", "Latitude", "DustCategory", "PM10_ugm3"]];
-  for (const s of DUST_SENSORS) {
-    let v = null;
-    for (let i = 0; i < STEPS; i++) {
-      const hour = i / 60;
+  const state = new Map();
+  for (let i = 0; i < STEPS; i++) {
+    const hour = i / 60;
+    const ts = START_MS + i * STEP_MS;
+    for (const s of DUST_SENSORS) {
       const target = s.base + (s.work - s.base) * activityAt(hour);
-      v = v == null ? target : clamp(v + (target - v) * 0.12 + rnd(1.2), 6, 240);
-      rows.push([START_MS + i * STEP_MS, s.id, s.track, s.x, s.y, DUST_CATS[stepUp(v, DUST_T)], round(v)]);
+      const prev = state.get(s.id);
+      const v = prev == null ? target : clamp(prev + (target - prev) * 0.12 + rnd(1.2), 6, 240);
+      state.set(s.id, v);
+      rows.push([ts, s.id, s.track, s.x, s.y, DUST_CATS[stepUp(v, DUST_T)], round(v)]);
     }
   }
   return rows;
