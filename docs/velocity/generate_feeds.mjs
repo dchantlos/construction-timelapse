@@ -78,7 +78,7 @@ const GAS_SENSOR = { id: "GAS-01", track: "28dc49c7-651a-4c08-b646-470d8c332f4d"
 
 // --- generators (each metric eases toward its target with a small walk) ------
 function genNoise() {
-  const rows = [["Timestamp", "Sensor ID", "Track ID", "Longitude", "Latitude", "Noise Category", "LAeq_dBA"]];
+  const rows = [["Timestamp", "SensorID", "TrackID", "Longitude", "Latitude", "NoiseCategory", "LAeq_dBA"]];
   for (const s of NOISE_SENSORS) {
     let v = null;
     for (let i = 0; i < STEPS; i++) {
@@ -92,7 +92,7 @@ function genNoise() {
 }
 
 function genDust() {
-  const rows = [["Timestamp", "Sensor ID", "Track ID", "Longitude", "Latitude", "Dust Category", "PM10_ugm3"]];
+  const rows = [["Timestamp", "SensorID", "TrackID", "Longitude", "Latitude", "DustCategory", "PM10_ugm3"]];
   for (const s of DUST_SENSORS) {
     let v = null;
     for (let i = 0; i < STEPS; i++) {
@@ -107,7 +107,7 @@ function genDust() {
 
 function genGas() {
   const rows = [
-    ["Timestamp", "Sensor ID", "Track ID", "Longitude", "Latitude", "Gas Category", "Gas Level",
+    ["Timestamp", "SensorID", "TrackID", "Longitude", "Latitude", "GasCategory", "GasLevel",
       "CO_ppm", "CO2_ppm", "NO2_ugm3", "O3_ugm3", "VOC_ppb", "CH4_ppm"]
   ];
   const s = GAS_SENSOR;
