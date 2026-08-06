@@ -13,7 +13,7 @@ import {
   refreshRiskContext,
   wireDrillDownModal,
   openDrillDownModal,
-} from "./progress-drilldown.js?v=12";
+} from "./progress-drilldown.js?v=14";
 
 /** Circumference of the SVG ring (2πr, r=52) — matches .ring__bar dasharray. */
 const RING_CIRCUMFERENCE = 327;
@@ -34,6 +34,20 @@ const RISK_LAYERS = {
   schedule: "schedule_delay",
   delayed: "delayed_components",
   pending: "pending_change_orders",
+  environmental: "environmental_sensors",
+};
+
+/**
+ * Site-sensor environmental exposure — illustrative, like the drill-down rows.
+ * Tower-crane high-wind stand-downs (operator can't safely work above the gust
+ * threshold) plus CO/CO₂ air-quality evacuations for ground and interior crews;
+ * each carries idle-time and remediation cost. Summed for the risk-card total.
+ */
+const ENVIRONMENTAL_RISK = {
+  windDaysLost: 3,
+  heatAdvisories: 2,
+  gasStandDowns: 2,
+  total: 100_500,
 };
 
 /** Latest count-up targets, refreshed each render, replayed on first reveal. */
@@ -89,7 +103,7 @@ export function renderFinancialPanel(summary = {}) {
 
   // --- Risk & variance (tie the headline penalty to real schedule slip) ------
   const delayImpact = daysBehind * f.dailyLiquidatedDamages;
-  setText("finDelay", `-${money(delayImpact)}`);
+  setText("finDelay", money(delayImpact));
   setText(
     "finDelaySub",
     `Penalty for ${daysBehind} day${daysBehind === 1 ? "" : "s"} behind schedule`
@@ -97,6 +111,12 @@ export function renderFinancialPanel(summary = {}) {
   setText("finComp", money(f.delayedComponentsCost));
   setText("finCompSub", `Value of ${count(behind)} overdue components on map`);
   setText("finChange", money(f.pendingChangeOrders));
+  const env = ENVIRONMENTAL_RISK;
+  setText("finEnv", money(env.total));
+  setText(
+    "finEnvSub",
+    `${env.windDaysLost} wind \u00b7 ${env.heatAdvisories} heat \u00b7 ${env.gasStandDowns} air-quality holds`
+  );
 
   // Feed the themed drill-down windows with the live totals + subtitles.
   refreshRiskContext({
@@ -111,6 +131,10 @@ export function renderFinancialPanel(summary = {}) {
     pending: {
       total: f.pendingChangeOrders,
       sub: "Submitted CORs not yet in the contract sum",
+    },
+    environmental: {
+      total: env.total,
+      sub: `${env.windDaysLost} wind hold${env.windDaysLost === 1 ? "" : "s"} \u00b7 ${env.heatAdvisories} heat advisor${env.heatAdvisories === 1 ? "y" : "ies"} \u00b7 ${env.gasStandDowns} gas evacuation${env.gasStandDowns === 1 ? "" : "s"} flagged by site sensors`,
     },
   });
 
@@ -238,6 +262,10 @@ function wireRiskFilters() {
       text: "Map Overlay Active: Viewing geometry for pending CORs…",
       tone: "is-cyan",
     },
+    environmental: {
+      text: "Map Overlay Active: Locating sensor-flagged wind & air-quality zones…",
+      tone: "is-violet",
+    },
   };
 
   let active = null;
@@ -248,7 +276,7 @@ function wireRiskFilters() {
       card.classList.toggle("is-active", on);
       card.setAttribute("aria-pressed", String(on));
     }
-    banner.classList.remove("is-rose", "is-amber", "is-cyan");
+    banner.classList.remove("is-rose", "is-amber", "is-cyan", "is-violet");
     const meta = active ? BANNERS[active] : null;
     if (meta) {
       banner.textContent = meta.text;

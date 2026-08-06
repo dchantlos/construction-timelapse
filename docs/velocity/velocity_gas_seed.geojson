@@ -1,0 +1,27 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.614571,
+          47.417096
+        ]
+      },
+      "properties": {
+        "SensorID": "GAS-01",
+        "TrackID": "28dc49c7-651a-4c08-b646-470d8c332f4d",
+        "GasCategory": "Normal",
+        "GasLevel": 0,
+        "CO_ppm": 0.5,
+        "CO2_ppm": 450.5,
+        "NO2_ugm3": 20.3,
+        "O3_ugm3": 40.6,
+        "VOC_ppb": 120.4,
+        "CH4_ppm": 1.9
+      }
+    }
+  ]
+}

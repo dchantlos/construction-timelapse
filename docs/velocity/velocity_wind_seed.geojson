@@ -1,0 +1,24 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.6128547,
+          47.4174417
+        ]
+      },
+      "properties": {
+        "SensorID": "WIND-01",
+        "TrackID": "40078e96-523d-429e-87f4-2c6f571355de",
+        "WindCategory": "Calm",
+        "WindSpeed_ms": 3.5,
+        "WindDir_deg": 240.2,
+        "WindGust_ms": 5.5,
+        "Elevation": 582.35
+      }
+    }
+  ]
+}

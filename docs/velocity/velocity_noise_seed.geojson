@@ -1,0 +1,117 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.6140012,
+          47.4179544
+        ]
+      },
+      "properties": {
+        "SensorID": "NOISE-N",
+        "TrackID": "b291e7be-9f14-44ed-87c1-0f02b8ca35b3",
+        "NoiseCategory": "Comfortable",
+        "LAeq_dBA": 55.4
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.6152491,
+          47.4172358
+        ]
+      },
+      "properties": {
+        "SensorID": "NOISE-E",
+        "TrackID": "7be9696e-9ace-4085-a81b-0b04c83955db",
+        "NoiseCategory": "Comfortable",
+        "LAeq_dBA": 55.4
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.6138153,
+          47.4163375
+        ]
+      },
+      "properties": {
+        "SensorID": "NOISE-S",
+        "TrackID": "b543d03f-a7d0-4faa-8507-0b3e31081e0b",
+        "NoiseCategory": "Comfortable",
+        "LAeq_dBA": 55.4
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.612594,
+          47.4170561
+        ]
+      },
+      "properties": {
+        "SensorID": "NOISE-W",
+        "TrackID": "49a1ac8f-b89d-4356-8260-a3e73765a98a",
+        "NoiseCategory": "Comfortable",
+        "LAeq_dBA": 55.4
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.6162846,
+          47.4186551
+        ]
+      },
+      "properties": {
+        "SensorID": "NOISE-NR1",
+        "TrackID": "5c7eb3a5-3ace-49d5-b023-33009a594311",
+        "NoiseCategory": "Comfortable",
+        "LAeq_dBA": 55.4
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.6113726,
+          47.4156907
+        ]
+      },
+      "properties": {
+        "SensorID": "NOISE-NR2",
+        "TrackID": "a7b30385-932d-4325-b84b-ae6bdcc359e3",
+        "NoiseCategory": "Comfortable",
+        "LAeq_dBA": 55.4
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.6169484,
+          47.4168585
+        ]
+      },
+      "properties": {
+        "SensorID": "NOISE-NR3",
+        "TrackID": "74469165-c65c-4435-a387-36920379578d",
+        "NoiseCategory": "Comfortable",
+        "LAeq_dBA": 55.4
+      }
+    }
+  ]
+}
