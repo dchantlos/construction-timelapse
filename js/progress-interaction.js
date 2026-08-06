@@ -8,6 +8,7 @@
 // =============================================================================
 
 import { BUILDING_LAYERS, PROGRESS_STATUS } from "./config.js?v=12";
+import { openSensorPopupForGraphic, closeSensorPopup } from "./velocity-live.js?v=7";
 
 // Friendly label + colour for each CStatus value, keyed for O(1) lookup.
 const STATUS_BY_VALUE = new Map(PROGRESS_STATUS.buckets.map((b) => [b.value, b]));
@@ -100,11 +101,22 @@ export function createProgressInteraction(view) {
       return;
     }
 
-    const result = response.results.find(
+    const results = response.results.filter(
       (r) => r.type === "graphic" && r.graphic?.layer
     );
 
     clearHighlight();
+
+    // A live Velocity sensor wins: show its reading card, not the component tip.
+    for (const r of results) {
+      if (openSensorPopupForGraphic(r.graphic, event.x, event.y)) {
+        hideTooltip();
+        return;
+      }
+    }
+    closeSensorPopup();
+
+    const result = results[0];
 
     if (!result) {
       hideTooltip();
@@ -139,6 +151,7 @@ export function createProgressInteraction(view) {
     if (e.key === "Escape") {
       clearHighlight();
       hideTooltip();
+      closeSensorPopup();
     }
   });
 }

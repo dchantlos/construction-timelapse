@@ -12,10 +12,12 @@ import { createSpin } from "./spin.js?v=12";
 import { collectConstructionStatus } from "./progress-stats.js?v=12";
 import { renderProgressPanel } from "./progress-panel.js?v=12";
 import { createProgressLayers } from "./progress-layers.js?v=12";
-import { createProgressInteraction } from "./progress-interaction.js?v=12";
+import { createProgressInteraction } from "./progress-interaction.js?v=17";
 import { createSlice } from "./slice.js?v=12";
-import { renderFinancialPanel, createFinancialControls } from "./progress-financial.js?v=12";
+import { renderFinancialPanel, createFinancialControls } from "./progress-financial.js?v=15";
 import { createCostOverlays } from "./progress-overlays.js?v=14";
+import { createSensorPanel } from "./progress-sensors.js?v=14";
+import { createVelocityLive } from "./velocity-live.js?v=7";
 import { PROGRESS_WEBSCENE_ID } from "./config.js?v=12";
 
 /** Surface any error directly on the boot veil so failures are never silent. */
@@ -60,6 +62,10 @@ async function boot() {
   // Per-layer visibility toggles (reused from the planned-schedule view).
   createLayerVisibility(scene);
 
+  // On this view the layer list folds into the right-hand widget stack: a
+  // nav-stack button reveals it as a flyout (same pattern as the slice tool).
+  wireLayersFlyout();
+
   // Custom navigation controls.
   wireNavControls(view);
 
@@ -74,6 +80,14 @@ async function boot() {
 
   // Wire the Schedule (4D) ↔ Financials (5D) view toggle and its controls.
   createFinancialControls();
+
+  // Live ArcGIS Velocity sensor network: pulsing 3D markers for every noise,
+  // dust, gas and wind sensor, plus the shared store that drives the panel.
+  createVelocityLive({ scene, view });
+
+  // Live on-site environmental sensor panel (top-right, draggable) — its wind,
+  // noise, dust and gas figures come straight from the Velocity feeds above.
+  createSensorPanel();
 
   // "Filter 3D Map by Cost" pills recolor the building components in 3D.
   const overlays = createCostOverlays(scene);
@@ -107,6 +121,26 @@ async function boot() {
     });
     renderFinancialPanel({});
   }
+}
+
+/** Toggle the layer-visibility flyout from its button in the right-hand stack. */
+function wireLayersFlyout() {
+  const button = document.getElementById("layersBtn");
+  const panel = document.getElementById("layersPanel");
+  const closeBtn = document.getElementById("layersClose");
+  if (!button || !panel) return;
+
+  const setOpen = (open) => {
+    button.classList.toggle("is-active", open);
+    button.setAttribute("aria-pressed", String(open));
+    panel.classList.toggle("is-open", open);
+    panel.setAttribute("aria-hidden", String(!open));
+  };
+
+  button.addEventListener("click", () =>
+    setOpen(!panel.classList.contains("is-open"))
+  );
+  closeBtn?.addEventListener("click", () => setOpen(false));
 }
 
 /** Hook the minimalist right-hand nav buttons up to the SceneView. */

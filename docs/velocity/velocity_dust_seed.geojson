@@ -1,0 +1,37 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.614752,
+          47.417063
+        ]
+      },
+      "properties": {
+        "SensorID": "DUST-01",
+        "TrackID": "ad65284f-6a8b-444e-a5f7-d0dcf56b61f9",
+        "DustCategory": "Good",
+        "PM10_ugm3": 30.7
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.612887,
+          47.417212
+        ]
+      },
+      "properties": {
+        "SensorID": "DUST-02",
+        "TrackID": "5c5c7940-d07e-4e92-8670-ac35e6a7e956",
+        "DustCategory": "Good",
+        "PM10_ugm3": 30.7
+      }
+    }
+  ]
+}

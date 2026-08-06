@@ -126,3 +126,59 @@ export const FINANCIALS = {
     retainagePct: 5
   }
 };
+
+// -----------------------------------------------------------------------------
+// IDS model audit — buildingSMART Information Delivery Specification
+// -----------------------------------------------------------------------------
+//
+// A second bSI openBIM deliverable alongside the IFC-derived model: an IDS file
+// (ids/construction-timelapse.ids) is parsed in the browser and the published
+// scene is audited against it live, using the I3S per-attribute statistics that
+// progress-stats.js already reads anonymously.
+
+/** Location of the IDS 1.0 specification file to audit the model against. */
+export const IDS_URL = "./ids/construction-timelapse.ids";
+
+/**
+ * Map the IFC entity names used in the IDS applicability facets to the WebScene
+ * building-layer titles that represent them. Each layer is a federated IFC
+ * class (the source model was authored in IFC and published as scene layers).
+ */
+export const IFC_ENTITY_LAYERS = {
+  IFCSLAB: "Slabs",
+  IFCCOLUMN: "Columns",
+  IFCBEAM: "Structural Framing",
+  IFCWALL: "Walls",
+  IFCPLATE: "Plates",
+  IFCROOF: "Roofs",
+  IFCCURTAINWALL: "Curtain Wall Panels"
+};
+
+/**
+ * Bridge IDS requirement facets (attribute names and property baseNames) to the
+ * scene-service field that carries the value. The IDS keeps authentic IFC names
+ * (e.g. PredefinedType, ThermalTransmittance); the published layers flatten them
+ * to these fields, so the audit checks the right column.
+ */
+export const IDS_FIELD_MAP = {
+  // IfcRoot / entity attributes
+  GlobalId: "GlobalId",
+  Name: "Name",
+  PredefinedType: "PreDefinedType",
+  // Pset_*Common properties
+  FireRating: "FireRating",
+  LoadBearing: "LoadBearing",
+  IsExternal: "IsExternal",
+  ThermalTransmittance: "ThermalTransmittance",
+  // Pset_4D_ConstructionSequencing (project 4D schedule properties)
+  ScheduledPhase: "Sched_Phase",
+  PlannedStartDate: "Sched_StartDate",
+  PlannedFinishDate: "Sched_EndDate",
+  ConstructionStatus: "CStatus"
+};
+
+/**
+ * Candidate fields that satisfy a classification requirement — an element is
+ * classified if any of these carries a value.
+ */
+export const IDS_CLASSIFICATION_FIELDS = ["AssemblyCode", "OmniClass"];

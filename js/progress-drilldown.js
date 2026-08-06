@@ -53,6 +53,20 @@ const RISK_DETAILS = {
       { label: "COR-030 \u00b7 Lobby Finishes", meta: "Pending", amount: 65000 },
     ],
   },
+  environmental: {
+    title: "Environmental Sensor Risk",
+    icon: "\u26A0",
+    theme: "violet",
+    totalLabel: "Sensor-flagged exposure",
+    rows: [
+      { label: "Tower Crane T2 \u00b7 high-wind stand-down", meta: "3 days \u00b7 gusts >45 mph", amount: 30000 },
+      { label: "High-heat advisory \u00b7 crew work stoppage", meta: "2 days \u00b7 heat index >105\u00b0F", amount: 22000 },
+      { label: "Idle equipment \u00b7 weather hold", meta: "Cranes + hoists", amount: 18000 },
+      { label: "Ground-crew evacuation \u00b7 CO alert", meta: "Level 07 \u00b7 42 ppm", amount: 12500 },
+      { label: "Ventilation & re-entry testing \u00b7 CO\u2082", meta: "Basement \u00b7 5,000 ppm", amount: 8000 },
+      { label: "Air-quality monitoring & remediation", meta: "Site-wide sensors", amount: 10000 },
+    ],
+  },
 };
 
 /** Live headline total + subtitle per risk, refreshed each panel render. */
@@ -60,6 +74,7 @@ const riskContext = {
   schedule: { total: 0, sub: "" },
   delayed: { total: 0, sub: "" },
   pending: { total: 0, sub: "" },
+  environmental: { total: 0, sub: "" },
 };
 
 /** Push the latest computed totals/subtitles in from renderFinancialPanel. */
