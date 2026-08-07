@@ -41,6 +41,10 @@ export const HELP_CONTENT = {
         a: "Open the <strong>☑ IDS audit</strong> from the right-hand controls to check the live model against a <strong>buildingSMART IDS</strong> — an openBIM Information Delivery Specification. Each requirement (GlobalId, naming, predefined type, 4D scheduling, fire rating, thermal U-value, classification…) is scored <strong style=\"color:#4ade80\">pass</strong> / <strong style=\"color:#f6c445\">partial</strong> / <strong style=\"color:#fb7185\">fail</strong> against the real element data. Expand any specification for the per-layer breakdown, then click a layer to isolate it in 3D."
       },
       {
+        q: "Highlight & export issues (BCF)",
+        a: "For any rule that fails, use <strong>◎ Highlight failing in 3D</strong> to fly to and ghost-highlight the exact non-compliant elements — painted red down to the individual component — then <strong>⭳ Export BCF issue</strong> to download a <strong>buildingSMART BCF 2.1</strong> file (<code>.bcfzip</code>) any BCF-aware tool can open. IFC in, IDS checked, BCF out."
+      },
+      {
         q: "Ask the timeline (✨)",
         a: "Type a date or a phrase — “Nov 1 2025”, “60%”, “halfway”, “completion” — and the build jumps straight to that moment."
       },
@@ -57,7 +61,7 @@ export const HELP_CONTENT = {
   progress: {
     title: "Guide · Real Construction Status",
     intro:
-      "The as-built view: what has actually been constructed on site, measured against the plan in both time (4D) and cost (5D).",
+      "The as-built view: what has actually been constructed on site, measured against the plan in time (4D) and cost (5D) — with live environmental sensors overlaid on the model.",
     sections: [
       {
         q: "What am I looking at?",
@@ -86,6 +90,26 @@ export const HELP_CONTENT = {
       {
         q: "Generate AIA Billing Report",
         a: "Produces a formal <strong>AIA G702 / G703</strong> Application for Payment built from the live project figures."
+      },
+      {
+        q: "Live site sensors",
+        a: "The <strong>Live Sensors on Site</strong> panel (bottom-left) streams real-time <strong>noise, dust, gas and wind</strong> readings from <strong>ArcGIS Velocity</strong>, alongside weather, air quality and site activity (workers / vehicles), updating continuously as new readings arrive."
+      },
+      {
+        q: "Show sensors on the map",
+        a: "Hit <strong>Show</strong> in the panel's location controls to drop each sensor onto the 3D model as a glowing, gently pulsing orb, colour-coded by its reading. Filter with the chips — <strong>All · Noise · Dust · Gas · Wind</strong> — to isolate one type; press <strong>Show</strong> again to hide them."
+      },
+      {
+        q: "Inspect a sensor",
+        a: "Click any orb for a live pop-up showing its latest reading, category and status. Sensor identities are anonymised (e.g. “Noise sensor 1”, “Gas monitor”)."
+      },
+      {
+        q: "Live Site Overview (⤢)",
+        a: "Press <strong>⤢</strong> on the sensor panel to open the <strong>Live Site Overview</strong> — a full dashboard of site conditions plus a per-sensor breakdown. <strong>⤡</strong> returns to the summary."
+      },
+      {
+        q: "Which gases to watch",
+        a: "When gas readings climb, the panel, pop-up and on-map label name the exact gases driving it — worst first (e.g. “Watch: CO, VOC”) — so you can see which factors need attention, not just an overall category."
       },
       {
         q: "Navigate & Spin",
