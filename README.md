@@ -1,11 +1,10 @@
 # Construction Timelapse
 
-A futuristic, glassmorphism **4D / 5D construction-monitoring digital twin** of *Meridian Tower*,
-built on the [ArcGIS Maps SDK for JavaScript (5.x)](https://developers.arcgis.com/javascript/).
-It streams an **IFC-authored building model published as Esri I3S**, plays its construction
-sequence back over time, audits it **live against a buildingSMART IDS**, tracks real as-built
-progress in both schedule (4D) and cost (5D), and overlays **live environmental sensors** from
-ArcGIS Velocity.
+A **4D / 5D construction-monitoring digital twin** of *Meridian Tower*, built end-to-end on the
+**[ArcGIS Maps SDK for JavaScript 5.1](https://developers.arcgis.com/javascript/)**. It streams an
+**IFC-authored building model published as Esri I3S**, plays its construction sequence back over
+time, audits it **live against a buildingSMART IDS**, tracks real as-built progress in both
+schedule (4D) and cost (5D), and overlays **live environmental sensors** from ArcGIS Velocity.
 
 > **openBIM at the core** — the model is **IFC → I3S**, validated against a **buildingSMART
 > IDS 1.0** specification in the browser, and findings export to **BCF 2.1**. IFC in, IDS
@@ -66,8 +65,8 @@ track every reading, including a gas **"which gases to watch"** breakdown that n
 drivers.
 
 ### Experience
-Glassmorphism UI with WCAG-tuned contrast and neon-cyan accents, custom hit-test tooltips, a
-sectioned help guide on every screen, a slice / cut-plane tool, and one-touch camera spin.
+Custom hit-test tooltips, a sectioned help guide on every screen, an SDK slice / cut-plane tool
+and one-touch camera spin, over a dark, high-contrast theme (WCAG-tuned).
 
 ## Views
 
@@ -78,12 +77,29 @@ sectioned help guide on every screen, a slice / cut-plane tool, and one-touch ca
 | `report.html` | AIA G702 / G703 Application for Payment |
 | `login.html` | Entry gate |
 
-## Tech
+## Built on the ArcGIS Maps SDK for JavaScript 5.1
 
-- **ArcGIS Maps SDK for JavaScript 5.1** — ES modules loaded from the CDN via an import map (no build step)
-- **Esri I3S** Scene Layers (IFC-derived) in a WebScene + SceneView, driven by a headless `TimeSlider`
+The whole app is written directly against the
+**[ArcGIS Maps SDK for JavaScript 5.1](https://developers.arcgis.com/javascript/)**, loaded as ES
+modules from the CDN via an import map — no build step, no framework. It leans on the SDK's 5.x 3D
+stack throughout:
+
+- **`WebScene` + `SceneView`** — the 3D digital twin, camera control and cinematic orbit (`view.goTo`)
+- **I3S `SceneLayer`s** — the IFC-derived building model streamed as cached 3D object layers
+- **Headless `TimeSlider` + time-aware layers** — the 4D construction sequence
+- **`esriRequest` against the I3S per-attribute statistics** — the live IDS audit and progress
+  analytics, with no server round-trip
+- **`UniqueValueRenderer` / `SimpleRenderer` + `MeshSymbol3D`** — recolouring elements by IDS
+  pass / fail and construction status, down to individual `GlobalId`s
+- **3D object sphere symbols with emissive material + WebScene `Glow`** — the glowing Velocity
+  sensor orbs
+- **`view.hitTest` + layer-view `highlight`** — click-to-inspect popups and tooltips
+- **Slice (cut-plane) analysis** — look straight inside the model
+
+### Also uses
+
 - **buildingSMART openBIM** — IFC, IDS 1.0, BCF 2.1
-- **ArcGIS Velocity** real-time stream services
+- **ArcGIS Velocity** — real-time sensor stream services
 - Vanilla JavaScript (ES modules), HTML and CSS
 
 ## Run locally
@@ -105,7 +121,7 @@ construction-timelapse/
 ├─ index.html                      Planned 4D sequencing + IDS audit
 ├─ progress.html                   Real status (4D) + 5D cost + live sensors
 ├─ report.html                     AIA G702/G703 Application for Payment
-├─ css/styles.css                  Design tokens + glassmorphism + widget overrides
+├─ css/styles.css                  Design tokens + UI theme + ArcGIS widget overrides
 ├─ ids/construction-timelapse.ids  buildingSMART IDS 1.0 specification
 ├─ docs/velocity/                  ArcGIS Velocity feed data + generator
 ├─ assets/                         Logos
