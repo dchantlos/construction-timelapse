@@ -66,7 +66,8 @@ export function cameraToBcfPerspective(camera) {
     viewPoint: { x: p.x ?? 0, y: p.y ?? 0, z: p.z ?? 0 },
     direction,
     up,
-    fieldOfView: clamp(camera?.fov ?? 60, 10, 120)
+    // BCF 2.1 restricts FieldOfView to 45–60 degrees (visinfo.xsd), so clamp here.
+    fieldOfView: clamp(camera?.fov ?? 60, 45, 60)
   };
 }
 
@@ -148,16 +149,22 @@ function markupXml({ topicGuid, viewpointGuid, title, description, author, date 
 }
 
 function viewpointXml({ viewpointGuid, guids, perspective }) {
-  const selection = guids
-    .map((g) => `      <Component IfcGuid="${xmlEscape(g)}" />`)
-    .join("\n");
+  // BCF 2.1 (visinfo.xsd): inside <Components> the order is fixed —
+  // <Selection>? , <Visibility> (required) , <Coloring>? — and both <Selection>
+  // and every <Color> must hold at least one <Component>. An empty <Selection/>
+  // is schema-invalid, so Selection (and Coloring) are omitted entirely when
+  // there are no GlobalIds to reference.
+  const selection = guids.length
+    ? `    <Selection>
+${guids.map((g) => `      <Component IfcGuid="${xmlEscape(g)}" />`).join("\n")}
+    </Selection>
+`
+    : "";
 
   const coloring = guids.length
     ? `    <Coloring>
       <Color Color="FF3B30">
-        <Components>
-${guids.map((g) => `          <Component IfcGuid="${xmlEscape(g)}" />`).join("\n")}
-        </Components>
+${guids.map((g) => `        <Component IfcGuid="${xmlEscape(g)}" />`).join("\n")}
       </Color>
     </Coloring>
 `
@@ -166,11 +173,8 @@ ${guids.map((g) => `          <Component IfcGuid="${xmlEscape(g)}" />`).join("\n
   return `<?xml version="1.0" encoding="UTF-8"?>
 <VisualizationInfo xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Guid="${viewpointGuid}">
   <Components>
-    <Selection>
-${selection}
-    </Selection>
-${coloring}    <Visibility DefaultVisibility="true" />
-  </Components>
+${selection}    <Visibility DefaultVisibility="true" />
+${coloring}  </Components>
   <PerspectiveCamera>
     ${vec("CameraViewPoint", perspective.viewPoint)}
     ${vec("CameraDirection", perspective.direction)}
