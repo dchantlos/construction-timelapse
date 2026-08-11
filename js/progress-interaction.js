@@ -10,6 +10,11 @@
 import { BUILDING_LAYERS, PROGRESS_STATUS } from "./config.js?v=12";
 import { openSensorPopupForGraphic, closeSensorPopup } from "./velocity-live.js?v=7";
 
+/** Reference-only context layers (e.g. SwissBuildings 3D) are never identifiable. */
+function isContextOnlyLayer(title = "") {
+  return title.replace(/[\s_]/g, "").toLowerCase().includes("swissbuilding");
+}
+
 // Friendly label + colour for each CStatus value, keyed for O(1) lookup.
 const STATUS_BY_VALUE = new Map(PROGRESS_STATUS.buckets.map((b) => [b.value, b]));
 
@@ -102,7 +107,10 @@ export function createProgressInteraction(view) {
     }
 
     const results = response.results.filter(
-      (r) => r.type === "graphic" && r.graphic?.layer
+      (r) =>
+        r.type === "graphic" &&
+        r.graphic?.layer &&
+        !isContextOnlyLayer(r.graphic.layer.title)
     );
 
     clearHighlight();

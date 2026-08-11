@@ -23,10 +23,15 @@ function normalizeTitle(title = "") {
 }
 
 /** True for context layers with no CStatus — the excluded set plus any
- *  "Places"/"Labels" variant (e.g. the combined "Places and Labels" ref layer). */
+ *  "Places"/"Labels"/"SwissBuildings" variant (reference-only context layers). */
 function isExcludedLayer(title) {
   const n = normalizeTitle(title);
-  return EXCLUDED_LAYERS.has(n) || n.includes("place") || n.includes("label");
+  return (
+    EXCLUDED_LAYERS.has(n) ||
+    n.includes("place") ||
+    n.includes("label") ||
+    n.includes("swissbuilding")
+  );
 }
 
 /**

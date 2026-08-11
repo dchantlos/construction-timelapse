@@ -4,6 +4,11 @@
 
 import { BUILDING_LAYERS, PHASES, FALLBACK_TIME_EXTENT } from "./config.js";
 
+/** Reference-only context layers (e.g. SwissBuildings 3D) are never identifiable. */
+function isContextOnlyLayer(title = "") {
+  return title.replace(/[\s_]/g, "").toLowerCase().includes("swissbuilding");
+}
+
 /**
  * Replace the default Esri popup with a custom click experience: clicking a
  * building component highlights it with the SceneView's neon highlight and
@@ -97,7 +102,10 @@ export function createInteraction(view) {
     }
 
     const result = response.results.find(
-      (r) => r.type === "graphic" && r.graphic?.layer
+      (r) =>
+        r.type === "graphic" &&
+        r.graphic?.layer &&
+        !isContextOnlyLayer(r.graphic.layer.title)
     );
 
     clearHighlight();

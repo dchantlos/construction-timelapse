@@ -9,13 +9,13 @@
 import { createView } from "./scene.js?v=12";
 import { createLayerVisibility } from "./visibility.js?v=12";
 import { createSpin } from "./spin.js?v=12";
-import { collectConstructionStatus } from "./progress-stats.js?v=12";
+import { collectConstructionStatus } from "./progress-stats.js?v=13";
 import { renderProgressPanel } from "./progress-panel.js?v=12";
-import { createProgressLayers } from "./progress-layers.js?v=12";
-import { createProgressInteraction } from "./progress-interaction.js?v=17";
+import { createProgressLayers } from "./progress-layers.js?v=13";
+import { createProgressInteraction } from "./progress-interaction.js?v=18";
 import { createSlice } from "./slice.js?v=12";
 import { renderFinancialPanel, createFinancialControls } from "./progress-financial.js?v=15";
-import { createCostOverlays } from "./progress-overlays.js?v=14";
+import { createCostOverlays } from "./progress-overlays.js?v=15";
 import { createSensorPanel } from "./progress-sensors.js?v=14";
 import { createVelocityLive } from "./velocity-live.js?v=7";
 import { PROGRESS_WEBSCENE_ID } from "./config.js?v=12";

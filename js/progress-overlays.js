@@ -91,7 +91,8 @@ function isBuildingLayer(title = "") {
     n === "constructionobjects" ||
     n === "buildings" ||
     n.includes("place") ||
-    n.includes("label")
+    n.includes("label") ||
+    n.includes("swissbuilding")
   );
 }
 

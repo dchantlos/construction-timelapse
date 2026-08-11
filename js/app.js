@@ -11,7 +11,7 @@ import { createLayerControl } from "./layers.js?v=1";
 import { createLayerVisibility } from "./visibility.js";
 import { createCinematic } from "./cinematic.js?v=21";
 import { createAssistant } from "./assistant.js?v=23";
-import { createInteraction } from "./interaction.js?v=1";
+import { createInteraction } from "./interaction.js?v=2";
 import { createSlice } from "./slice.js";
 import { createAudit } from "./audit.js?v=15";
 import { TIME_STEP } from "./config.js";
