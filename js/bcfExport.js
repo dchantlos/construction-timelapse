@@ -11,14 +11,15 @@
 // Adapted to this app (see the project README/PR notes):
 //   • No build step — JSZip is loaded as an ESM module from the CDN (import map).
 //   • view.takeScreenshot() supplies snapshot.png.
-//   • The scene is georeferenced I3S, so the camera is written in the scene's
-//     spatial reference: it round-trips perfectly inside this app, but a generic
-//     desktop viewer may not align it to IFC local coordinates.
+//   • The global SceneView reports the camera in geographic degrees; BCF/IFC
+//     consumers expect planar metres, so the camera position is projected to
+//     Web Mercator (the model's planar frame) before it is written out.
 //   • Per BCF 2.1, element GlobalIds live in the viewpoint's <Components>, and
 //     the markup references that viewpoint (BCF 1.0 kept them in the markup).
 // =============================================================================
 
 import JSZip from "jszip";
+import { lngLatToXY } from "@arcgis/core/geometry/support/webMercatorUtils.js";
 
 // ---------- small vector helpers ---------------------------------------------
 
@@ -37,16 +38,36 @@ const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
 // ---------- camera <-> BCF perspective conversion ----------------------------
 
 /**
+ * Project a SceneView camera position into the model's planar frame. A global
+ * SceneView reports camera.position in geographic degrees (lon/lat); BCF/IFC
+ * consumers place geometry in planar metres, so geographic coordinates are
+ * projected to Web Mercator. A position already in a projected SR is used as-is.
+ *
+ * @param {{ x?:number, y?:number, spatialReference?:{ isGeographic?:boolean } }} position
+ * @returns {{ x:number, y:number }}
+ */
+function toPlanarXY(position) {
+  if (position?.spatialReference?.isGeographic) {
+    const [x, y] = lngLatToXY(position.x ?? 0, position.y ?? 0);
+    return { x, y };
+  }
+  return { x: position?.x ?? 0, y: position?.y ?? 0 };
+}
+
+/**
  * Convert an ArcGIS SceneView camera into a BCF PerspectiveCamera description.
  * `heading` is degrees clockwise from north; `tilt` is degrees from straight
  * down (0) to the horizon (90). The direction/up basis is built in a local
- * East-North-Up frame so the result is a valid orthonormal camera.
+ * East-North-Up frame so the result is a valid orthonormal camera. The camera
+ * position is projected to the model's planar (Web Mercator) frame so a desktop
+ * viewer aligns it to the IFC geometry rather than to raw geographic degrees.
  *
  * @param {import("@arcgis/core/Camera").default} camera
  * @returns {{ viewPoint:{x,y,z}, direction:{x,y,z}, up:{x,y,z}, fieldOfView:number }}
  */
 export function cameraToBcfPerspective(camera) {
   const p = camera?.position ?? { x: 0, y: 0, z: 0 };
+  const planar = toPlanarXY(p);
   const h = ((camera?.heading ?? 0) * Math.PI) / 180;
   const t = ((camera?.tilt ?? 0) * Math.PI) / 180;
 
@@ -63,7 +84,7 @@ export function cameraToBcfPerspective(camera) {
   const up = normalize(cross(normalize(right), direction));
 
   return {
-    viewPoint: { x: p.x ?? 0, y: p.y ?? 0, z: p.z ?? 0 },
+    viewPoint: { x: planar.x, y: planar.y, z: p.z ?? 0 },
     direction,
     up,
     // BCF 2.1 restricts FieldOfView to 45–60 degrees (visinfo.xsd), so clamp here.
@@ -150,10 +171,11 @@ function markupXml({ topicGuid, viewpointGuid, title, description, author, date 
 
 function viewpointXml({ viewpointGuid, guids, perspective }) {
   // BCF 2.1 (visinfo.xsd): inside <Components> the order is fixed —
-  // <Selection>? , <Visibility> (required) , <Coloring>? — and both <Selection>
-  // and every <Color> must hold at least one <Component>. An empty <Selection/>
-  // is schema-invalid, so Selection (and Coloring) are omitted entirely when
-  // there are no GlobalIds to reference.
+  // <ViewSetupHints>? , <Selection>? , <Visibility> (required) , <Coloring>? —
+  // and <Selection> must hold at least one <Component>. Elements are flagged by
+  // adding a <Component IfcGuid="…"/> to <Selection>, so a BCF viewer selects and
+  // zooms to them. An empty <Selection/> is schema-invalid, so it is emitted
+  // only when there are GlobalIds to reference.
   const selection = guids.length
     ? `    <Selection>
 ${guids.map((g) => `      <Component IfcGuid="${xmlEscape(g)}" />`).join("\n")}
@@ -161,20 +183,12 @@ ${guids.map((g) => `      <Component IfcGuid="${xmlEscape(g)}" />`).join("\n")}
 `
     : "";
 
-  const coloring = guids.length
-    ? `    <Coloring>
-      <Color Color="FF3B30">
-${guids.map((g) => `        <Component IfcGuid="${xmlEscape(g)}" />`).join("\n")}
-      </Color>
-    </Coloring>
-`
-    : "";
-
   return `<?xml version="1.0" encoding="UTF-8"?>
 <VisualizationInfo xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Guid="${viewpointGuid}">
   <Components>
+    <ViewSetupHints SpacesVisible="false" SpaceBoundariesVisible="false" OpeningsVisible="false" />
 ${selection}    <Visibility DefaultVisibility="true" />
-${coloring}  </Components>
+  </Components>
   <PerspectiveCamera>
     ${vec("CameraViewPoint", perspective.viewPoint)}
     ${vec("CameraDirection", perspective.direction)}

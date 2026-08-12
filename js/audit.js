@@ -17,8 +17,8 @@ import {
   IDS_FIELD_MAP,
   IDS_CLASSIFICATION_FIELDS
 } from "./config.js";
-import { exportBcf, guidOf } from "./bcfExport.js?v=2";
-import { createBcfHighlighter } from "./bcfViewer.js?v=4";
+import { exportBcf, guidOf } from "./bcfExport.js?v=3";
+import { createBcfHighlighter } from "./bcfViewer.js?v=5";
 import SimpleRenderer from "@arcgis/core/renderers/SimpleRenderer.js";
 import UniqueValueRenderer from "@arcgis/core/renderers/UniqueValueRenderer.js";
 import MeshSymbol3D from "@arcgis/core/symbols/MeshSymbol3D.js";
