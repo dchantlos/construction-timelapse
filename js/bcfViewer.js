@@ -20,7 +20,7 @@
 import FeatureEffect from "@arcgis/core/layers/support/FeatureEffect.js";
 import FeatureFilter from "@arcgis/core/layers/support/FeatureFilter.js";
 
-import { bcfPerspectiveToCamera } from "./bcfExport.js?v=3";
+import { bcfPerspectiveToCamera } from "./bcfExport.js?v=4";
 
 // Failing elements pop; everything else ghosts to translucent grey.
 const INCLUDED_EFFECT = "drop-shadow(0 0 8px rgba(255, 90, 0, 0.95)) saturate(1.6)";

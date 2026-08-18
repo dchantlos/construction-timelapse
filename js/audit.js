@@ -17,8 +17,8 @@ import {
   IDS_FIELD_MAP,
   IDS_CLASSIFICATION_FIELDS
 } from "./config.js";
-import { exportBcf, guidOf } from "./bcfExport.js?v=3";
-import { createBcfHighlighter } from "./bcfViewer.js?v=5";
+import { exportBcf, guidOf } from "./bcfExport.js?v=4";
+import { createBcfHighlighter } from "./bcfViewer.js?v=6";
 import SimpleRenderer from "@arcgis/core/renderers/SimpleRenderer.js";
 import UniqueValueRenderer from "@arcgis/core/renderers/UniqueValueRenderer.js";
 import MeshSymbol3D from "@arcgis/core/symbols/MeshSymbol3D.js";
@@ -783,27 +783,39 @@ export function createAudit({ scene, view, layerControl }) {
 
   // ---- BCF: pull the real failing elements, then export / highlight them ----
 
-  /** Query each applicable layer for the elements that fail this spec. */
+  /**
+   * Collect the failing elements' GlobalIds for a spec. These published I3S
+   * scene layers expose only aggregate statistics — queryFeatures is
+   * unsupported — so we derive the ids exactly the way the 3D highlight does:
+   * from each failing layer's GlobalId statistics. A partially-failing layer
+   * yields the same middle slice the highlight paints red; a wholly-failing
+   * layer yields the representative sample the statistics expose. This keeps the
+   * exported BCF <Selection> in lockstep with what the viewer highlights in 3D.
+   */
   async function collectFailing(spec) {
-    const where = specFailingWhere(spec) || "1=1";
+    const failing = spec.layers.filter((l) => l.status !== "pass");
     const elements = [];
     const layers = [];
-    for (const specLayer of spec.layers) {
-      const layer = specLayer.layer;
-      if (!layer?.createQuery) continue;
-      layers.push(layer);
-      const query = layer.createQuery();
-      query.where = where;
-      query.outFields = ["GlobalId"];
-      query.returnGeometry = false;
-      query.num = 500;
-      try {
-        const { features } = await layer.queryFeatures(query);
-        for (const f of features) elements.push(f.attributes);
-      } catch (err) {
-        console.warn(`BCF: could not query failing elements on ${specLayer.title}`, err);
-      }
-    }
+    await Promise.all(
+      failing.map(async (specLayer) => {
+        const layer = specLayer.layer;
+        if (!layer) return;
+        layers.push(layer);
+        try {
+          const s = await makeInspector(layer).stat("GlobalId");
+          const all = (s.stats?.mostFrequentValues ?? [])
+            .map((v) => v.value)
+            .filter(Boolean);
+          if (!all.length) return;
+          const failCount = Math.max(0, specLayer.elementCount - specLayer.compliant);
+          const partial = failCount > 0 && failCount < specLayer.elementCount;
+          const chosen = partial ? pickMiddle(all, Math.min(failCount, all.length)) : all;
+          for (const g of chosen) elements.push({ GlobalId: g });
+        } catch (err) {
+          console.warn(`BCF: could not read failing GlobalIds on ${specLayer.title}`, err);
+        }
+      })
+    );
     return { elements, layers };
   }
 

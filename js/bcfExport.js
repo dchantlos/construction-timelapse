@@ -11,9 +11,9 @@
 // Adapted to this app (see the project README/PR notes):
 //   • No build step — JSZip is loaded as an ESM module from the CDN (import map).
 //   • view.takeScreenshot() supplies snapshot.png.
-//   • The global SceneView reports the camera in geographic degrees; BCF/IFC
-//     consumers expect planar metres, so the camera position is projected to
-//     Web Mercator (the model's planar frame) before it is written out.
+//   • The scene is Web Mercator, but IFC/BCF consumers expect the model's own
+//     LOCAL engineering frame, so the camera is mapped from Web Mercator into
+//     local model metres (see MODEL_GEOREF) before it is written out.
 //   • Per BCF 2.1, element GlobalIds live in the viewpoint's <Components>, and
 //     the markup references that viewpoint (BCF 1.0 kept them in the markup).
 // =============================================================================
@@ -35,58 +35,123 @@ const normalize = (v) => {
 };
 const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
 
-// ---------- camera <-> BCF perspective conversion ----------------------------
+// ---------- model georeference: Web Mercator scene <-> IFC local frame --------
 
 /**
- * Project a SceneView camera position into the model's planar frame. A global
- * SceneView reports camera.position in geographic degrees (lon/lat); BCF/IFC
- * consumers place geometry in planar metres, so geographic coordinates are
- * projected to Web Mercator. A position already in a projected SR is used as-is.
- *
- * @param {{ x?:number, y?:number, spatialReference?:{ isGeographic?:boolean } }} position
- * @returns {{ x:number, y:number }}
+ * The BIM model is published into a Web Mercator (EPSG:3857) scene, but IFC/BCF
+ * desktop tools (BIMVision, etc.) expect the model's own LOCAL engineering frame
+ * — small metre coordinates near the project origin — not raw Web Mercator
+ * easting/northing in the millions. This anchor maps between the two:
+ *   • originX / originY — Web Mercator position of the IFC local origin (0,0).
+ *   • originZ           — height (scene vertical datum) of IFC z = 0.
+ *   • rotationDeg       — IFC +X axis east of grid north (0 ⇒ model aligned to
+ *                         true north, so ENU axes already match the IFC axes).
+ * Web Mercator inflates ground distance by sec(latitude); the reverse factor
+ * cos(latitude) at the site is derived from the origin below. These come from
+ * the source model's georeference — confirm against its survey/base point.
+ * (Current X/Y/Z are estimated from the published Slabs layer extent.)
  */
-function toPlanarXY(position) {
+const MODEL_GEOREF = {
+  originX: 958890.58,
+  originY: 6010426.04,
+  originZ: 442.85,
+  rotationDeg: 0
+};
+
+const EARTH_R = 6378137; // Web Mercator sphere radius (WGS84 semi-major axis), m
+
+/** Geodetic latitude (radians) for a Web Mercator northing Y (metres). */
+function webMercatorLat(y) {
+  return 2 * Math.atan(Math.exp(y / EARTH_R)) - Math.PI / 2;
+}
+
+// Web Mercator metres → true ground metres at the site (near-constant over the
+// ~60 m model footprint, so a single origin-derived factor is used both ways).
+const WM_SCALE = Math.cos(webMercatorLat(MODEL_GEOREF.originY));
+const GEOREF_RAD = (MODEL_GEOREF.rotationDeg * Math.PI) / 180;
+
+// ---------- camera <-> BCF perspective conversion ----------------------------
+
+/** Web Mercator (or still-geographic) camera position → IFC local metres. */
+function toModelLocal(position) {
+  let X, Y;
   if (position?.spatialReference?.isGeographic) {
-    const [x, y] = lngLatToXY(position.x ?? 0, position.y ?? 0);
-    return { x, y };
+    [X, Y] = lngLatToXY(position.x ?? 0, position.y ?? 0);
+  } else {
+    X = position?.x ?? 0;
+    Y = position?.y ?? 0;
   }
-  return { x: position?.x ?? 0, y: position?.y ?? 0 };
+  const dx = (X - MODEL_GEOREF.originX) * WM_SCALE;
+  const dy = (Y - MODEL_GEOREF.originY) * WM_SCALE;
+  const c = Math.cos(GEOREF_RAD);
+  const s = Math.sin(GEOREF_RAD);
+  return {
+    x: dx * c + dy * s,
+    y: -dx * s + dy * c,
+    z: (position?.z ?? 0) - MODEL_GEOREF.originZ
+  };
+}
+
+/** IFC local metres → Web Mercator {x,y,z} (inverse of toModelLocal). */
+function fromModelLocal(local) {
+  const c = Math.cos(GEOREF_RAD);
+  const s = Math.sin(GEOREF_RAD);
+  const dx = local.x * c - local.y * s;
+  const dy = local.x * s + local.y * c;
+  return {
+    x: MODEL_GEOREF.originX + dx / WM_SCALE,
+    y: MODEL_GEOREF.originY + dy / WM_SCALE,
+    z: (local.z ?? 0) + MODEL_GEOREF.originZ
+  };
+}
+
+/** Rotate a direction/up vector from ENU (grid) into the IFC frame. */
+function rotateToModel(v) {
+  const c = Math.cos(GEOREF_RAD);
+  const s = Math.sin(GEOREF_RAD);
+  return { x: v.x * c + v.y * s, y: -v.x * s + v.y * c, z: v.z };
+}
+
+/** Rotate a direction vector from the IFC frame back to ENU (grid). */
+function rotateFromModel(v) {
+  const c = Math.cos(GEOREF_RAD);
+  const s = Math.sin(GEOREF_RAD);
+  return { x: v.x * c - v.y * s, y: v.x * s + v.y * c, z: v.z };
 }
 
 /**
  * Convert an ArcGIS SceneView camera into a BCF PerspectiveCamera description.
  * `heading` is degrees clockwise from north; `tilt` is degrees from straight
  * down (0) to the horizon (90). The direction/up basis is built in a local
- * East-North-Up frame so the result is a valid orthonormal camera. The camera
- * position is projected to the model's planar (Web Mercator) frame so a desktop
- * viewer aligns it to the IFC geometry rather than to raw geographic degrees.
+ * East-North-Up frame so the result is a valid orthonormal camera. The position
+ * and basis are then mapped into the model's LOCAL IFC frame (see MODEL_GEOREF)
+ * so a desktop viewer aligns the viewpoint to the IFC geometry rather than to
+ * raw Web Mercator easting/northing.
  *
  * @param {import("@arcgis/core/Camera").default} camera
  * @returns {{ viewPoint:{x,y,z}, direction:{x,y,z}, up:{x,y,z}, fieldOfView:number }}
  */
 export function cameraToBcfPerspective(camera) {
   const p = camera?.position ?? { x: 0, y: 0, z: 0 };
-  const planar = toPlanarXY(p);
   const h = ((camera?.heading ?? 0) * Math.PI) / 180;
   const t = ((camera?.tilt ?? 0) * Math.PI) / 180;
 
   // View direction in East-North-Up: tilt 0 → straight down, 90 → horizon.
-  const direction = normalize({
+  const dirEnu = normalize({
     x: Math.sin(t) * Math.sin(h),
     y: Math.sin(t) * Math.cos(h),
     z: -Math.cos(t)
   });
 
   // Orthonormal up-vector: right = dir × worldUp, up = right × dir.
-  let right = cross(direction, { x: 0, y: 0, z: 1 });
+  let right = cross(dirEnu, { x: 0, y: 0, z: 1 });
   if (length(right) < 1e-6) right = { x: 1, y: 0, z: 0 }; // looking straight up/down
-  const up = normalize(cross(normalize(right), direction));
+  const upEnu = normalize(cross(normalize(right), dirEnu));
 
   return {
-    viewPoint: { x: planar.x, y: planar.y, z: p.z ?? 0 },
-    direction,
-    up,
+    viewPoint: toModelLocal(p),
+    direction: rotateToModel(dirEnu),
+    up: rotateToModel(upEnu),
     // BCF 2.1 restricts FieldOfView to 45–60 degrees (visinfo.xsd), so clamp here.
     fieldOfView: clamp(camera?.fov ?? 60, 45, 60)
   };
@@ -95,15 +160,16 @@ export function cameraToBcfPerspective(camera) {
 /**
  * Inverse of {@link cameraToBcfPerspective}: turn a BCF PerspectiveCamera back
  * into ArcGIS {position, heading, tilt} so a viewer can fly the SceneView to it.
+ * The viewpoint is mapped from the IFC local frame back to Web Mercator.
  *
  * @param {{ viewPoint:{x,y,z}, direction:{x,y,z}, fieldOfView?:number }} persp
  */
 export function bcfPerspectiveToCamera(persp) {
-  const d = normalize(persp.direction);
+  const d = normalize(rotateFromModel(persp.direction));
   const heading = (((Math.atan2(d.x, d.y) * 180) / Math.PI) + 360) % 360;
   const tilt = (Math.acos(clamp(-d.z, -1, 1)) * 180) / Math.PI;
   return {
-    position: persp.viewPoint,
+    position: fromModelLocal(persp.viewPoint),
     heading,
     tilt,
     fov: persp.fieldOfView ?? 60
