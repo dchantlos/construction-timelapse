@@ -2054,7 +2054,7 @@ body {
   right: 74px;
   top: 96px;
   z-index: 13;
-  width: 408px;
+  width: 460px;
   max-width: calc(100vw - 108px);
   max-height: calc(100dvh - 210px);
   padding: 0;
@@ -2098,6 +2098,31 @@ body {
   font-size: 13px;
   letter-spacing: -2px;
   opacity: 0.7;
+}
+.audit-panel__right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.audit-standards {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.audit-standards__logo {
+  height: 30px;
+  width: auto;
+  display: block;
+  opacity: 0.95;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+.audit-standards__sep {
+  width: 1px;
+  height: 22px;
+  background: var(--glass-border-soft);
+  border-radius: 1px;
 }
 .audit-body {
   padding: 14px 16px 16px;
