@@ -24,7 +24,7 @@
 
     <!-- ArcGIS dark base theme (we override most of it in styles.css) -->
     <link rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css" />
-    <link rel="stylesheet" href="./css/styles.css?v=43" />
+    <link rel="stylesheet" href="./css/styles.css?v=50" />
 
     <!-- ESM import map: load @arcgis/core (and JSZip for BCF export) from CDNs -->
     <script type="importmap">
@@ -43,22 +43,25 @@
 
     <!-- Boot / loading veil -->
     <div id="boot" class="boot">
-      <div class="boot__pulse"></div>
+      <div class="boot__mark">
+        <span class="boot__pulse" aria-hidden="true"></span>
+        <img class="boot__logo" src="./assets/dev-logo.png" alt="Esri Developers" />
+      </div>
       <div class="boot__text">Initializing Construction Twin<span class="boot__dots"></span></div>
     </div>
 
     <!-- ======================= TOP BAR ======================= -->
     <header class="topbar glass">
-      <div class="brand">
-        <div class="brand__mark">
-          <span class="brand__ring"></span>
-          <span class="brand__core"></span>
-        </div>
-        <div class="brand__text">
-          <h1>ArcGIS</h1>
-          <p>Construction Timelapse</p>
-        </div>
-      </div>
+      <a class="brand" href="https://developers.arcgis.com/" target="_blank" rel="noopener noreferrer" title="Develop with ArcGIS — Esri Developers">
+        <span class="brand__logo-wrap">
+          <img class="brand__logo" src="./assets/dev-logo.png" alt="Esri Developers" width="40" height="40" />
+          <span class="brand__glow" aria-hidden="true"></span>
+        </span>
+        <span class="brand__text">
+          <span class="brand__badge">Develop with <span class="brand__accent">ArcGIS</span></span>
+          <span class="brand__title">Construction Timelapse</span>
+        </span>
+      </a>
 
       <nav class="topbar__nav">
         <a class="tab-link" href="./progress.html" title="View real construction status vs. the planned schedule">
@@ -68,7 +71,6 @@
       </nav>
 
       <div class="topbar__status">
-        <span class="dot dot--live"></span>
         <span id="liveLabel">Planned Construction Sequencing</span>
       </div>
     </header>
@@ -76,7 +78,7 @@
     <!-- ======================= LEFT DASHBOARD ======================= -->
     <aside class="dashboard glass">
       <div class="dashboard__head">
-        <h2>Construction Dashboard</h2>
+        <h2>Simulated Construction Dashboard</h2>
         <span class="dashboard__sub" id="dashDate">—</span>
       </div>
 

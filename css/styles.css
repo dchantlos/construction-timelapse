@@ -6,8 +6,8 @@
 /* ---------- Design tokens ---------- */
 :root {
   --bg: #060912;
-  --glass: rgba(16, 22, 38, 0.55);
-  --glass-strong: rgba(13, 18, 32, 0.78);
+  --glass: rgba(6, 9, 16, 0.66);
+  --glass-strong: rgba(4, 6, 12, 0.85);
   --glass-border: rgba(140, 170, 230, 0.18);
   --glass-border-soft: rgba(140, 170, 230, 0.1);
   --text: #e8eefc;
@@ -87,20 +87,37 @@ body {
   place-content: center;
   gap: 22px;
   justify-items: center;
-  background: radial-gradient(circle at 50% 40%, #0b1224 0%, #04060d 70%);
+  background: #05070e;
   transition: opacity 0.6s ease, visibility 0.6s ease;
 }
 .boot.is-hidden {
   opacity: 0;
   visibility: hidden;
 }
+.boot__mark {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  display: grid;
+  place-items: center;
+}
+.boot__logo {
+  width: 96px;
+  height: 96px;
+  position: relative;
+  z-index: 1;
+  animation: boot-glow 2s ease-in-out infinite;
+}
+/* Pulse is a blue silhouette of the logo (mask) so it hugs the squircle shape
+   instead of a square box, expanding and fading behind it. */
 .boot__pulse {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  border: 2px solid var(--accent);
-  box-shadow: 0 0 0 0 rgba(56, 226, 234, 0.5);
-  animation: pulse 1.6s ease-out infinite;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: #0079c1;
+  -webkit-mask: url(../assets/dev-logo.png) center / contain no-repeat;
+  mask: url(../assets/dev-logo.png) center / contain no-repeat;
+  animation: pulse 1.9s ease-out infinite;
 }
 .boot__text {
   color: var(--text-dim);
@@ -112,8 +129,13 @@ body {
   animation: dots 1.4s steps(4, end) infinite;
 }
 @keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(56, 226, 234, 0.45); }
-  100% { box-shadow: 0 0 0 38px rgba(56, 226, 234, 0); }
+  0% { transform: scale(1); opacity: 0.5; }
+  70% { opacity: 0; }
+  100% { transform: scale(1.75); opacity: 0; }
+}
+@keyframes boot-glow {
+  0%, 100% { filter: drop-shadow(0 0 7px rgba(0, 121, 193, 0.5)); }
+  50% { filter: drop-shadow(0 0 22px rgba(0, 121, 193, 0.9)); }
 }
 @keyframes dots {
   0% { content: ""; }
@@ -140,55 +162,79 @@ body {
 .brand {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 13px;
+  text-decoration: none;
+  color: inherit;
 }
-.brand__mark {
+.brand__logo-wrap {
   position: relative;
-  width: 34px;
-  height: 34px;
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  border-radius: 12px;
 }
-.brand__ring {
+.brand__logo {
+  position: relative;
+  z-index: 1;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: block;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.brand__glow {
   position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  border: 1.5px solid var(--accent);
-  opacity: 0.7;
-  animation: spin 6s linear infinite;
-  border-right-color: transparent;
-  border-bottom-color: transparent;
+  inset: -2px;
+  border-radius: 13px;
+  background: #0079c1;
+  filter: blur(15px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 0;
 }
-.brand__core {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 14px var(--accent);
+.brand:hover .brand__logo {
+  transform: scale(1.07);
 }
-.brand__text h1 {
-  margin: 0;
-  font-size: 17px;
-  letter-spacing: 0.34em;
+.brand:hover .brand__glow {
+  opacity: 0.6;
+}
+.brand__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.15;
+}
+.brand__badge {
+  font-size: 15px;
+  font-weight: 600;
+  color: #e6ecff;
+  letter-spacing: 0.005em;
+}
+.brand__accent {
   font-weight: 700;
+  color: #2e9bd6;
+  transition: color 0.3s ease;
 }
-.brand__text p {
-  margin: 0;
+.brand:hover .brand__accent {
+  color: #46b4ec;
+}
+.brand__title {
   font-size: 10.5px;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
+  font-weight: 600;
   color: var(--text-dim);
 }
 .topbar__status {
   display: flex;
   align-items: center;
   gap: 9px;
-  font-size: 12px;
-  color: var(--text-dim);
-  padding: 7px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #2e9bd6;
+  padding: 7px 16px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--glass-border-soft);
+  background: rgba(0, 121, 193, 0.1);
+  border: 1px solid rgba(46, 155, 214, 0.42);
 }
 .dot {
   width: 8px;
@@ -225,13 +271,14 @@ body {
   font-weight: 600;
   letter-spacing: 0.03em;
   color: var(--text);
-  background: linear-gradient(135deg, rgba(124, 92, 255, 0.22), rgba(56, 226, 234, 0.16));
-  border: 1px solid rgba(124, 92, 255, 0.42);
+  background: linear-gradient(135deg, rgba(0, 121, 193, 0.32), rgba(169, 123, 244, 0.2));
+  border: 1px solid rgba(46, 155, 214, 0.55);
+  box-shadow: 0 0 18px -8px rgba(0, 121, 193, 0.6);
   transition: all 0.22s ease;
 }
 .tab-link:hover {
-  border-color: var(--accent);
-  box-shadow: 0 0 22px -6px var(--accent);
+  border-color: #46b4ec;
+  box-shadow: 0 0 22px -4px rgba(46, 155, 214, 0.7);
   transform: translateY(-1px);
 }
 .tab-link:active {
@@ -239,14 +286,7 @@ body {
 }
 .tab-link__icon {
   font-size: 14px;
-  filter: drop-shadow(0 0 6px rgba(56, 226, 234, 0.7));
-}
-.tab-link--back {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: var(--glass-border-soft);
-}
-.tab-link--back:hover {
-  border-color: var(--accent);
+  filter: drop-shadow(0 0 6px rgba(46, 155, 214, 0.85));
 }
 
 /* =============================================================================
