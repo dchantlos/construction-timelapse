@@ -24,7 +24,7 @@
 
     <!-- ArcGIS dark base theme (we override most of it in styles.css) -->
     <link rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css" />
-    <link rel="stylesheet" href="./css/styles.css?v=50" />
+    <link rel="stylesheet" href="./css/styles.css?v=67" />
 
     <!-- ESM import map: load @arcgis/core (and JSZip for BCF export) from CDNs -->
     <script type="importmap">
@@ -64,9 +64,9 @@
       </a>
 
       <nav class="topbar__nav">
-        <a class="tab-link" href="./progress.html" title="View real construction status vs. the planned schedule">
+        <a class="tab-link" href="./progress.html" title="View the simulated construction progress vs. the planned schedule">
           <span class="tab-link__icon">◎</span>
-          <span class="tab-link__label">See Current Construction Progress</span>
+          <span class="tab-link__label">View Simulated Construction Progress</span>
         </a>
       </nav>
 
@@ -77,8 +77,7 @@
 
     <!-- ======================= LEFT DASHBOARD ======================= -->
     <aside class="dashboard glass">
-      <div class="dashboard__head">
-        <h2>Simulated Construction Dashboard</h2>
+      <div class="dashboard__head dashboard__head--stack">
         <span class="dashboard__sub" id="dashDate">—</span>
       </div>
 
@@ -124,6 +123,15 @@
         </div>
         <ul id="layerList" class="layer-list"></ul>
       </section>
+
+      <!-- Model provenance: authored in IFC, streamed to the app as I3S -->
+      <footer class="dashboard__foot">
+        <span class="dashboard__foot-note">
+          <span class="kicker">Source Model</span>
+          <span class="dashboard__foot-sub">IFC · visualized as I3S</span>
+        </span>
+        <img class="dashboard__foot-logo" src="./assets/buildingsmart-ifc-white.png" alt="buildingSMART IFC" />
+      </footer>
     </aside>
 
     <!-- ======================= LAYER VISIBILITY PANEL ======================= -->
@@ -213,17 +221,6 @@
       </div>
     </div>
 
-    <!-- ======================= ESRI ATTRIBUTION BADGE ======================= -->
-    <a
-      class="esri-badge glass"
-      href="https://www.esri.com"
-      target="_blank"
-      rel="noopener noreferrer"
-      title="Powered by Esri ArcGIS"
-    >
-      <img src="./assets/esri-logo.jpg" alt="Esri" width="28" height="28" />
-      <span>Powered by Esri</span>
-    </a>
 
     <!-- ======================= TIMELINE ASSISTANT ======================= -->
     <button
@@ -256,7 +253,8 @@
       </form>
     </section>
 
-    <script type="module" src="./js/app.js?v=50"></script>
-    <script type="module" src="./js/help.js?v=3"></script>
+    <script type="module" src="./js/app.js?v=51"></script>
+    <script type="module" src="./js/help.js?v=5"></script>
+    <script type="module" src="./js/resources.js?v=3"></script>
   </body>
 </html>

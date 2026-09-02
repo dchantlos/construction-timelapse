@@ -667,7 +667,7 @@ function renderLocControls() {
     btn.setAttribute("aria-pressed", locState.shown ? "true" : "false");
     btn.classList.toggle("is-on", locState.shown);
     const txt = btn.querySelector(".loc-toggle__txt");
-    if (txt) txt.textContent = locState.shown ? "Hide" : "Show";
+    if (txt) txt.textContent = locState.shown ? "Hide Sensor Locations" : "Show Sensor Locations";
   });
   document.querySelectorAll(".loc-chips").forEach((grp) => grp.classList.toggle("is-disabled", !locState.shown));
   document.querySelectorAll(".loc-chip").forEach((chip) => {

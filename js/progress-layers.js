@@ -72,12 +72,7 @@ export function createProgressLayers(scene, data, onScope) {
       state.textContent = "on track";
     }
 
-    const iso = document.createElement("span");
-    iso.className = "layer-iso";
-    iso.textContent = "\u25CE"; // ◎ isolate / focus glyph
-    iso.setAttribute("aria-hidden", "true");
-
-    li.append(swatch, label, state, iso);
+    li.append(swatch, label, state);
 
     const activate = () => toggle(entry, summary);
     li.addEventListener("click", activate);

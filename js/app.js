@@ -6,7 +6,7 @@ import TimeSlider from "@arcgis/core/widgets/TimeSlider.js";
 import * as reactiveUtils from "@arcgis/core/core/reactiveUtils.js";
 
 import { createView, resolveTimeExtent } from "./scene.js";
-import { createDashboard } from "./dashboard.js";
+import { createDashboard } from "./dashboard.js?v=1";
 import { createLayerControl } from "./layers.js?v=1";
 import { createLayerVisibility } from "./visibility.js";
 import { createCinematic } from "./cinematic.js?v=21";

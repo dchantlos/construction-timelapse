@@ -230,11 +230,8 @@ body {
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: #2e9bd6;
-  padding: 7px 16px;
-  border-radius: 999px;
-  background: rgba(0, 121, 193, 0.1);
-  border: 1px solid rgba(46, 155, 214, 0.42);
+  color: var(--accent-bright);
+  text-shadow: var(--glow-cyan);
 }
 .dot {
   width: 8px;
@@ -297,12 +294,12 @@ body {
   top: 98px;
   left: 18px;
   z-index: 10;
-  width: 344px;
-  max-height: calc(100vh - 220px);
-  padding: 20px;
+  width: 368px;
+  max-height: calc(100vh - 118px);
+  padding: 16px 20px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
   overflow-y: auto;
 }
 
@@ -328,7 +325,10 @@ body {
 .dashboard__head h2 {
   margin: 0;
   font-size: 14px;
+  font-weight: 700;
   letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--label);
 }
 .dashboard__sub {
   font-size: 11px;
@@ -338,12 +338,25 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* Headline slider date — a glowing live chip so the current date stands out. */
+#dashDate {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 3px 11px;
+  border-radius: 999px;
+  background: rgba(56, 226, 234, 0.1);
+  border: 1px solid rgba(56, 226, 234, 0.3);
+  color: var(--accent-bright);
+  text-shadow: var(--glow-cyan);
+}
+
 /* Progress ring card */
 .ring-card {
   display: flex;
   align-items: center;
   gap: 18px;
-  padding: 16px;
+  padding: 12px;
   border-radius: 14px;
   background: linear-gradient(135deg, rgba(56, 226, 234, 0.08), rgba(124, 92, 255, 0.06));
   border: 1px solid var(--glass-border-soft);
@@ -408,7 +421,7 @@ body {
   gap: 10px;
 }
 .metric {
-  padding: 12px 10px;
+  padding: 10px 10px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.035);
   border: 1px solid var(--glass-border-soft);
@@ -424,10 +437,62 @@ body {
   text-shadow: 0 0 12px rgba(251, 113, 133, 0.4);
 }
 
+/* Panel footer — source-model provenance (IFC → I3S) + buildingSMART IFC logo */
+.dashboard__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--glass-border-soft);
+}
+.dashboard__foot-note {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.dashboard__foot-sub {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-bright);
+  letter-spacing: 0.01em;
+  text-shadow: var(--glow-cyan);
+}
+.dashboard__foot-logo {
+  height: 36px;
+  width: auto;
+  display: block;
+  flex-shrink: 0;
+  opacity: 0.95;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
 /* Progress view — schedule-slippage emphasis + CStatus breakdown */
 .dashboard__sub.is-behind {
   color: var(--danger);
   text-shadow: 0 0 10px rgba(251, 113, 133, 0.4);
+}
+/* Illustrative-data footnote at the base of the financials view */
+.fin-disclaimer {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 14px 0 2px;
+  padding-top: 12px;
+  border-top: 1px solid var(--glass-border-soft);
+  font-size: 10.5px;
+  font-style: italic;
+  color: var(--text-faint);
+  letter-spacing: 0.01em;
+}
+.fin-disclaimer::before {
+  content: "ⓘ";
+  flex-shrink: 0;
+  font-style: normal;
+  font-size: 12px;
+  color: rgba(251, 191, 36, 0.7);
 }
 .status-list {
   list-style: none;
@@ -450,28 +515,33 @@ body {
   flex-shrink: 0;
 }
 .status-row__name {
-  font-size: 12.5px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   color: var(--text-dim);
 }
 .status-row__val {
-  font-size: 11.5px;
+  font-size: 14px;
   font-variant-numeric: tabular-nums;
   color: var(--text);
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
 }
 .status-row__bar {
   grid-column: 1 / -1;
-  height: 5px;
+  height: 9px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  overflow: hidden;
+  background: rgba(255, 255, 255, 0.09);
 }
 .status-row__fill {
   display: block;
   height: 100%;
   border-radius: 999px;
   transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* Colour-matched breathing glow to mirror the sequencing panel bars. */
+.status-row__fill.is-lit {
+  animation: layer-pulse 2.4s ease-in-out infinite;
 }
 
 /* Layer list */
@@ -484,17 +554,19 @@ body {
   gap: 6px;
 }
 .layer-list li {
-  display: flex;
+  display: grid;
+  grid-template-columns: 10px 1fr auto;
+  column-gap: 8px;
+  row-gap: 5px;
   align-items: center;
-  gap: 10px;
-  padding: 7px 11px;
+  padding: 7px 12px;
   border-radius: 11px;
   background: rgba(255, 255, 255, 0.025);
   border: 1px solid transparent;
   font-size: 12.5px;
   cursor: pointer;
   user-select: none;
-  transition: all 0.3s ease;
+  transition: background 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
 }
 .layer-list li:hover {
   background: rgba(56, 226, 234, 0.1);
@@ -510,39 +582,79 @@ body {
   border-color: var(--accent);
   box-shadow: 0 0 18px -6px var(--accent);
 }
-.layer-list li.is-active {
-  background: rgba(56, 226, 234, 0.08);
-  border-color: rgba(56, 226, 234, 0.3);
-}
 .layer-list .swatch {
+  grid-column: 1;
+  grid-row: 1;
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  flex-shrink: 0;
-  opacity: 0.4;
-  transition: opacity 0.3s ease, box-shadow 0.3s ease;
+  opacity: 0.35;
+  transition: opacity 0.3s ease;
 }
-.layer-list li.is-active .swatch {
+.layer-list li.is-building .swatch,
+.layer-list li.is-complete .swatch {
   opacity: 1;
 }
 .layer-list .layer-name {
-  flex: 1;
+  grid-column: 2;
+  grid-row: 1;
   color: var(--text-dim);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.layer-list li.is-active .layer-name {
+.layer-list li.is-building .layer-name,
+.layer-list li.is-complete .layer-name {
   color: var(--text);
 }
-.layer-list .layer-state {
-  font-size: 10px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--accent-bright);
+.layer-list .layer-pct {
+  grid-column: 3;
+  grid-row: 1;
+  font-size: 14px;
   font-weight: 700;
-  text-shadow: var(--glow-cyan);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  min-width: 42px;
+  text-align: right;
+  transition: color 0.3s ease;
 }
-.layer-list li.is-active .layer-state {
-  color: var(--accent-3);
-  text-shadow: 0 0 8px rgba(74, 222, 128, 0.4);
+.layer-list li.is-building .layer-pct {
+  color: var(--text);
+}
+.layer-list li.is-complete .layer-pct {
+  color: #4ade80;
+}
+.layer-list .layer-bar {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  position: relative;
+  height: 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.09);
+}
+.layer-list .layer-bar__fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 0%;
+  border-radius: 999px;
+  background: var(--layer-c, var(--accent));
+  transition: width 0.6s cubic-bezier(0.33, 1, 0.68, 1);
+}
+/* Active trades breathe a soft glow in their own colour. */
+.layer-list li.is-building .layer-bar__fill {
+  animation: layer-pulse 2.4s ease-in-out infinite;
+}
+.layer-list li.is-complete .layer-bar__fill {
+  box-shadow: 0 0 10px -1px var(--layer-c, var(--accent));
+}
+@keyframes layer-pulse {
+  0%, 100% { box-shadow: 0 0 4px -1px var(--layer-c, var(--accent)); }
+  50% { box-shadow: 0 0 16px 0 var(--layer-c, var(--accent)); }
 }
 
 /* Isolate / filter glyph on each progress-panel layer row */
@@ -2139,6 +2251,10 @@ body {
   letter-spacing: -2px;
   opacity: 0.7;
 }
+/* Match the audit header label to the dashboard panel title size */
+.audit-panel__handle .kicker {
+  font-size: 14px;
+}
 .audit-panel__right {
   display: flex;
   align-items: center;
@@ -2151,7 +2267,7 @@ body {
   min-width: 0;
 }
 .audit-standards__logo {
-  height: 30px;
+  height: 38px;
   width: auto;
   display: block;
   opacity: 0.95;
@@ -2160,7 +2276,7 @@ body {
 }
 .audit-standards__sep {
   width: 1px;
-  height: 22px;
+  height: 28px;
   background: var(--glass-border-soft);
   border-radius: 1px;
 }
@@ -2780,6 +2896,7 @@ body {
   min-width: 0;
 }
 .sensor-panel__id .kicker {
+  font-size: 12px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2809,7 +2926,7 @@ body {
   justify-content: space-between;
   gap: 8px;
   margin-top: -3px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.02em;
   color: #e2e8f0;
@@ -2842,13 +2959,13 @@ body {
   min-width: 0;
 }
 .sensor-activity__val strong {
-  font-size: 19px;
+  font-size: 21px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--text);
 }
 .sensor-activity__val small {
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   opacity: 0.78;
@@ -2875,12 +2992,12 @@ body {
   display: flex;
   align-items: baseline;
   gap: 5px;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text);
   opacity: 1;
 }
 .sensor-row__q {
-  font-size: 9.5px;
+  font-size: 10.5px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   opacity: 0.75;
@@ -2893,14 +3010,14 @@ body {
   font-variant-numeric: tabular-nums;
 }
 .sensor-row__read strong {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 650;
   line-height: 1;
   color: var(--accent-bright);
   transition: color 0.3s ease;
 }
 .sensor-row__read small {
-  font-size: 10.5px;
+  font-size: 11.5px;
   opacity: 0.85;
   white-space: nowrap;
 }
@@ -2915,7 +3032,7 @@ body {
   gap: 3px;
 }
 .sensor-row__read--dual strong {
-  font-size: 12.5px;
+  font-size: 14px;
 }
 .sensor-row--gas {
   display: block;
@@ -2930,7 +3047,7 @@ body {
 .sensor-gas__watch {
   margin-left: auto;
   text-align: right;
-  font-size: 10.5px;
+  font-size: 11.5px;
   font-weight: 600;
   letter-spacing: 0.02em;
   line-height: 1.25;
@@ -2949,7 +3066,7 @@ body {
 }
 .gas-chip em {
   font-style: normal;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.02em;
   opacity: 0.72;
@@ -2957,7 +3074,7 @@ body {
 }
 .gas-chip strong {
   margin-left: auto;
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: 650;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -2965,7 +3082,7 @@ body {
   transition: color 0.3s ease;
 }
 .gas-chip small {
-  font-size: 9px;
+  font-size: 10px;
   opacity: 0.7;
   white-space: nowrap;
   min-width: 32px;
@@ -3003,13 +3120,13 @@ body {
   gap: 2px;
 }
 .sensor-summary__text strong {
-  font-size: 12.5px;
+  font-size: 13.5px;
   font-weight: 700;
   letter-spacing: 0.01em;
   transition: color 0.3s ease;
 }
 .sensor-summary__text span {
-  font-size: 11.5px;
+  font-size: 12.5px;
   line-height: 1.42;
   color: #dbe4ee;
 }
@@ -3288,7 +3405,7 @@ body {
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 11px;
+  font-size: 12px;
 }
 .src-chip__dot {
   flex: none;
@@ -3305,7 +3422,7 @@ body {
 }
 .src-chip__state {
   margin-left: auto;
-  font-size: 9.5px;
+  font-size: 10.5px;
   letter-spacing: 0.02em;
   opacity: 0.82;
 }
@@ -3318,14 +3435,14 @@ body {
   display: flex;
   align-items: baseline;
   gap: 7px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #cbd5e1;
 }
 .sensor-detail__title small {
-  font-size: 9.5px;
+  font-size: 10.5px;
   font-weight: 500;
   letter-spacing: 0.02em;
   text-transform: none;
@@ -3354,11 +3471,11 @@ body {
   align-items: baseline;
   gap: 5px;
   min-width: 0;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text);
 }
 .sensor-mini__label small {
-  font-size: 9.5px;
+  font-size: 10.5px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   opacity: 0.7;
@@ -3369,13 +3486,13 @@ body {
   gap: 3px;
   justify-self: end;
   font-variant-numeric: tabular-nums;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 650;
   color: var(--accent-bright);
   transition: color 0.3s ease;
 }
 .sensor-mini__read small {
-  font-size: 9.5px;
+  font-size: 10.5px;
   font-weight: 500;
   opacity: 0.8;
   white-space: nowrap;
@@ -3394,7 +3511,7 @@ body {
 }
 .sensor-detail__foot {
   margin: 2px 0 0;
-  font-size: 10.5px;
+  font-size: 11.5px;
   line-height: 1.5;
   color: #93a4b8;
 }
@@ -3426,31 +3543,39 @@ body {
   color: #cbd5e1;
 }
 .loc-toggle {
-  display: inline-flex;
+  display: flex;
+  width: 100%;
   align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text);
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 11px;
+  border: 1px solid rgba(56, 226, 234, 0.5);
+  background: rgba(56, 226, 234, 0.14);
+  color: #bff6fa;
   font: inherit;
-  font-size: 11.5px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  box-shadow: 0 0 18px -7px rgba(56, 226, 234, 0.6);
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 .loc-toggle__icon {
   flex: none;
-  opacity: 0.9;
+  width: 16px;
+  height: 16px;
+  opacity: 0.95;
 }
 .loc-toggle:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(56, 226, 234, 0.22);
+  border-color: rgba(56, 226, 234, 0.8);
+  box-shadow: 0 0 26px -5px rgba(56, 226, 234, 0.85);
 }
 .loc-toggle.is-on {
-  background: rgba(56, 226, 234, 0.18);
-  border-color: rgba(56, 226, 234, 0.55);
-  color: #aef3f7;
+  background: rgba(56, 226, 234, 0.26);
+  border-color: rgba(56, 226, 234, 0.85);
+  color: #e2fdff;
 }
 .loc-chips {
   display: flex;

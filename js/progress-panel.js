@@ -104,6 +104,10 @@ function renderBreakdown(stats) {
     fill.className = "status-row__fill";
     fill.style.width = `${(count / max) * 100}%`;
     fill.style.background = bucket.color;
+    if (count > 0) {
+      fill.style.setProperty("--layer-c", bucket.color);
+      fill.classList.add("is-lit");
+    }
     bar.appendChild(fill);
 
     li.append(dot, name, value, bar);

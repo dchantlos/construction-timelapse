@@ -61,7 +61,7 @@ export const HELP_CONTENT = {
   progress: {
     title: "Guide · Real Construction Status",
     intro:
-      "The as-built view: what has actually been constructed on site, measured against the plan in time (4D) and cost (5D) — with live environmental sensors overlaid on the model.",
+      "The as-built view: what has actually been constructed on site, measured against the plan in time (4D) and cost (5D) — with real-time IoT feeds overlaid on the model.",
     sections: [
       {
         q: "What am I looking at?",
@@ -92,8 +92,8 @@ export const HELP_CONTENT = {
         a: "Produces a formal <strong>AIA G702 / G703</strong> Application for Payment built from the live project figures."
       },
       {
-        q: "Live site sensors",
-        a: "The <strong>Live Sensors on Site</strong> panel (bottom-left) streams real-time <strong>noise, dust, gas and wind</strong> readings from <strong>ArcGIS Velocity</strong>, alongside weather, air quality and site activity (workers / vehicles), updating continuously as new readings arrive."
+        q: "Real-time IoT feeds",
+        a: "The <strong>Real-Time IoT Feeds</strong> panel (bottom-left) streams real-time <strong>noise, dust, gas and wind</strong> readings from <strong>ArcGIS Velocity</strong>, alongside weather, air quality and site activity (workers / vehicles), updating continuously as new readings arrive."
       },
       {
         q: "Show sensors on the map",
@@ -104,8 +104,8 @@ export const HELP_CONTENT = {
         a: "Click any orb for a live pop-up showing its latest reading, category and status. Sensor identities are anonymised (e.g. “Noise sensor 1”, “Gas monitor”)."
       },
       {
-        q: "Live Site Overview (⤢)",
-        a: "Press <strong>⤢</strong> on the sensor panel to open the <strong>Live Site Overview</strong> — a full dashboard of site conditions plus a per-sensor breakdown. <strong>⤡</strong> returns to the summary."
+        q: "Real-Time IoT Feeds · Overview (⤢)",
+        a: "Press <strong>⤢</strong> on the feeds panel to open the <strong>Real-Time IoT Feeds · Overview</strong> — a full dashboard of live conditions plus a per-feed breakdown. <strong>⤡</strong> returns to the summary."
       },
       {
         q: "Which gases to watch",

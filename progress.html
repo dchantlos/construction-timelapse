@@ -24,7 +24,7 @@
 
     <!-- ArcGIS dark base theme (we override most of it in styles.css) -->
     <link rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css" />
-    <link rel="stylesheet" href="./css/styles.css?v=53" />
+    <link rel="stylesheet" href="./css/styles.css?v=67" />
 
     <!-- ESM import map: load @arcgis/core straight from the CDN -->
     <script type="importmap">
@@ -89,7 +89,6 @@
       <!-- ---------- Schedule (4D) view ---------- -->
       <div id="scheduleView" class="dash-view">
         <div class="dashboard__head dashboard__head--stack">
-          <h2>Simulated Construction Progress</h2>
           <span class="dashboard__sub" id="progSub">Simulated status</span>
         </div>
 
@@ -268,6 +267,8 @@
           </div>
           <p class="fin-risk__banner" id="finRiskBanner" role="status" hidden></p>
         </section>
+
+        <p class="fin-disclaimer">Illustrative figures — not actual project financials.</p>
       </div>
     </aside>
 
@@ -280,12 +281,12 @@
       <ul id="visibilityList" class="toggle-list"></ul>
     </aside>
 
-    <!-- ================== SITE ENVIRONMENTAL SENSORS (live) ================== -->
-    <aside id="sensorPanel" class="sensor-panel glass" aria-label="Live sensors on site">
+    <!-- ================== REAL-TIME IoT FEEDS (ArcGIS Velocity) ================== -->
+    <aside id="sensorPanel" class="sensor-panel glass" aria-label="Real-time IoT feeds">
       <div class="sensor-panel__head" id="sensorHead" title="Drag to move">
         <div class="sensor-panel__id">
           <span class="sensor-live" aria-hidden="true"></span>
-          <span class="kicker">Live Sensors on Site</span>
+          <span class="kicker">Real-Time IoT Feeds</span>
         </div>
         <div class="sensor-panel__btns">
           <button id="sensorExpand" class="panel-collapse" type="button" aria-label="Open detailed panel" title="Open detailed panel">⤢</button>
@@ -367,10 +368,9 @@
       <!-- Sensor-location map controls (markers hidden until the user asks). -->
       <div class="loc-controls" id="locControls">
         <div class="loc-controls__row">
-          <span class="loc-controls__title">Sensor locations</span>
           <button class="loc-toggle" type="button" data-loc-toggle aria-pressed="false">
             <svg class="loc-toggle__icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.16 7-11a7 7 0 1 0-14 0c0 4.84 7 11 7 11Z"/><circle cx="12" cy="10" r="2.3"/></svg>
-            <span class="loc-toggle__txt">Show</span>
+            <span class="loc-toggle__txt">Show Sensor Locations</span>
           </button>
         </div>
         <div class="loc-chips" role="group" aria-label="Filter sensor types">
@@ -383,12 +383,12 @@
       </div>
     </aside>
 
-    <!-- ============ SENSOR DETAIL PANEL (full live site dashboard) ============ -->
-    <aside id="sensorDetailPanel" class="sensor-detail-panel glass" aria-label="Detailed sensor readings" aria-hidden="true">
+    <!-- ============ REAL-TIME IoT FEEDS — DETAIL PANEL ============ -->
+    <aside id="sensorDetailPanel" class="sensor-detail-panel glass" aria-label="Detailed IoT feed readings" aria-hidden="true">
       <div class="sensor-panel__head" id="sensorDetailHead" title="Drag to move">
         <div class="sensor-panel__id">
           <span class="sensor-live" aria-hidden="true"></span>
-          <span class="kicker">Live Site Overview</span>
+          <span class="kicker">Real-Time IoT Feeds · Overview</span>
         </div>
         <div class="sensor-panel__btns">
           <button id="sensorDetailClose" class="panel-collapse" type="button" aria-label="Back to summary" title="Back to summary">⤡</button>
@@ -502,10 +502,9 @@
       <!-- Map controls — click a type to isolate it. -->
       <div class="loc-controls" id="locControlsDetail">
         <div class="loc-controls__row">
-          <span class="loc-controls__title">Sensor locations</span>
           <button class="loc-toggle" type="button" data-loc-toggle aria-pressed="false">
             <svg class="loc-toggle__icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.16 7-11a7 7 0 1 0-14 0c0 4.84 7 11 7 11Z"/><circle cx="12" cy="10" r="2.3"/></svg>
-            <span class="loc-toggle__txt">Show</span>
+            <span class="loc-toggle__txt">Show Sensor Locations</span>
           </button>
         </div>
         <div class="loc-chips" role="group" aria-label="Filter sensor types">
@@ -585,17 +584,6 @@
       </div>
     </div>
 
-    <!-- ======================= ESRI ATTRIBUTION BADGE ======================= -->
-    <a
-      class="esri-badge glass"
-      href="https://www.esri.com"
-      target="_blank"
-      rel="noopener noreferrer"
-      title="Powered by Esri ArcGIS"
-    >
-      <img src="./assets/esri-logo.jpg" alt="Esri" width="28" height="28" />
-      <span>Powered by Esri</span>
-    </a>
 
     <!-- ======================= DRILL-DOWN MODAL ======================= -->
     <div id="finModal" class="fin-modal" role="dialog" aria-modal="true" aria-labelledby="finModalTitle" hidden>
@@ -623,7 +611,8 @@
       </div>
     </div>
 
-    <script type="module" src="./js/progress.js?v=32"></script>
-    <script type="module" src="./js/help.js?v=2"></script>
+    <script type="module" src="./js/progress.js?v=34"></script>
+    <script type="module" src="./js/help.js?v=4"></script>
+    <script type="module" src="./js/resources.js?v=3"></script>
   </body>
 </html>
