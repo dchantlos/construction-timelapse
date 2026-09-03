@@ -20,6 +20,20 @@
       })();
     </script>
 
+    <!-- ============ CLEAN CAPTURE MODE (marketing screenshots) ============
+         Append ?clean to the URL to hide floating UI (help / resources /
+         assistant buttons) for pristine hero screenshots. The timeline dock,
+         full 3D scene, and Esri attribution are kept. No effect otherwise. -->
+    <script>
+      if (new URLSearchParams(location.search).has("clean"))
+        document.documentElement.classList.add("capture-clean");
+    </script>
+    <style>
+      .capture-clean .help-fab,
+      .capture-clean .res-fab,
+      .capture-clean .asst-fab { display: none !important; }
+    </style>
+
     <title>Current Construction Progress · ArcGIS</title>
 
     <!-- ArcGIS dark base theme (we override most of it in styles.css) -->
