@@ -10,6 +10,24 @@ schedule (4D) and cost (5D), and overlays **live environmental sensors** from Ar
 > IDS 1.0** specification in the browser, and findings export to **BCF 2.1**. IFC in, IDS
 > checked, BCF out.
 
+## The openBIM data lifecycle
+
+This app is a working slice of the **openBIM data lifecycle**: author the building in **IFC**,
+declare the requirements in **IDS**, **check** the model against them, and round-trip the findings
+as **BCF** so they flow back into authoring — then the loop repeats.
+
+<p align="center">
+  <img src="assets/openbim-data-lifecycle.jpg" alt="OpenBIM Data Lifecycle — a continuous loop: IFC (upload BIM models) to IDS (upload IDS file) to IFC vs IDS (run checking) to BCF (communicate issues) and back to IFC" width="820">
+</p>
+
+| openBIM stage | How **Construction Timelapse** supports it |
+| --- | --- |
+| **IFC** — author and publish | The tower is authored in IFC (one federated class per building system) and published as Esri **I3S Scene Layers**, streamed straight into a 3D WebScene. |
+| **IDS** — define requirements | A buildingSMART **IDS 1.0** file (`ids/construction-timelapse.ids`) is fetched and parsed in the browser. |
+| **Run checking** — validate | The published model is audited **live** against the IDS using the I3S per-attribute statistics, scoring every requirement **pass / partial / fail** — failing elements recoloured red down to the individual `GlobalId`. |
+| **BCF** — communicate | Findings export to **BCF 2.1** (`.bcfzip`), carrying the issues back into any BCF-aware authoring tool. |
+| ↻ **loop** | Resolved issues feed back into the IFC model and the cycle runs again. |
+
 ## Highlights
 
 ### IFC → I3S building model
@@ -124,7 +142,7 @@ construction-timelapse/
 ├─ css/styles.css                  Design tokens + UI theme + ArcGIS widget overrides
 ├─ ids/construction-timelapse.ids  buildingSMART IDS 1.0 specification
 ├─ docs/velocity/                  ArcGIS Velocity feed data + generator
-├─ assets/                         Logos
+├─ assets/                         Logos + diagrams
 └─ js/
    ├─ app.js · scene.js · config.js             Boot · WebScene/SceneView · configuration
    ├─ cinematic.js · spin.js                    Timeline playback · camera orbit
