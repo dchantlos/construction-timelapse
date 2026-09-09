@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ============================================================================
+  Construction Timelapse : Information Delivery Specification (IDS)
+
+  A buildingSMART IDS that expresses the information requirements for the
+  Meridian Tower federated model at the construction / 4D coordination
+  milestone. See:
+  https://www.buildingsmart.org/standards/bsi-standards/information-delivery-specification-ids/
+
+  This is a real, schema valid IDS 1.0 file. The web app (js/ids.js + js/audit.js)
+  parses it in the browser and audits the published openBIM model against every
+  specification below, live, using the scene service per attribute statistics.
+  ============================================================================
+-->
+<ids xmlns="http://standards.buildingsmart.org/IDS"
+     xmlns:xs="http://www.w3.org/2001/XMLSchema"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://standards.buildingsmart.org/IDS http://standards.buildingsmart.org/IDS/1.0/ids.xsd">
+  <info>
+    <title>Meridian Tower - Construction Delivery Requirements</title>
+    <copyright>Construction Timelapse demo</copyright>
+    <version>1.0</version>
+    <description>Information requirements the federated model must satisfy at the construction sequencing (4D) milestone: unique identification, naming, typing, 4D scheduling data, common property sets for structural and envelope elements, and classification.</description>
+    <author>ids@construction-timelapse.example</author>
+    <date>2026-07-30</date>
+    <purpose>Construction coordination / 4D handover</purpose>
+    <milestone>Construction (4D)</milestone>
+  </info>
+
+  <specifications>
+
+    <!-- ================= S-01 : Global identification ================= -->
+    <specification name="Global unique identification" ifcVersion="IFC4" identifier="CT-S01"
+                   description="Every delivered element must carry a persistent IfcRoot.GlobalId."
+                   instructions="GlobalId is the stable key that links the geometry to the schedule, the cost plan and the asset register. It must never be blank.">
+      <applicability minOccurs="1" maxOccurs="unbounded">
+        <entity>
+          <name>
+            <xs:restriction base="xs:string">
+              <xs:enumeration value="IFCSLAB"/>
+              <xs:enumeration value="IFCCOLUMN"/>
+              <xs:enumeration value="IFCBEAM"/>
+              <xs:enumeration value="IFCWALL"/>
+              <xs:enumeration value="IFCPLATE"/>
+              <xs:enumeration value="IFCROOF"/>
+              <xs:enumeration value="IFCCURTAINWALL"/>
+            </xs:restriction>
+          </name>
+        </entity>
+      </applicability>
+      <requirements>
+        <attribute cardinality="required">
+          <name><simpleValue>GlobalId</simpleValue></name>
+        </attribute>
+      </requirements>
+    </specification>
+
+    <!-- ================= S-02 : Element naming ================= -->
+    <specification name="Human-readable naming" ifcVersion="IFC4" identifier="CT-S02"
+                   description="Every delivered element must carry an IfcRoot.Name."
+                   instructions="A populated Name lets reviewers, schedulers and field crews identify elements without opening authoring software.">
+      <applicability minOccurs="1" maxOccurs="unbounded">
+        <entity>
+          <name>
+            <xs:restriction base="xs:string">
+              <xs:enumeration value="IFCSLAB"/>
+              <xs:enumeration value="IFCCOLUMN"/>
+              <xs:enumeration value="IFCBEAM"/>
+              <xs:enumeration value="IFCWALL"/>
+              <xs:enumeration value="IFCPLATE"/>
+              <xs:enumeration value="IFCROOF"/>
+              <xs:enumeration value="IFCCURTAINWALL"/>
+            </xs:restriction>
+          </name>
+        </entity>
+      </applicability>
+      <requirements>
+        <attribute cardinality="required">
+          <name><simpleValue>Name</simpleValue></name>
+        </attribute>
+      </requirements>
+    </specification>
+
+    <!-- ================= S-03 : Predefined type ================= -->
+    <specification name="Predefined type declared" ifcVersion="IFC4" identifier="CT-S03"
+                   description="Every delivered element must declare its PredefinedType."
+                   instructions="PredefinedType drives downstream classification, quantity take-off and analysis. It must not be left UNDEFINED.">
+      <applicability minOccurs="1" maxOccurs="unbounded">
+        <entity>
+          <name>
+            <xs:restriction base="xs:string">
+              <xs:enumeration value="IFCSLAB"/>
+              <xs:enumeration value="IFCCOLUMN"/>
+              <xs:enumeration value="IFCBEAM"/>
+              <xs:enumeration value="IFCWALL"/>
+              <xs:enumeration value="IFCPLATE"/>
+              <xs:enumeration value="IFCROOF"/>
+              <xs:enumeration value="IFCCURTAINWALL"/>
+            </xs:restriction>
+          </name>
+        </entity>
+      </applicability>
+      <requirements>
+        <attribute cardinality="required">
+          <name><simpleValue>PredefinedType</simpleValue></name>
+        </attribute>
+      </requirements>
+    </specification>
+
+    <!-- ================= S-04 : 4D construction sequencing data ================= -->
+    <specification name="4D construction sequencing data" ifcVersion="IFC4" identifier="CT-S04"
+                   description="Every element must carry the scheduling properties that drive the 4D timeline."
+                   instructions="These properties link each element to its task in the construction programme. They power the timelapse: scheduled phase, planned start / finish dates and the current construction status.">
+      <applicability minOccurs="1" maxOccurs="unbounded">
+        <entity>
+          <name>
+            <xs:restriction base="xs:string">
+              <xs:enumeration value="IFCSLAB"/>
+              <xs:enumeration value="IFCCOLUMN"/>
+              <xs:enumeration value="IFCBEAM"/>
+              <xs:enumeration value="IFCWALL"/>
+              <xs:enumeration value="IFCPLATE"/>
+              <xs:enumeration value="IFCROOF"/>
+              <xs:enumeration value="IFCCURTAINWALL"/>
+            </xs:restriction>
+          </name>
+        </entity>
+      </applicability>
+      <requirements>
+        <property cardinality="required" dataType="IFCLABEL">
+          <propertySet><simpleValue>Pset_4D_ConstructionSequencing</simpleValue></propertySet>
+          <baseName><simpleValue>ScheduledPhase</simpleValue></baseName>
+        </property>
+        <property cardinality="required" dataType="IFCDATE">
+          <propertySet><simpleValue>Pset_4D_ConstructionSequencing</simpleValue></propertySet>
+          <baseName><simpleValue>PlannedStartDate</simpleValue></baseName>
+        </property>
+        <property cardinality="required" dataType="IFCDATE">
+          <propertySet><simpleValue>Pset_4D_ConstructionSequencing</simpleValue></propertySet>
+          <baseName><simpleValue>PlannedFinishDate</simpleValue></baseName>
+        </property>
+        <property cardinality="required" dataType="IFCLABEL">
+          <propertySet><simpleValue>Pset_4D_ConstructionSequencing</simpleValue></propertySet>
+          <baseName><simpleValue>ConstructionStatus</simpleValue></baseName>
+        </property>
+      </requirements>
+    </specification>
+
+    <!-- ================= S-05 : Fire rating on load-bearing structure ================= -->
+    <specification name="Fire rating on structural elements" ifcVersion="IFC4" identifier="CT-S05"
+                   description="Load-bearing structural elements must declare a fire rating."
+                   instructions="The fire strategy requires a fire-resistance rating (e.g. R60/R90/R120) on the primary structure. This surfaces which structural systems still lack the property.">
+      <applicability minOccurs="1" maxOccurs="unbounded">
+        <entity>
+          <name>
+            <xs:restriction base="xs:string">
+              <xs:enumeration value="IFCCOLUMN"/>
+              <xs:enumeration value="IFCWALL"/>
+              <xs:enumeration value="IFCSLAB"/>
+              <xs:enumeration value="IFCBEAM"/>
+            </xs:restriction>
+          </name>
+        </entity>
+      </applicability>
+      <requirements>
+        <property cardinality="required" dataType="IFCLABEL">
+          <propertySet>
+            <xs:restriction base="xs:string">
+              <xs:pattern value="Pset_.*Common"/>
+            </xs:restriction>
+          </propertySet>
+          <baseName><simpleValue>FireRating</simpleValue></baseName>
+        </property>
+      </requirements>
+    </specification>
+
+    <!-- ================= S-06 : Common structural properties ================= -->
+    <specification name="Structural common properties" ifcVersion="IFC4" identifier="CT-S06"
+                   description="Structural elements must declare LoadBearing and IsExternal in their common property set."
+                   instructions="LoadBearing and IsExternal are core Pset__Common flags used by structural and thermal analysis. Every applicable element must carry both.">
+      <applicability minOccurs="1" maxOccurs="unbounded">
+        <entity>
+          <name>
+            <xs:restriction base="xs:string">
+              <xs:enumeration value="IFCCOLUMN"/>
+              <xs:enumeration value="IFCWALL"/>
+              <xs:enumeration value="IFCSLAB"/>
+            </xs:restriction>
+          </name>
+        </entity>
+      </applicability>
+      <requirements>
+        <property cardinality="required" dataType="IFCBOOLEAN">
+          <propertySet>
+            <xs:restriction base="xs:string">
+              <xs:pattern value="Pset_.*Common"/>
+            </xs:restriction>
+          </propertySet>
+          <baseName><simpleValue>LoadBearing</simpleValue></baseName>
+        </property>
+        <property cardinality="required" dataType="IFCBOOLEAN">
+          <propertySet>
+            <xs:restriction base="xs:string">
+              <xs:pattern value="Pset_.*Common"/>
+            </xs:restriction>
+          </propertySet>
+          <baseName><simpleValue>IsExternal</simpleValue></baseName>
+        </property>
+      </requirements>
+    </specification>
+
+    <!-- ================= S-07 : Thermal transmittance on the envelope ================= -->
+    <specification name="Thermal transmittance on the envelope" ifcVersion="IFC4" identifier="CT-S07"
+                   description="Thermal-envelope elements must declare a ThermalTransmittance (U-value)."
+                   instructions="The energy model needs a U-value on every envelope element. This checks the walls, curtain walling and slabs that form the thermal envelope.">
+      <applicability minOccurs="1" maxOccurs="unbounded">
+        <entity>
+          <name>
+            <xs:restriction base="xs:string">
+              <xs:enumeration value="IFCWALL"/>
+              <xs:enumeration value="IFCCURTAINWALL"/>
+              <xs:enumeration value="IFCSLAB"/>
+            </xs:restriction>
+          </name>
+        </entity>
+      </applicability>
+      <requirements>
+        <property cardinality="required" dataType="IFCTHERMALTRANSMITTANCEMEASURE">
+          <propertySet>
+            <xs:restriction base="xs:string">
+              <xs:pattern value="Pset_.*Common"/>
+            </xs:restriction>
+          </propertySet>
+          <baseName><simpleValue>ThermalTransmittance</simpleValue></baseName>
+        </property>
+      </requirements>
+    </specification>
+
+    <!-- ================= S-08 : Classification reference ================= -->
+    <specification name="Classification reference present" ifcVersion="IFC4" identifier="CT-S08"
+                   description="Every element must carry a recognised classification reference for hand-over and asset management."
+                   instructions="A classification code (Uniclass, OmniClass or Uniformat / AssemblyCode) is required so elements can be grouped for cost, procurement and FM. This audit flags where classification is not yet populated.">
+      <applicability minOccurs="1" maxOccurs="unbounded">
+        <entity>
+          <name>
+            <xs:restriction base="xs:string">
+              <xs:enumeration value="IFCSLAB"/>
+              <xs:enumeration value="IFCCOLUMN"/>
+              <xs:enumeration value="IFCBEAM"/>
+              <xs:enumeration value="IFCWALL"/>
+              <xs:enumeration value="IFCPLATE"/>
+              <xs:enumeration value="IFCROOF"/>
+              <xs:enumeration value="IFCCURTAINWALL"/>
+            </xs:restriction>
+          </name>
+        </entity>
+      </applicability>
+      <requirements>
+        <classification cardinality="required">
+          <system>
+            <xs:restriction base="xs:string">
+              <xs:enumeration value="Uniclass 2015"/>
+              <xs:enumeration value="OmniClass"/>
+              <xs:enumeration value="Uniformat"/>
+            </xs:restriction>
+          </system>
+        </classification>
+      </requirements>
+    </specification>
+
+  </specifications>
+</ids>
