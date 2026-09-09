@@ -44,13 +44,19 @@ const GROUPS = [
     ]
   },
   {
-    group: "About this app",
+    group: "Source & documentation",
     items: [
       {
-        badge: "Soon",
-        title: "Coming soon",
-        desc: "",
-        href: null
+        badge: "GitHub",
+        title: "Source code on GitHub",
+        desc: "dchantlos/construction-timelapse — the full app repository.",
+        href: "https://github.com/dchantlos/construction-timelapse"
+      },
+      {
+        badge: "Docs",
+        title: "Documentation",
+        desc: "How the IDS audit, 3D highlight & BCF export work.",
+        href: "https://github.com/dchantlos/construction-timelapse/tree/main/documentation"
       }
     ]
   }
