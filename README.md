@@ -93,7 +93,6 @@ and one-touch camera spin, over a dark, high-contrast theme (WCAG-tuned).
 | `index.html` | Planned construction sequencing (4D timelapse) + IDS audit |
 | `progress.html` | Real construction status (4D schedule + 5D cost) + live sensors |
 | `report.html` | AIA G702 / G703 Application for Payment |
-| `login.html` | Entry gate |
 
 ## Built on the ArcGIS Maps SDK for JavaScript 5.1
 
@@ -129,13 +128,12 @@ ES modules must be served over HTTP (not opened from `file://`). Any static serv
 python -m http.server 5533
 ```
 
-Then open <http://localhost:5533/login.html>.
+Then open <http://localhost:5533/index.html>.
 
 ## Project structure
 
 ```
 construction-timelapse/
-├─ login.html                      Entry gate
 ├─ index.html                      Planned 4D sequencing + IDS audit
 ├─ progress.html                   Real status (4D) + 5D cost + live sensors
 ├─ report.html                     AIA G702/G703 Application for Payment
