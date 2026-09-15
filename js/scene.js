@@ -13,8 +13,8 @@ import { WEBSCENE_ID, PORTAL_URL, FALLBACK_TIME_EXTENT } from "./config.js";
 esriConfig.assetsPath = "https://js.arcgis.com/5.1/@arcgis/core/assets";
 
 /**
- * Build the WebScene + SceneView, strip the default UI chrome and switch on
- * dramatic sun lighting with shadows.
+ * Build the WebScene + SceneView, strip the default UI chrome and apply the
+ * WebScene's authored virtual lighting (even, camera-relative) with shadows.
  *
  * @param {string} [webSceneId=WEBSCENE_ID] Portal item id to open. Defaults to
  *   the time-enabled planned-schedule scene; the progress view passes its own.
@@ -34,10 +34,12 @@ export function createView(webSceneId = WEBSCENE_ID) {
     environment: {
       starsEnabled: true,
       atmosphereEnabled: true,
-      // Fixed late-afternoon sun → long, dramatic architectural shadows.
+      // Match the WebScene's authored daylight: virtual (camera-relative)
+      // lighting so the model stays evenly lit regardless of the viewer's local
+      // clock/timezone. The previous fixed "sun" date was parsed in local time,
+      // so viewers far from the building's timezone saw a night-time scene.
       lighting: {
-        type: "sun",
-        date: new Date("2025-06-21T15:30:00"),
+        type: "virtual",
         directShadowsEnabled: true
       }
     },
