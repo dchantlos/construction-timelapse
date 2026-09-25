@@ -95,7 +95,6 @@ export function buildAssistant(): HTMLElement {
   const assistant = document.createElement("arcgis-assistant") as any;
   assistant.setAttribute("reference-element", "#sc-map");
   assistant.setAttribute("log-enabled", "");
-  assistant.setAttribute("keep-suggested-prompts", "");
   assistant.heading = "AI Site Analyst";
   assistant.description =
     "AI reasoning over this site's live ArcGIS Velocity IoT — crane-wind safety, air quality, trends, and weather-driven schedule & cost impact.";

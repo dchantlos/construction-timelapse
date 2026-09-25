@@ -10,7 +10,7 @@
 // The built widget bundle lives at <app-root>/assistant/. This module is at
 // <app-root>/js/, so the specifier is resolved one level up. This works both
 // locally (served at root) and on GitHub Pages (served at /construction-timelapse/).
-const EMBED_URL = "../assistant/site-conditions.js?v=12";
+const EMBED_URL = "../assistant/site-conditions.js?v=13";
 
 let embedPromise = null;
 
