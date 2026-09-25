@@ -8,7 +8,7 @@
 // the live CStatus summary so the money always tracks the real progress.
 // =============================================================================
 
-import { PLANNED_PROGRESS_PCT, FINANCIALS } from "./config.js?v=12";
+import { PLANNED_PROGRESS_PCT, FINANCIALS, ENVIRONMENTAL_RISK } from "./config.js?v=13";
 import {
   refreshRiskContext,
   wireDrillDownModal,
@@ -35,19 +35,6 @@ const RISK_LAYERS = {
   delayed: "delayed_components",
   pending: "pending_change_orders",
   environmental: "environmental_sensors",
-};
-
-/**
- * Site-sensor environmental exposure — illustrative, like the drill-down rows.
- * Tower-crane high-wind stand-downs (operator can't safely work above the gust
- * threshold) plus CO/CO₂ air-quality evacuations for ground and interior crews;
- * each carries idle-time and remediation cost. Summed for the risk-card total.
- */
-const ENVIRONMENTAL_RISK = {
-  windDaysLost: 3,
-  heatAdvisories: 2,
-  gasStandDowns: 2,
-  total: 100_500,
 };
 
 /** Latest count-up targets, refreshed each render, replayed on first reveal. */

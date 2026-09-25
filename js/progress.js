@@ -18,7 +18,8 @@ import { renderFinancialPanel, createFinancialControls } from "./progress-financ
 import { createCostOverlays } from "./progress-overlays.js?v=15";
 import { createSensorPanel } from "./progress-sensors.js?v=15";
 import { createVelocityLive } from "./velocity-live.js?v=7";
-import { PROGRESS_WEBSCENE_ID } from "./config.js?v=12";
+import { PROGRESS_WEBSCENE_ID } from "./config.js?v=13";
+import { installAiBridge } from "./ai-bridge.js?v=3";
 
 /** Surface any error directly on the boot veil so failures are never silent. */
 function showBootError(message) {
@@ -85,6 +86,10 @@ async function boot() {
   // dust, gas and wind sensor, plus the shared store that drives the panel.
   createVelocityLive({ scene, view });
 
+  // Bridge so the embedded AI assistant can read the live schedule/cost figures
+  // (window.CT3D) for its IoT→cost analysis.
+  const aiBridge = installAiBridge();
+
   // Live on-site environmental sensor panel (top-right, draggable) — its wind,
   // noise, dust and gas figures come straight from the Velocity feeds above.
   createSensorPanel();
@@ -105,6 +110,7 @@ async function boot() {
     const data = await collectConstructionStatus(scene);
     renderProgressPanel(data.summary);
     renderFinancialPanel(data.summary);
+    aiBridge.setSummary(data.summary);
     // Per-layer isolate: filters the render and every metric to one layer.
     createProgressLayers(scene, data, (summary, scope) =>
       renderProgressPanel(summary, { scope })

@@ -7,7 +7,7 @@
 // planned-sequencing view.
 // =============================================================================
 
-import { BUILDING_LAYERS, PROGRESS_STATUS } from "./config.js?v=12";
+import { BUILDING_LAYERS, PROGRESS_STATUS } from "./config.js?v=13";
 import { openSensorPopupForGraphic, closeSensorPopup } from "./velocity-live.js?v=7";
 
 /** Reference-only context layers (e.g. SwissBuildings 3D) are never identifiable. */

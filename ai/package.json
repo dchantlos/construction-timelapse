@@ -1,0 +1,25 @@
+{
+  "name": "site-conditions-agent",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Custom ArcGIS AI assistant (beta) that answers live construction site-conditions questions for the construction-timelapse app.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:embed": "vite build --config vite.embed.config.ts",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@arcgis/ai-components": "5.1.25",
+    "@arcgis/core": "5.1.25",
+    "@arcgis/map-components": "5.1.25",
+    "@esri/calcite-components": "^5.1.1",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vite": "^7.1.0"
+  }
+}

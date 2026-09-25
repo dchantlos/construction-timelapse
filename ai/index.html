@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Site Conditions Assistant — construction-timelapse</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: #0e1522;
+        color: #e5eefb;
+      }
+      #layout {
+        display: flex;
+        height: 100vh;
+      }
+      #main-map {
+        flex: 1 1 auto;
+        height: 100%;
+      }
+      #side {
+        width: 420px;
+        max-width: 46vw;
+        display: flex;
+        flex-direction: column;
+        border-left: 1px solid #1c2a3f;
+        background: #0b1220;
+      }
+      #assistant-host {
+        flex: 1 1 auto;
+        min-height: 0;
+      }
+      #assistant-host arcgis-assistant {
+        height: 100%;
+      }
+      #gate {
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      #gate h1 {
+        font-size: 18px;
+        margin: 0;
+      }
+      #gate p {
+        margin: 0;
+        color: #9fb3cd;
+        font-size: 13px;
+        line-height: 1.55;
+      }
+      #gate-btn {
+        align-self: flex-start;
+        background: #38e2ea;
+        color: #04212a;
+        border: 0;
+        border-radius: 8px;
+        padding: 10px 16px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      #gate-btn:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      #gate-msg {
+        font-size: 12px;
+        color: #9fb3cd;
+        min-height: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="layout">
+      <!-- osm needs no API key, so the map renders before the user signs in. -->
+      <arcgis-map id="main-map" basemap="osm" center="8.6142,47.4133" zoom="16"></arcgis-map>
+      <div id="side">
+        <div id="gate">
+          <h1>Site Conditions Assistant</h1>
+          <p>
+            Ask about live conditions on the Zürich construction site — wind at the tower crane,
+            air quality, harmful gases, dust, and noise. You'll be asked to sign in with your
+            ArcGIS account only when you open the assistant.
+          </p>
+          <button id="gate-btn" type="button">Ask the site conditions →</button>
+          <div id="gate-msg"></div>
+        </div>
+        <div id="assistant-host" hidden></div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

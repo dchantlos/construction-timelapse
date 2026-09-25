@@ -127,6 +127,29 @@ export const FINANCIALS = {
   }
 };
 
+/**
+ * Environmental sensor exposure for the Financials (5D) risk card and the AI
+ * Site Analyst. Illustrative idle-time / remediation costs, each flagged by a
+ * site IoT sensor — tower-crane high-wind stand-downs, harmful-gas (CO/CO₂)
+ * crew evacuations, and heat-index work stoppages. `events` is the single
+ * source of truth: the drill-down window lists them and the risk-card total is
+ * their sum (30 + 22 + 18 + 12.5 + 8 + 10 = $100.5k).
+ */
+export const ENVIRONMENTAL_RISK = {
+  windDaysLost: 3,
+  heatAdvisories: 2,
+  gasStandDowns: 2,
+  total: 100_500,
+  events: [
+    { category: "wind", sensor: "Crane-apex wind sensor (WIND-01)", label: "Tower Crane T2 \u00b7 high-wind stand-down", meta: "3 days \u00b7 gusts >45 mph", amount: 30_000 },
+    { category: "heat", sensor: "Site weather station", label: "High-heat advisory \u00b7 crew work stoppage", meta: "2 days \u00b7 heat index >105\u00b0F", amount: 22_000 },
+    { category: "wind", sensor: "Crane-apex wind sensor (WIND-01)", label: "Idle equipment \u00b7 weather hold", meta: "Cranes + hoists", amount: 18_000 },
+    { category: "gas", sensor: "Multi-gas cabinet (GAS-01)", label: "Ground-crew evacuation \u00b7 CO alert", meta: "Level 07 \u00b7 42 ppm", amount: 12_500 },
+    { category: "gas", sensor: "Multi-gas cabinet (GAS-01)", label: "Ventilation & re-entry testing \u00b7 CO\u2082", meta: "Basement \u00b7 5,000 ppm", amount: 8_000 },
+    { category: "gas", sensor: "Site-wide air-quality sensors", label: "Air-quality monitoring & remediation", meta: "Site-wide sensors", amount: 10_000 },
+  ],
+};
+
 // -----------------------------------------------------------------------------
 // IDS model audit — buildingSMART Information Delivery Specification
 // -----------------------------------------------------------------------------

@@ -5,7 +5,7 @@
 // =============================================================================
 
 import { summarizeStatus } from "./progress-stats.js?v=13";
-import { BUILDING_LAYERS } from "./config.js?v=12";
+import { BUILDING_LAYERS } from "./config.js?v=13";
 
 const fmt = (n) => n.toLocaleString("en-US");
 

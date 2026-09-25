@@ -6,6 +6,8 @@
 // mocked — but each card now has its own satisfying detail view.
 // =============================================================================
 
+import { ENVIRONMENTAL_RISK } from "./config.js?v=13";
+
 const money = (n) => `$${Math.round(n).toLocaleString("en-US")}`;
 
 /** Per-risk modal content: heading, glyph, colour theme, total caption, rows. */
@@ -58,14 +60,7 @@ const RISK_DETAILS = {
     icon: "\u26A0",
     theme: "violet",
     totalLabel: "Sensor-flagged exposure",
-    rows: [
-      { label: "Tower Crane T2 \u00b7 high-wind stand-down", meta: "3 days \u00b7 gusts >45 mph", amount: 30000 },
-      { label: "High-heat advisory \u00b7 crew work stoppage", meta: "2 days \u00b7 heat index >105\u00b0F", amount: 22000 },
-      { label: "Idle equipment \u00b7 weather hold", meta: "Cranes + hoists", amount: 18000 },
-      { label: "Ground-crew evacuation \u00b7 CO alert", meta: "Level 07 \u00b7 42 ppm", amount: 12500 },
-      { label: "Ventilation & re-entry testing \u00b7 CO\u2082", meta: "Basement \u00b7 5,000 ppm", amount: 8000 },
-      { label: "Air-quality monitoring & remediation", meta: "Site-wide sensors", amount: 10000 },
-    ],
+    rows: ENVIRONMENTAL_RISK.events.map(({ label, meta, amount }) => ({ label, meta, amount })),
   },
 };
 
