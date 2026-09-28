@@ -27,7 +27,7 @@ const SCRIPTS = {
     { label: "From Plan to Site", text: "That's the validated plan. So how is the real build tracking against it? Let's move to the next panel on the application.", target: ".tab-link", cue: "→ View Simulated Construction Progress" },
   ],
   progress: [
-    { label: "The As-Built Twin", text: "The same tower, now colour-coded by real construction status, updated in the field by our construction crews with ArcGIS Field Maps, can be measured against the plan." },
+    { label: "The Construction Twin", text: "The same tower, now colour-coded by real construction status, updated in the field by our construction crews with ArcGIS Field Maps, can be measured against the plan." },
     { label: "Status at a Glance", text: "Green is installed, blue is due soon, orange is due by the end of the month, and grey is still weeks out. The whole job, read at a single glance." },
     { label: "Schedule · 4D", text: "The 4D view compares scheduled versus effective progress, this shows how far behind our planned schedule is running, and breaks the job down by status.", target: ".dashboard" },
     { label: "Real-Time IoT", text: "Live feeds for wind, gas, dust, noise and weather stream in from ArcGIS Velocity. We detect, store and analyse them to measure the cost of environmental and site delays, this also helps keep field crews safe with early detection monitoring.", target: ["#sensorDetailPanel", ".sensor-panel"], cue: "⤢ Expand the feeds" },
