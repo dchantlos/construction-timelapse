@@ -13,6 +13,7 @@
         document.documentElement.classList.add("capture-clean");
     </script>
     <style>
+      .capture-clean .welcome,
       .capture-clean .help-fab,
       .capture-clean .res-fab,
       .capture-clean .asst-fab { display: none !important; }
@@ -22,7 +23,7 @@
 
     <!-- ArcGIS dark base theme (we override most of it in styles.css) -->
     <link rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css" />
-    <link rel="stylesheet" href="./css/styles.css?v=67" />
+    <link rel="stylesheet" href="./css/styles.css?v=78" />
 
     <!-- ESM import map: load @arcgis/core (and JSZip for BCF export) from CDNs -->
     <script type="importmap">
@@ -49,6 +50,19 @@
         <img class="boot__logo" src="./assets/dev-logo.png" alt="Esri Developers" />
       </div>
       <div class="boot__text">Initializing Construction Twin<span class="boot__dots"></span></div>
+    </div>
+
+    <!-- ======================= WELCOME MODAL ======================= -->
+    <div id="welcome" class="welcome" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+      <div class="welcome__backdrop" data-welcome-close></div>
+      <div class="welcome__panel glass" role="document">
+        <span class="welcome__badge">Pre-Construction · BIM Validation</span>
+        <h1 id="welcomeTitle" class="welcome__title">Welcome to the Construction Digital Twin</h1>
+        <p class="welcome__made">Made with the <strong>ArcGIS Maps SDK for JavaScript</strong></p>
+        <p class="welcome__desc">Validating the BIM model before we build — checking geolocation, 4D plan sequencing, and auditing the standards in an open buildingSMART IDS.</p>
+        <button type="button" class="welcome__btn" data-welcome-close>Enter the digital twin →</button>
+        <img class="welcome__esri" src="./assets/esri-logo.png" alt="Esri" width="140" height="81" />
+      </div>
     </div>
 
     <!-- ======================= TOP BAR ======================= -->
@@ -254,6 +268,8 @@
       </form>
     </section>
 
+    <script type="module" src="./js/welcome.js?v=2"></script>
+    <script type="module" src="./js/presentation.js?v=25"></script>
     <script type="module" src="./js/app.js?v=51"></script>
     <script type="module" src="./js/help.js?v=5"></script>
     <script type="module" src="./js/resources.js?v=4"></script>

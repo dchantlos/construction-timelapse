@@ -188,7 +188,7 @@ function specFailingWhere(spec) {
   return clauses.length ? clauses.join(" OR ") : null;
 }
 
-/** Human label for a requirement facet. */
+/** Human label for a requirement facet (the raw IFC / property term). */
 function requirementLabel(req) {
   if (req.kind === "attribute") return `Attribute · ${req.name}`;
   if (req.kind === "property") return `${req.propertySet}.${req.baseName}`;
@@ -196,6 +196,31 @@ function requirementLabel(req) {
     return `Classification · ${req.system?.join(" / ") || "any recognised system"}`;
   }
   return "Requirement";
+}
+
+// Plain-English names for the common requirement facets, so a non-technical
+// audience reads what is being checked; the raw term stays available on hover.
+const REQUIREMENT_PLAIN = {
+  globalid: "Unique ID",
+  name: "Name",
+  predefinedtype: "Element type",
+  scheduledphase: "Scheduled phase",
+  plannedstartdate: "Planned start date",
+  plannedfinishdate: "Planned finish date",
+  constructionstatus: "Construction status",
+  firerating: "Fire rating",
+  loadbearing: "Load-bearing",
+  isexternal: "External or internal",
+  thermaltransmittance: "Thermal performance (U-value)"
+};
+
+/** Plain-English label + the raw technical term (kept for a hover tooltip). */
+function requirementPlain(req) {
+  const technical = requirementLabel(req);
+  if (req.kind === "classification") return { label: "Classification code", tag: technical };
+  const key = req.kind === "attribute" ? req.name : req.kind === "property" ? req.baseName : null;
+  const plain = key ? REQUIREMENT_PLAIN[String(key).toLowerCase()] : null;
+  return plain ? { label: plain, tag: technical } : { label: technical, tag: null };
 }
 
 /** A short, human evidence string derived from the observed statistics. */
@@ -230,8 +255,10 @@ async function evaluateRequirement(req, inspector, elementCount) {
   const evidenceIdx = Math.max(0, stats.findIndex((s) => s.populated > 0));
   const evidence = evidenceText(fields[evidenceIdx], stats[evidenceIdx]);
 
+  const plain = requirementPlain(req);
   return {
-    label: requirementLabel(req),
+    label: plain.label,
+    tag: plain.tag,
     optional: req.cardinality === "optional",
     hasField,
     populated: hasField ? populated : 0,
@@ -382,7 +409,9 @@ function renderRequirement(r) {
   const met = r.hasField && r.populated >= r.total && r.total > 0;
   const partial = r.hasField && r.populated > 0 && r.populated < r.total;
   dot.classList.add(met ? "is-pass" : partial ? "is-partial" : "is-fail");
-  row.append(dot, elt("span", "audit-req__label", r.label));
+  const label = elt("span", "audit-req__label", r.label);
+  if (r.tag) label.title = r.tag; // keep the raw IFC / property term on hover
+  row.append(dot, label);
   row.append(elt("span", "audit-req__evidence", r.evidence));
   return row;
 }
@@ -487,6 +516,95 @@ function renderSpec(spec, onFocus, bcf) {
 
   card.append(head, detail);
   return card;
+}
+
+// Presentation-friendly "what's happening" panel shown while the audit runs.
+// Paces the check into an even, plain-language sequence for audiences unfamiliar
+// with openBIM/IDS. Returns { settle() } — call it when the real audit resolves;
+// it holds a minimum even pace, then finishes the last step and the bar. While
+// waiting it shows an indeterminate shimmer so the final step never looks frozen.
+function renderRunning(container) {
+  const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
+  const steps = [
+    ["Reading the 3D design model", "the design team's BIM model"],
+    ["Loading the requirements", "the project's shared rulebook \u2014 an open buildingSMART IDS"],
+    ["Checking every element", "the right information, in the right location"],
+    ["Scoring the results", "pass \u00b7 needs attention \u00b7 fail"]
+  ];
+
+  const wrap = elt("div", "audit-running");
+  wrap.setAttribute("role", "status");
+  wrap.setAttribute("aria-live", "polite");
+  wrap.append(elt("span", "kicker", "Model validation"));
+  wrap.append(elt("h2", "audit-running__title", "Validating the design model"));
+  wrap.append(
+    elt(
+      "p",
+      "audit-running__intro",
+      "Automatically checking the building's 3D design against the project's agreed information standard \u2014 confirming every element carries the right data, in the right place, before construction begins."
+    )
+  );
+
+  const list = elt("ol", "audit-running__steps");
+  const stepEls = steps.map(([label, sub]) => {
+    const li = elt("li", "audit-step");
+    li.append(elt("span", "audit-step__mark"));
+    const text = elt("span", "audit-step__text");
+    text.append(elt("span", "audit-step__label", label));
+    text.append(elt("span", "audit-step__sub", sub));
+    li.append(text);
+    list.append(li);
+    return li;
+  });
+  wrap.append(list);
+
+  const bar = elt("div", "audit-running__bar");
+  const fill = elt("span", "audit-running__fill");
+  bar.append(fill);
+  wrap.append(bar);
+  container.append(wrap);
+
+  // Even, unhurried pacing: every step dwells the same amount; the last step
+  // activates then stays "working" (indeterminate bar shimmer + pulse) until the
+  // real audit finishes, so the final step never reads as frozen.
+  const stepMs = reduce ? 300 : 950;
+  const minEnd = (steps.length - 1) * stepMs + (reduce ? 200 : 750);
+  const startedAt = performance.now();
+
+  stepEls.forEach((li, i) => {
+    setTimeout(() => {
+      if (i > 0) {
+        stepEls[i - 1].classList.remove("is-active");
+        stepEls[i - 1].classList.add("is-done");
+      }
+      li.classList.add("is-active");
+    }, i * stepMs);
+  });
+
+  // Fill to ~90% over the sequence, then run an indeterminate shimmer while we
+  // wait for the real audit — a full, static bar is what looks frozen.
+  requestAnimationFrame(() => {
+    fill.style.transition = `width ${minEnd}ms cubic-bezier(.4, 0, .2, 1)`;
+    fill.style.width = "90%";
+  });
+  const workingTimer = setTimeout(() => bar.classList.add("is-working"), minEnd);
+
+  // Called when the real audit resolves: hold the minimum even pace, then mark
+  // the final step done and complete the bar before the score appears.
+  async function settle() {
+    const wait = Math.max(0, minEnd - (performance.now() - startedAt));
+    if (wait) await new Promise((r) => setTimeout(r, wait));
+    clearTimeout(workingTimer);
+    bar.classList.remove("is-working");
+    const last = stepEls[stepEls.length - 1];
+    last.classList.remove("is-active");
+    last.classList.add("is-done");
+    fill.style.transition = "width .3s ease";
+    fill.style.width = "100%";
+    await new Promise((r) => setTimeout(r, reduce ? 150 : 420));
+  }
+
+  return { settle };
 }
 
 function renderSetup({ activeIds, onView, onDownload, onUpload, onRun }) {
@@ -663,12 +781,13 @@ export function createAudit({ scene, view, layerControl }) {
   reviewCaption.style.display = "none";
   view.ui.add(reviewCaption, "manual");
 
-  function showCaption(title, detail) {
-    reviewCaption.replaceChildren(
-      elt("span", "audit-review-caption__kicker", "3D audit review"),
-      elt("strong", "audit-review-caption__title", title),
-      elt("span", "audit-review-caption__detail", detail)
-    );
+  function showCaption({ kicker = "3D audit review", why = "", title = "", detail = "", action = "" }) {
+    const nodes = [elt("span", "audit-review-caption__kicker", kicker)];
+    if (why) nodes.push(elt("strong", "audit-review-caption__why", why));
+    if (title) nodes.push(elt("strong", "audit-review-caption__title", title));
+    if (detail) nodes.push(elt("span", "audit-review-caption__detail", detail));
+    if (action) nodes.push(elt("span", "audit-review-caption__action", action));
+    reviewCaption.replaceChildren(...nodes);
     reviewCaption.style.display = "";
   }
   function hideCaption() {
@@ -688,12 +807,12 @@ export function createAudit({ scene, view, layerControl }) {
     reviewLayers([layer]);
     const total = typeof specLayer === "object" ? specLayer.elementCount ?? 0 : 0;
     const compliant = typeof specLayer === "object" ? specLayer.compliant ?? 0 : 0;
-    showCaption(
+    showCaption({
       title,
-      total
+      detail: total
         ? `${compliant.toLocaleString()} of ${total.toLocaleString()} compliant · isolated in 3D`
         : "isolated in 3D"
-    );
+    });
   }
 
   // ---- Issue review: isolate the failing components regardless of the slider -
@@ -900,9 +1019,8 @@ export function createAudit({ scene, view, layerControl }) {
     // failing elements red (a representative sample when only some fail) and the
     // passing ones grey (opacity/bloom don't render here), captioning the counts.
     const idTag = spec.identifier ? `${spec.identifier} · ` : "";
-    let detail;
     if (failing.length) {
-      detail =
+      let detail =
         `${failing.length} of ${spec.layers.length} components fail — ` +
         failing
           .map(
@@ -914,10 +1032,31 @@ export function createAudit({ scene, view, layerControl }) {
       if (passing.length) {
         detail += ` · ${passing.map((l) => l.title).join(", ")} compliant (grey)`;
       }
+      // Lead with the plain reason the highlighted components are red: the
+      // required information they don't carry (plain names, not IFC property paths).
+      const missing = [
+        ...new Set(
+          (spec.requirements ?? [])
+            .filter((r) => r.cardinality !== "optional")
+            .map((r) => requirementPlain(r).label)
+        )
+      ];
+      showCaption({
+        kicker: "Why this component failed",
+        why: missing.length
+          ? `Missing: ${missing.join("  ·  ")}`
+          : spec.description || "Required project information is missing on these elements.",
+        title: `${idTag}${spec.name}`,
+        detail,
+        action: "⭳ Send it back to the design team for review — export as a BCF issue"
+      });
     } else {
-      detail = "all applicable components compliant";
+      showCaption({
+        kicker: "Model audit — compliant",
+        title: `${idTag}${spec.name}`,
+        detail: "All applicable components compliant"
+      });
     }
-    showCaption(`${idTag}${spec.name}`, detail);
   }
 
   /** Remove any BCF highlight, restore the timeline behaviour and all layers. */
@@ -1003,10 +1142,11 @@ export function createAudit({ scene, view, layerControl }) {
   async function runNow() {
     body.scrollTop = 0;
     body.textContent = "";
-    body.append(elt("div", "audit-loading", "Auditing the model against the IDS…"));
+    const running = renderRunning(body);
     try {
-      const idsModel = parseIds(await ensureIdsText());
-      const result = await runAudit(idsModel, layerByTitle);
+      const result = await runAudit(parseIds(await ensureIdsText()), layerByTitle);
+      // Hold an even minimum pace, then finish the sequence before showing results.
+      await running.settle();
       renderResult(result, body, focusLayer, {
         onView: viewIds,
         onReset: showSetup,

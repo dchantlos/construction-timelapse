@@ -8,7 +8,7 @@
 // =============================================================================
 
 import { BUILDING_LAYERS, PROGRESS_STATUS } from "./config.js?v=13";
-import { openSensorPopupForGraphic, closeSensorPopup } from "./velocity-live.js?v=7";
+import { openSensorPopupForGraphic, closeSensorPopup } from "./velocity-live.js?v=8";
 
 /** Reference-only context layers (e.g. SwissBuildings 3D) are never identifiable. */
 function isContextOnlyLayer(title = "") {

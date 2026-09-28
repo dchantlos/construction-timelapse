@@ -10,7 +10,7 @@ import { LLMAgent } from "@arcgis/ai-components/agent-utils/LLMAgent.js";
 import { FunctionTool } from "@arcgis/ai-components/agent-utils/tools/FunctionTool.js";
 import { z } from "zod";
 
-import { getSiteConditions, assessCrane, assessGas, analyzeConditionTrends, craneLiftWindows, windImpactHours } from "./feed";
+import { getSiteConditions, assessCrane, assessGas, analyzeConditionTrends, craneLiftWindows, windImpactHours, planSafetyHolds } from "./feed";
 
 // These tools take no input; the site is fixed. An empty object schema is valid.
 const noInput = z.object({});
@@ -181,21 +181,31 @@ const environmentalImpactTool = new FunctionTool({
   execute: async () => JSON.stringify(await analyzeEnvironmentalImpact()),
 });
 
+const safetyHoldsTool = new FunctionTool({
+  name: "planSafetyHolds",
+  description:
+    "Forward-looking safety planning for the day ahead. Synthesises today's whole-day telemetry across EVERY hazard — tower-crane high-wind stand-downs, harmful-gas (CO/CO₂/NO₂/O₃/VOC/CH₄) evacuations, heat-stress holds, and dust/noise mitigations — into the safety holds / work stoppages a supervisor should plan the day around, each with its likelihood (likely / watch), the time windows it applies to, and the recommended action. Use for 'based on current conditions, what safety holds should I plan for today', 'what stoppages / stand-downs should I expect today', 'plan the day around the conditions', 'what should the crews watch out for', or 'any holds coming up'.",
+  inputSchema: noInput,
+  execute: async () => JSON.stringify(await planSafetyHolds()),
+});
+
 export const agentTools = [
   getSiteConditionsTool,
   assessCraneSafetyTool,
   assessGasSafetyTool,
   analyzeTrendsTool,
   craneWindowsTool,
+  safetyHoldsTool,
   scheduleCostTool,
   environmentalImpactTool,
 ];
 
 // The description drives the assistant's orchestrator routing — be specific about
 // when to use this agent, with example prompts.
-const description = String.raw`- **Site Conditions** — An AI analyst for the Zürich construction site's live ArcGIS Velocity IoT feeds. It answers questions about current conditions (crane wind and lift safety, air quality, harmful gases CO/CO2/NO2/O3/VOCs/CH4, dust/PM10, noise, temperature, humidity), analyses whole-day trends and patterns, recommends tower-crane lifting windows, explains how the weather is affecting the project's schedule and cost, and itemises how sensor-flagged environmental events (wind stand-downs, gas evacuations, heat holds) have added to project delay and cost.
+const description = String.raw`- **Site Conditions** — An AI analyst for the Zürich construction site's live ArcGIS Velocity IoT feeds. It answers questions about current conditions (crane wind and lift safety, air quality, harmful gases CO/CO2/NO2/O3/VOCs/CH4, dust/PM10, noise, temperature, humidity), analyses whole-day trends and patterns, recommends tower-crane lifting windows, predicts which safety holds / work stoppages to plan for today across every hazard, explains how the weather is affecting the project's schedule and cost, and itemises how sensor-flagged environmental events (wind stand-downs, gas evacuations, heat holds) have added to project delay and cost.
 
   _Example queries:_
+  - "Based on current conditions, what safety holds should I plan for today?"
   - "How is the weather affecting our schedule and cost?"
   - "What's our schedule delay penalty, and why are we behind?"
   - "What have wind stand-downs and gas evacuations cost us?"
@@ -211,6 +221,7 @@ Always use your tools to fetch real data before answering — never invent or gu
 - Gas / air-safety / confined-space → assessGasSafety.
 - Patterns, trends, "how has it changed today", "when is it worst", day summaries → analyzeConditionTrends.
 - Planning lifts / best time to lift / when it will be too windy → forecastCraneLiftWindows.
+- Which safety holds / stoppages / stand-downs to plan for today across all hazards, planning the day around conditions, what crews should watch out for → planSafetyHolds.
 - The schedule delay impact / liquidated-damages penalty / how the weather is affecting the schedule or cost right now / why we're behind / what the delay costs → analyzeScheduleCostImpact.
 - How environmental events have ADDED to cost or delay — itemised wind stand-downs, gas evacuations, heat holds, "what did the crane wind or gas alerts cost us", a breakdown of sensor-flagged costs → analyzeEnvironmentalImpact.
 

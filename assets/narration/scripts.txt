@@ -1,0 +1,91 @@
+PRESENTATION NARRATION SCRIPTS
+==============================
+How to use:
+  1. In ElevenLabs (or Azure / Polly), generate one MP3 per block below.
+     Try a polished British voice such as "Alice" or "Matilda".
+  2. Save each file with the EXACT filename shown, into this folder:
+        assets/narration/
+  3. Reload the app in Presentation Mode. It auto-detects these clips and
+     plays them. Any file you have not made yet falls back to the on-screen
+     browser voice automatically, so you can add them one at a time.
+
+Tip: if an acronym sounds off, tweak the wording just for the audio, e.g.
+  "4D" -> "four-D",  "5D" -> "five-D",  "ArcGIS" -> "Arc G I S".
+
+
+==================  MAIN PAGE  (index.html)  ==================
+
+index-01.mp3
+Welcome to the construction digital twin, built with the ArcGIS Maps SDK for JavaScript. This is ArcGIS extended into a fully customisable application, shaped to any business solution. Building an application like this no longer takes a development team: it was built through AI-assisted engineering, extending the value and ROI of your existing ArcGIS user types.
+
+index-02.mp3
+As part of the validation process, before construction can break ground, we begin by visualising our BIM model: a high-rise building, authored in Autodesk Revit and exported as buildingSMART Industry Foundation Classes, also known as IFC, brought to life here as a 3D digital twin.
+
+index-03.mp3
+ArcGIS validates that the BIM model is correctly geolocated and carries its construction schedule. Press play and the tower builds itself in time, exactly to that schedule. That's 4D sequencing.
+
+index-04.mp3
+As part of that validation, the team can query the dashboard at any date on the timeline: overall progress, the current phase, active building systems, and days elapsed versus remaining. It's how we confirm the schedule holds to the deadlines the construction teams depend on.
+
+index-05.mp3
+Every building system, from structure to facade to services, is its own layer. Click one to isolate it and see how the building goes together.
+
+index-06.mp3
+Before construction starts, we validate the model against an open buildingSMART Information Delivery Specification, also known as IDS. It checks every element against the project's data standards and submission requirements, confirming the model meets the agreed design standards before we build.
+
+index-07.mp3
+The audit checks every element against that specification and scores the whole project in seconds: whether it passes, needs attention, or fails compliance.
+
+index-08.mp3
+Each requirement is scored against the real element data: unique IDs, naming, 4D scheduling dates, fire ratings, classifications. You see exactly what's compliant and what's missing from the BIM data.
+
+index-09.mp3
+Expand any requirement for a per-layer breakdown, then drill into a layer to see precisely which elements fall short.
+
+index-10.mp3
+We visualise and highlight every failing component right in the 3D model, then package them into a buildingSMART BIM Collaboration Format file, also known as BCF, so the design team can fix the model before construction begins.
+
+index-11.mp3
+Once the design team receives that BCF file, they fix each flagged issue and run the audit again, looping until the model reaches 100% compliance.
+
+index-12.mp3
+That's the validated plan. So how is the real build tracking against it? Let's move to the next panel on the application.
+
+
+==================  PROGRESS PAGE  (progress.html)  ==================
+
+progress-01.mp3
+The same tower, now colour-coded by real construction status, updated in the field by our construction crews with ArcGIS Field Maps, can be measured against the plan.
+
+progress-02.mp3
+Green is installed, blue is due soon, orange is due by the end of the month, and grey is still weeks out. The whole job, read at a single glance.
+
+progress-03.mp3
+The 4D view compares scheduled versus effective progress, this shows how far behind our planned schedule is running, and breaks the job down by status.
+
+progress-04.mp3
+Live feeds for wind, gas, dust, noise and weather stream in from ArcGIS Velocity. We detect, store and analyse them to measure the cost of environmental and site delays, this also helps keep field crews safe with early detection monitoring.
+
+progress-05.mp3
+Every sensor drops onto the model as a live, colour-coded glowing point. Click one for its latest reading and status.
+
+progress-06.mp3
+Each pop-up gives project supervisors a clear read of a sensor's current values, and those same live readings roll up into the larger feeds panel, so the whole site's conditions stay in view.
+
+progress-07.mp3
+Click the Financials tab to open the ERP-to-GIS bridge. It streams our live project costs straight from the ERP into the twin: budget, cost-to-date, earned-value health, and the current billing draw. That's 5D.
+
+progress-08.mp3
+Risk and variance track the cost of everything we couldn't plan for in design: environmental holds flagged by our site sensors, and the price of components running late. The unplanned spend, captured and quantified.
+
+progress-09.mp3
+Open the AI Site Analyst and ask how those risks hit the bottom line. It reasons over the live feeds and the cost figures and answers in plain English: how much these unplanned events have added to the total budget.
+
+progress-10.mp3
+For supervisors and stakeholders, this is the payoff. No dashboards to decode: the assistant turns connected data and systems, working in harmony, into clear answers, so everyone makes better sense of the site and the decisions that follow.
+
+progress-11.mp3
+Finally, generate the AIA billing report: full transparency on exactly how much work is in place and what it has cost. One click produces the payment application, ready to submit and saved with the project record.
+
+progress-12.mp3
+From a validated plan to tracked delivery: one construction digital twin. Model the plan, manage the build, master the budget, with ArcGIS.

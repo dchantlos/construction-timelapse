@@ -415,3 +415,204 @@ export async function windImpactHours() {
   }
   return { cautionHours: round(cautionH), standDownHours: round(standH), peakWind_ms: round(peak) };
 }
+
+// =============================================================================
+// Forward-looking safety planning — synthesise the whole day of telemetry across
+// every hazard into the safety holds a supervisor should plan the day around.
+// =============================================================================
+
+/** Contiguous spans where the value stays at/above a threshold (as HH:MM ranges). */
+function aboveWindows(series: { ts: number; v: number }[], threshold: number): { from: string; to: string }[] {
+  const spans: { from: string; to: string }[] = [];
+  let startTs: number | null = null;
+  for (let i = 0; i < series.length; i++) {
+    const above = series[i].v >= threshold;
+    if (above && startTs === null) startTs = series[i].ts;
+    const isLast = i === series.length - 1;
+    if ((!above || isLast) && startTs !== null) {
+      const endTs = above && isLast ? series[i].ts : series[i - 1].ts;
+      spans.push({ from: zurichTime(startTs), to: zurichTime(endTs) });
+      startTs = null;
+    }
+  }
+  return spans;
+}
+
+/** Worst harmful-gas reading reached anywhere in today's gas series (single CSV fetch). */
+async function gasDayWorst() {
+  const csv = await fetchCsv("gas");
+  const sidIdx = csv.header.indexOf("SensorID");
+  const tsIdx = csv.header.indexOf("Timestamp");
+  let worstIdx = 0;
+  let worst: { gas: string; value: number; unit: string; category: string; at: string } | null = null;
+  for (const r of csv.rows) {
+    if (r[sidIdx] !== GAS_PRIMARY) continue;
+    for (const p of GAS_PARAMS) {
+      const v = Number(r[csv.header.indexOf(p.field)]);
+      if (!Number.isFinite(v)) continue;
+      const idx = GAS_CATEGORIES.indexOf(classify(v, p.thresholds, GAS_CATEGORIES));
+      if (idx > worstIdx) {
+        worstIdx = idx;
+        worst = { gas: p.key, value: round(v), unit: p.unit, category: GAS_CATEGORIES[idx], at: zurichTime(Number(r[tsIdx])) };
+      }
+    }
+  }
+  return { worstIdx, worst };
+}
+
+interface SafetyHold {
+  hazard: string;
+  likelihood: "likely" | "watch" | "unlikely";
+  headline: string;
+  when: string;
+  detail: string;
+  recommendation: string;
+}
+
+/**
+ * Forward-looking safety briefing: which holds / work stoppages to plan for today.
+ * Reads the whole-day telemetry for every hazard (crane wind, harmful gas, dust,
+ * noise) plus live weather/air-quality and compares each against the site's safety
+ * thresholds, returning the likely holds with their time windows and actions.
+ */
+export async function planSafetyHolds() {
+  const [windSpeed, windGust, dustSeries, noiseSeries, gas, weather, air] = await Promise.all([
+    seriesFor("wind", WIND.primary, WIND.field),
+    seriesFor("wind", WIND.primary, WIND.gustField),
+    seriesFor("dust", DUST.primary, DUST.field),
+    seriesFor("noise", "NOISE-N", NOISE.field),
+    gasDayWorst(),
+    settle(readWeather()),
+    settle(readAirQuality()),
+  ]);
+
+  const holds: SafetyHold[] = [];
+  const spanTxt = (spans: { from: string; to: string }[]) => spans.map((s) => `${s.from}–${s.to}`).join(", ");
+
+  // --- Tower-crane high wind ---
+  const w = summarize(windSpeed);
+  const gustMax = summarize(windGust)?.max ?? 0;
+  const standSpans = aboveWindows(windSpeed, WIND.thresholds[2]);
+  const cautionSpans = aboveWindows(windSpeed, WIND.thresholds[1]);
+  const safeWindows = spanTxt(belowWindows(windSpeed, WIND.thresholds[1])) || "none today";
+  if (w) {
+    if (standSpans.length || gustMax >= WIND.thresholds[2]) {
+      holds.push({
+        hazard: "Tower-crane high wind",
+        likelihood: "likely",
+        headline: "Tower-crane stand-down",
+        when: standSpans.length ? spanTxt(standSpans) : `gusts peak near ${w.peakAt}`,
+        detail: `Crane-apex wind reaches ${w.max} m/s with gusts to ${round(gustMax)} m/s — at or above the ${WIND.thresholds[2]} m/s stand-down limit.`,
+        recommendation: `Stop lifting in those windows. Safe lift windows (mean wind below ${WIND.thresholds[1]} m/s): ${safeWindows}.`,
+      });
+    } else if (cautionSpans.length) {
+      holds.push({
+        hazard: "Tower-crane high wind",
+        likelihood: "watch",
+        headline: "Crane caution — restrict large lifts",
+        when: spanTxt(cautionSpans),
+        detail: `Wind reaches ${w.max} m/s (gusts ${round(gustMax)} m/s), above the ${WIND.thresholds[1]} m/s caution level but below the ${WIND.thresholds[2]} m/s stand-down limit.`,
+        recommendation: `Hold large sail-area lifts in those windows and re-check live gusts before every pick.`,
+      });
+    } else {
+      holds.push({
+        hazard: "Tower-crane high wind",
+        likelihood: "unlikely",
+        headline: "No crane wind hold expected",
+        when: "—",
+        detail: `Wind stays below the ${WIND.thresholds[1]} m/s caution level all day (peak ${w.max} m/s at ${w.peakAt}).`,
+        recommendation: "Normal lifting operations; re-check live gusts before heavy picks.",
+      });
+    }
+  }
+
+  // --- Harmful gas ---
+  if (gas.worstIdx >= 3 && gas.worst) {
+    holds.push({
+      hazard: "Harmful gas",
+      likelihood: "likely",
+      headline: "Gas evacuation",
+      when: `around ${gas.worst.at}`,
+      detail: `${gas.worst.gas} reaches ${gas.worst.value} ${gas.worst.unit} (${gas.worst.category}) around ${gas.worst.at}.`,
+      recommendation: "Evacuate the affected area, ventilate, and re-test before re-entry.",
+    });
+  } else if (gas.worstIdx === 2 && gas.worst) {
+    holds.push({
+      hazard: "Harmful gas",
+      likelihood: "watch",
+      headline: "Gas caution — ventilate & monitor",
+      when: `around ${gas.worst.at}`,
+      detail: `${gas.worst.gas} reaches ${gas.worst.value} ${gas.worst.unit} (${gas.worst.category}) around ${gas.worst.at}.`,
+      recommendation: "Boost ventilation in enclosed/basement areas and watch the multi-gas cabinet closely.",
+    });
+  } else {
+    holds.push({
+      hazard: "Harmful gas",
+      likelihood: "unlikely",
+      headline: "No gas hold expected",
+      when: "—",
+      detail: "CO, CO₂, NO₂, O₃, VOCs and CH₄ stay within safe limits across the day.",
+      recommendation: "Normal operations; keep the multi-gas cabinet monitoring on.",
+    });
+  }
+
+  // --- Heat stress (live weather) ---
+  const temp = !("error" in weather) ? weather.temperature_c : null;
+  const hum = !("error" in weather) ? weather.humidity_pct : null;
+  if (typeof temp === "number") {
+    const humTxt = typeof hum === "number" ? ` at ${Math.round(hum)}% humidity` : "";
+    if (temp >= 32) {
+      holds.push({ hazard: "Heat", likelihood: "likely", headline: "Heat-stress hold", when: "peak afternoon", detail: `Air temperature ${round(temp)}°C${humTxt} — high heat-stress risk.`, recommendation: "Plan mandatory shade/rest cycles and hydration; pause strenuous work at the peak." });
+    } else if (temp >= 28) {
+      holds.push({ hazard: "Heat", likelihood: "watch", headline: "Heat advisory", when: "afternoon", detail: `Air temperature ${round(temp)}°C${humTxt} — moderate heat-stress risk.`, recommendation: "Schedule extra breaks and hydration; watch crews on exposed work." });
+    } else {
+      holds.push({ hazard: "Heat", likelihood: "unlikely", headline: "No heat hold expected", when: "—", detail: `Air temperature ${round(temp)}°C${humTxt} — comfortable for outdoor work.`, recommendation: "Normal operations." });
+    }
+  }
+
+  // --- Dust (only surface when elevated) ---
+  const d = summarize(dustSeries);
+  if (d && d.max >= DUST.thresholds[1]) {
+    holds.push({
+      hazard: "Dust (PM10)",
+      likelihood: d.max >= DUST.thresholds[2] ? "likely" : "watch",
+      headline: "Dust suppression",
+      when: `peak ${d.peakAt}`,
+      detail: `PM10 reaches ${d.max} µg/m³ (${classify(d.max, DUST.thresholds, DUST.categories)}) at ${d.peakAt}.`,
+      recommendation: "Run water/misting suppression; restrict dusty tasks at the peak and mask up.",
+    });
+  }
+
+  // --- Noise (only surface when elevated) ---
+  const n = summarize(noiseSeries);
+  if (n && n.max >= NOISE.thresholds[1]) {
+    holds.push({
+      hazard: "Noise",
+      likelihood: n.max >= NOISE.thresholds[2] ? "likely" : "watch",
+      headline: "Noise mitigation",
+      when: `peak ${n.peakAt}`,
+      detail: `Boundary noise reaches ${n.max} dBA (${classify(n.max, NOISE.thresholds, NOISE.categories)}) at ${n.peakAt}.`,
+      recommendation: "Enforce hearing protection; keep the noisiest tasks within permitted hours.",
+    });
+  }
+
+  const rank = { likely: 0, watch: 1, unlikely: 2 } as const;
+  holds.sort((a, b) => rank[a.likelihood] - rank[b.likelihood]);
+  const likely = holds.filter((h) => h.likelihood === "likely");
+  const watch = holds.filter((h) => h.likelihood === "watch");
+
+  return {
+    site: "Zürich, CH",
+    generatedAt: new Date().toISOString(),
+    basis:
+      "Forward look at today's whole-day sensor telemetry (crane wind, harmful gas, dust, noise) plus live weather and air quality, each compared against the site's safety thresholds.",
+    summary: likely.length
+      ? `Plan for ${likely.length} likely hold${likely.length > 1 ? "s" : ""}: ${likely.map((h) => h.headline).join("; ")}.${watch.length ? ` Also watch: ${watch.map((h) => h.headline).join("; ")}.` : ""}`
+      : watch.length
+        ? `No hard stand-downs expected, but watch: ${watch.map((h) => h.headline).join("; ")}.`
+        : "No safety holds expected today — conditions stay within all thresholds.",
+    holds,
+    airQuality: air,
+    source: "wind/gas/dust/noise = sample ArcGIS Velocity telemetry (repo feed); temperature/humidity/air-quality = Open-Meteo (live)",
+  };
+}

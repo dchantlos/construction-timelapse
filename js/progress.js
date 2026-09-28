@@ -17,7 +17,7 @@ import { createSlice } from "./slice.js?v=12";
 import { renderFinancialPanel, createFinancialControls } from "./progress-financial.js?v=15";
 import { createCostOverlays } from "./progress-overlays.js?v=15";
 import { createSensorPanel } from "./progress-sensors.js?v=15";
-import { createVelocityLive } from "./velocity-live.js?v=7";
+import { createVelocityLive } from "./velocity-live.js?v=8";
 import { PROGRESS_WEBSCENE_ID } from "./config.js?v=13";
 import { installAiBridge } from "./ai-bridge.js?v=3";
 

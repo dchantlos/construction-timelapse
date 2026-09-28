@@ -101,6 +101,8 @@ export function buildAssistant(): HTMLElement {
   assistant.entryMessage =
     "I'm an AI analyst wired to this site's live ArcGIS Velocity IoT feeds. Ask about safety (crane wind, gases), current conditions, day-long trends — or how sensor-flagged events (wind stand-downs, gas evacuations, heat holds) have driven schedule slippage and cost. I analyse the sensor time series and explain the 'so what'.";
   assistant.suggestedPrompts = [
+    "How have environmental holds and delayed components affected our total budget?",
+    "Based on current conditions, what safety holds should I plan for today?",
     "How is the weather affecting our schedule and cost?",
     "What's our schedule delay penalty, and why are we behind?",
     "What have wind stand-downs and gas evacuations cost us?",

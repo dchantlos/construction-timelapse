@@ -13,6 +13,7 @@
         document.documentElement.classList.add("capture-clean");
     </script>
     <style>
+      .capture-clean .welcome,
       .capture-clean .help-fab,
       .capture-clean .res-fab,
       .capture-clean #sc-fab,
@@ -23,7 +24,7 @@
 
     <!-- ArcGIS dark base theme (we override most of it in styles.css) -->
     <link rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css" />
-    <link rel="stylesheet" href="./css/styles.css?v=67" />
+    <link rel="stylesheet" href="./css/styles.css?v=78" />
 
     <!-- ESM import map: load @arcgis/core straight from the CDN -->
     <script type="importmap">
@@ -49,6 +50,19 @@
         <img class="boot__logo" src="./assets/dev-logo.png" alt="Esri Developers" />
       </div>
       <div class="boot__text">Loading Construction Progress<span class="boot__dots"></span></div>
+    </div>
+
+    <!-- ======================= WELCOME MODAL ======================= -->
+    <div id="welcome" class="welcome" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+      <div class="welcome__backdrop" data-welcome-close></div>
+      <div class="welcome__panel glass" role="document">
+        <span class="welcome__badge">During Construction · As-Built Twin</span>
+        <h1 id="welcomeTitle" class="welcome__title">Simulated Construction Progress</h1>
+        <p class="welcome__made">Made with the <strong>ArcGIS Maps SDK for JavaScript</strong></p>
+        <p class="welcome__desc">Tracking the build against the plan — simulated construction status, 5D cost, and real-time IoT site conditions.</p>
+        <button type="button" class="welcome__btn" data-welcome-close>Enter the digital twin →</button>
+        <img class="welcome__esri" src="./assets/esri-logo.png" alt="Esri" width="140" height="81" />
+      </div>
     </div>
 
     <!-- ======================= TOP BAR ======================= -->
@@ -613,9 +627,11 @@
       </div>
     </div>
 
+    <script type="module" src="./js/welcome.js?v=2"></script>
+    <script type="module" src="./js/presentation.js?v=25"></script>
     <script type="module" src="./js/progress.js?v=35"></script>
     <script type="module" src="./js/help.js?v=4"></script>
     <script type="module" src="./js/resources.js?v=4"></script>
-    <script type="module" src="./js/site-conditions-widget.js?v=14"></script>
+    <script type="module" src="./js/site-conditions-widget.js?v=15"></script>
   </body>
 </html>

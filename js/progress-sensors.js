@@ -23,7 +23,7 @@
 // Temperature/humidity/AQI stay on Open-Meteo; worker/vehicle counts modelled.
 // =============================================================================
 
-import { liveStore, setLocationsVisible, setTypeVisible, gasAssess } from "./velocity-live.js?v=7";
+import { liveStore, setLocationsVisible, setTypeVisible, gasAssess } from "./velocity-live.js?v=8";
 import { VELOCITY } from "./velocity.js";
 
 const SITE = { label: "Zürich, CH", tz: "Europe/Zurich", lat: 47.4133, lon: 8.6142 };

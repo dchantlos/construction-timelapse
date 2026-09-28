@@ -287,6 +287,122 @@ body {
 }
 
 /* =============================================================================
+   Welcome modal — intro dialog shown on each page load; dismissed before use.
+   ============================================================================= */
+.welcome {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.welcome[hidden] {
+  display: none;
+}
+.welcome__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.68);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.welcome__panel {
+  position: relative;
+  width: min(560px, calc(100vw - 48px));
+  padding: 32px 34px 28px;
+  border-radius: 20px;
+  text-align: center;
+  animation: welcome-in 0.42s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+@keyframes welcome-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.welcome.is-closing .welcome__panel {
+  animation: welcome-out 0.24s ease forwards;
+}
+.welcome.is-closing .welcome__backdrop {
+  opacity: 0;
+  transition: opacity 0.24s ease;
+}
+@keyframes welcome-out {
+  to { opacity: 0; transform: translateY(10px) scale(0.97); }
+}
+.welcome__badge {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent-bright);
+  text-shadow: var(--glow-cyan);
+}
+.welcome__title {
+  margin: 10px 0 0;
+  font-size: clamp(25px, 3.2vw, 33px);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  color: #fff;
+}
+.welcome__made {
+  margin: 12px 0 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-dim);
+}
+.welcome__made strong {
+  color: var(--accent-bright);
+  font-weight: 700;
+}
+.welcome__desc {
+  margin: 16px auto 0;
+  max-width: 46ch;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--text-faint);
+}
+.welcome__btn {
+  margin-top: 26px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 999px;
+  border: 1px solid rgba(46, 155, 214, 0.55);
+  background: linear-gradient(135deg, rgba(0, 121, 193, 0.42), rgba(169, 123, 244, 0.3));
+  color: #eaf6ff;
+  font: 700 14px/1 "Inter", "Segoe UI", system-ui, sans-serif;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow: 0 12px 30px -12px rgba(0, 121, 193, 0.7), 0 0 18px -6px rgba(72, 223, 229, 0.5);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+.welcome__btn:hover {
+  transform: translateY(-1px);
+  border-color: #46b4ec;
+  box-shadow: 0 14px 34px -10px rgba(0, 121, 193, 0.85), 0 0 26px -4px rgba(72, 223, 229, 0.75);
+}
+.welcome__btn:active {
+  transform: translateY(0) scale(0.98);
+}
+.welcome__btn:focus-visible {
+  outline: 2px solid rgba(72, 223, 229, 0.8);
+  outline-offset: 2px;
+}
+.welcome__esri {
+  display: block;
+  width: 140px;
+  height: auto;
+  margin: 24px auto 0;
+  opacity: 0.95;
+}
+@media (prefers-reduced-motion: reduce) {
+  .welcome__panel { animation: none; }
+}
+
+/* =============================================================================
    Left dashboard
    ============================================================================= */
 .dashboard {
@@ -2205,7 +2321,7 @@ body {
   position: absolute;
   right: 74px;
   top: 96px;
-  z-index: 13;
+  z-index: 47;
   width: 460px;
   max-width: calc(100vw - 108px);
   max-height: calc(100dvh - 210px);
@@ -2306,6 +2422,135 @@ body {
   display: block;
   margin-bottom: 4px;
   color: var(--danger);
+}
+
+/* "What's happening" validation sequence (audience-friendly, shown while running) */
+.audit-running {
+  padding: 6px 2px 2px;
+  animation: audit-running-in 0.3s ease both;
+}
+@keyframes audit-running-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.audit-running__title {
+  margin: 5px 0 6px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.01em;
+}
+.audit-running__intro {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+.audit-running__steps {
+  list-style: none;
+  margin: 16px 0 14px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.audit-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  opacity: 0.4;
+  transform: translateX(-2px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.audit-step.is-active,
+.audit-step.is-done {
+  opacity: 1;
+  transform: none;
+}
+.audit-step__mark {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border-radius: 50%;
+  border: 2px solid var(--glass-border);
+  position: relative;
+  transition: border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+}
+.audit-step.is-active .audit-step__mark {
+  border-color: var(--accent);
+  animation: audit-step-pulse 1s ease-in-out infinite;
+}
+@keyframes audit-step-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(56, 226, 234, 0.10), var(--glow-cyan); }
+  50% { box-shadow: 0 0 0 6px rgba(56, 226, 234, 0.20), var(--glow-cyan); }
+}
+.audit-step.is-done .audit-step__mark {
+  border-color: var(--accent-3);
+  background: var(--accent-3);
+}
+.audit-step.is-done .audit-step__mark::after {
+  content: "\2713";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: #04121a;
+}
+.audit-step__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.audit-step__label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+.audit-step__sub {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-faint);
+}
+.audit-running__bar {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(140, 170, 230, 0.14);
+  overflow: hidden;
+}
+.audit-running__fill {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-3));
+  box-shadow: var(--glow-cyan);
+}
+.audit-running__bar.is-working {
+  position: relative;
+}
+.audit-running__bar.is-working::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -40%;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  animation: audit-bar-sweep 1.1s ease-in-out infinite;
+}
+@keyframes audit-bar-sweep {
+  from { left: -40%; }
+  to { left: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .audit-running { animation: none; }
+  .audit-step { opacity: 1; transform: none; transition: none; }
+  .audit-step.is-active .audit-step__mark { animation: none; }
+  .audit-running__bar.is-working::after { animation: none; display: none; }
 }
 
 /* Summary header */
@@ -2817,12 +3062,12 @@ body {
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  max-width: min(620px, 72vw);
-  padding: 12px 20px;
+  gap: 5px;
+  max-width: min(720px, 80vw);
+  padding: 16px 26px;
   background: var(--glass-strong);
   border: 1px solid var(--glass-border);
-  border-left: 3px solid var(--danger);
+  border-left: 4px solid var(--danger);
   border-radius: 14px;
   box-shadow: var(--shadow);
   backdrop-filter: blur(var(--blur));
@@ -2834,21 +3079,37 @@ body {
   z-index: 60;
 }
 .audit-review-caption__kicker {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--accent-bright);
 }
+.audit-review-caption__why {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.28;
+  color: var(--text);
+  margin: 2px 0 1px;
+}
 .audit-review-caption__title {
   font-size: 15px;
-  font-weight: 650;
-  color: var(--text);
+  font-weight: 600;
+  color: var(--text-dim);
 }
 .audit-review-caption__detail {
-  font-size: 12.5px;
-  line-height: 1.45;
-  color: var(--text-dim);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-faint);
+}
+.audit-review-caption__action {
+  margin-top: 8px;
+  padding-top: 9px;
+  border-top: 1px solid var(--glass-border);
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--accent-bright);
 }
 
 @media (max-width: 720px) {
@@ -3157,7 +3418,7 @@ body {
   position: absolute;
   top: 96px;
   right: 84px;
-  z-index: 13;
+  z-index: 48;
   width: 430px;
   max-height: calc(100vh - 132px);
   padding: 13px 15px 12px;
@@ -3199,15 +3460,21 @@ body {
 /* Click-to-inspect card — a live, anonymised reading popup for one sensor. */
 .sensor-pop {
   position: fixed;
-  z-index: 25;
+  z-index: 100002;
   width: 226px;
   padding: 12px 14px 11px;
   border-radius: 14px;
   display: none;
   flex-direction: column;
+  cursor: grab;
+  touch-action: none;
 }
 .sensor-pop.is-visible {
   display: flex;
+}
+.sensor-pop.is-dragging {
+  cursor: grabbing;
+  user-select: none;
 }
 .sensor-pop__close {
   position: absolute;

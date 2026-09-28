@@ -435,6 +435,8 @@ function readSensor(rec) {
 let popEl = null;
 let popRec = null;
 let popTimer = 0;
+let popMoved = false; // presenter has dragged the card to a custom spot
+let popPos = null; // remembered {left, top} once moved
 
 function ensurePopup() {
   if (popEl || typeof document === "undefined") return popEl;
@@ -446,8 +448,46 @@ function ensurePopup() {
   popEl.addEventListener("click", (e) => {
     if (e.target.closest(".sensor-pop__close")) closeSensorPopup();
   });
+  makePopupDraggable(popEl);
   document.body.appendChild(popEl);
   return popEl;
+}
+
+// The card opens next to the clicked orb, which can land under the IoT panel or
+// the presentation caption. Let the presenter drag it anywhere; the chosen spot
+// is remembered for later sensor clicks.
+function makePopupDraggable(el) {
+  let sx = 0, sy = 0, ox = 0, oy = 0, dragging = false;
+  el.addEventListener("pointerdown", (e) => {
+    if (e.target.closest(".sensor-pop__close")) return;
+    dragging = true;
+    const rect = el.getBoundingClientRect();
+    sx = e.clientX;
+    sy = e.clientY;
+    ox = rect.left;
+    oy = rect.top;
+    el.classList.add("is-dragging");
+    try { el.setPointerCapture(e.pointerId); } catch {}
+    e.preventDefault();
+  });
+  el.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    const pad = 8;
+    const left = clamp(ox + (e.clientX - sx), pad, window.innerWidth - el.offsetWidth - pad);
+    const top = clamp(oy + (e.clientY - sy), pad, window.innerHeight - el.offsetHeight - pad);
+    el.style.left = `${left}px`;
+    el.style.top = `${top}px`;
+    popPos = { left, top };
+    popMoved = true;
+  });
+  const end = (e) => {
+    if (!dragging) return;
+    dragging = false;
+    el.classList.remove("is-dragging");
+    try { el.releasePointerCapture(e.pointerId); } catch {}
+  };
+  el.addEventListener("pointerup", end);
+  el.addEventListener("pointercancel", end);
 }
 
 function renderPopup() {
@@ -472,6 +512,11 @@ function renderPopup() {
 
 function placePopup(x, y) {
   if (!popEl) return;
+  if (popMoved && popPos) {
+    popEl.style.left = `${popPos.left}px`;
+    popEl.style.top = `${popPos.top}px`;
+    return;
+  }
   const pad = 16;
   const rect = popEl.getBoundingClientRect();
   const w = rect.width || 226;
