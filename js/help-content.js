@@ -34,7 +34,7 @@ export const HELP_CONTENT = {
       },
       {
         q: "Navigate the model (right)",
-        a: "<ul><li><strong>+ / –</strong> zoom, <strong>⟳</strong> reset the camera to home.</li><li><strong>◫ Slice</strong> — drop a cut-plane and drag its handles to look straight inside the building.</li><li><strong>☑ Audit</strong> — validate the model against the buildingSMART IDS (see below).</li></ul>"
+        a: "<ul><li><strong>+ / –</strong> zoom, <strong>⟳</strong> reset the camera to home.</li><li><strong>◫ Slice</strong> — drop a cut-plane and drag its handles to look straight inside the building.</li><li><strong>⇕ Explode</strong> — spring the tower's podium, mid-rise and top apart to see how it stacks up; click again to settle it back.</li><li><strong>☑ Audit</strong> — validate the model against the buildingSMART IDS (see below).</li></ul>"
       },
       {
         q: "Audit the model (☑ IDS)",
@@ -113,7 +113,7 @@ export const HELP_CONTENT = {
       },
       {
         q: "Navigate & Spin",
-        a: "Zoom, reset or <strong>◫ Slice</strong> the model on the right. Press <strong>Spin</strong> at the bottom to orbit the building."
+        a: "Zoom, reset, <strong>◫ Slice</strong> or <strong>⇕ Explode</strong> the model on the right — Explode springs the podium, mid-rise and top apart. Press <strong>Spin</strong> at the bottom to orbit the building."
       }
     ]
   },

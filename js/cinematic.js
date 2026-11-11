@@ -198,5 +198,5 @@ export function createCinematic(view, timeSlider, fullTimeExtent) {
     applyMs(ms);
   }
 
-  return { start, stop, scrubTo };
+  return { start, stop, scrubTo, isPlaying: () => playing };
 }

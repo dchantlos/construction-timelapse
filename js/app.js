@@ -5,15 +5,16 @@
 import TimeSlider from "@arcgis/core/widgets/TimeSlider.js";
 import * as reactiveUtils from "@arcgis/core/core/reactiveUtils.js";
 
-import { createView, resolveTimeExtent } from "./scene.js";
+import { createView, resolveTimeExtent } from "./scene.js?v=13";
 import { createDashboard } from "./dashboard.js?v=1";
 import { createLayerControl } from "./layers.js?v=1";
 import { createLayerVisibility } from "./visibility.js";
-import { createCinematic } from "./cinematic.js?v=21";
+import { createCinematic } from "./cinematic.js?v=22";
 import { createAssistant } from "./assistant.js?v=23";
 import { createInteraction } from "./interaction.js?v=2";
 import { createSlice } from "./slice.js";
 import { createAudit } from "./audit.js?v=26";
+import { createExplode } from "./explode.js?v=1";
 import { TIME_STEP } from "./config.js";
 
 /** Surface any error directly on the boot veil so failures are never silent. */
@@ -111,6 +112,17 @@ async function boot() {
 
   // --- IDS model audit (buildingSMART openBIM validation) --------------------
   createAudit({ scene, view, layerControl });
+
+  // --- Exploded view (lift the tower's zones apart) --------------------------
+  createExplode({
+    scene,
+    view,
+    playback: {
+      isRunning: () => cinematic.isPlaying(),
+      pause: () => cinematic.stop(),
+      resume: () => cinematic.start()
+    }
+  });
 
   // --- Timeline assistant (local date/phrase command box) --------------------
   createAssistant({

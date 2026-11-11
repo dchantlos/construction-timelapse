@@ -24,7 +24,7 @@
 
     <!-- ArcGIS dark base theme (we override most of it in styles.css) -->
     <link rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css" />
-    <link rel="stylesheet" href="./css/styles.css?v=78" />
+    <link rel="stylesheet" href="./css/styles.css?v=79" />
 
     <!-- ESM import map: load @arcgis/core straight from the CDN -->
     <script type="importmap">
@@ -53,7 +53,8 @@
     </div>
 
     <!-- ======================= WELCOME MODAL ======================= -->
-    <div id="welcome" class="welcome" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+    <!-- Parked: hidden by default, open it with ?welcome (see js/welcome.js). -->
+    <div id="welcome" class="welcome" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle" hidden>
       <div class="welcome__backdrop" data-welcome-close></div>
       <div class="welcome__panel glass" role="document">
         <span class="welcome__badge">During Construction · As-Built Twin</span>
@@ -566,6 +567,7 @@
       <button class="nav-btn" id="resetView" title="Reset view" aria-label="Reset view">⟳</button>
       <button class="nav-btn" id="layersBtn" title="Layers" aria-label="Toggle layer visibility" aria-pressed="false">▤</button>
       <button class="nav-btn" id="sliceBtn" title="Slice through the model" aria-label="Slice tool" aria-pressed="false">◫</button>
+      <button class="nav-btn" id="explodeBtn" title="Exploded view: lift the floors apart" aria-label="Exploded view" aria-pressed="false">⇕</button>
     </div>
 
     <!-- ======================= SLICE TOOL PANEL ======================= -->
@@ -627,10 +629,10 @@
       </div>
     </div>
 
-    <script type="module" src="./js/welcome.js?v=2"></script>
+    <script type="module" src="./js/welcome.js?v=3"></script>
     <script type="module" src="./js/presentation.js?v=26"></script>
-    <script type="module" src="./js/progress.js?v=35"></script>
-    <script type="module" src="./js/help.js?v=4"></script>
+    <script type="module" src="./js/progress.js?v=36"></script>
+    <script type="module" src="./js/help.js?v=7"></script>
     <script type="module" src="./js/resources.js?v=4"></script>
     <script type="module" src="./js/site-conditions-widget.js?v=15"></script>
   </body>

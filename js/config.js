@@ -55,6 +55,29 @@ export const TIME_STEP = { value: 11, unit: "days" };
 export const HIGHLIGHT_COLOR = [56, 226, 234]; // cyan glow
 
 // -----------------------------------------------------------------------------
+// Exploded view — lift the tower's vertical zones apart (both views)
+// -----------------------------------------------------------------------------
+
+/**
+ * Vertical zones of the BIM model, following its storey names (Level_00_BASE …
+ * Level_14_MECH … Level_29_MECH … Level_Roof): the podium, the mid-rise and the
+ * top with its roof, each plant (MECH) floor starting the tier above it.
+ * Exploding keeps zone 0 in place and lifts zone i by i × gap metres, so the
+ * tiers float apart like an exploded diagram.
+ */
+export const EXPLODE = {
+  levelField: "BldgLevel",
+  gap: 15,
+  zones: [
+    { label: "Base", min: 0, max: 13 },
+    { label: "Mid-rise", min: 14, max: 28 },
+    { label: "Top", min: 29, max: 45 }
+  ],
+  // Map units the flattened build pad extends past the model's footprint.
+  padMargin: 6
+};
+
+// -----------------------------------------------------------------------------
 // Current-progress view — real construction status measured against the plan
 // -----------------------------------------------------------------------------
 

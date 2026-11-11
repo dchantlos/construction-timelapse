@@ -6,14 +6,15 @@
 // how many components have actually slipped behind.
 // =============================================================================
 
-import { createView } from "./scene.js?v=12";
+import { createView } from "./scene.js?v=13";
 import { createLayerVisibility } from "./visibility.js?v=12";
-import { createSpin } from "./spin.js?v=12";
+import { createSpin } from "./spin.js?v=13";
 import { collectConstructionStatus } from "./progress-stats.js?v=13";
 import { renderProgressPanel } from "./progress-panel.js?v=13";
 import { createProgressLayers } from "./progress-layers.js?v=14";
 import { createProgressInteraction } from "./progress-interaction.js?v=18";
 import { createSlice } from "./slice.js?v=12";
+import { createExplode } from "./explode.js?v=1";
 import { renderFinancialPanel, createFinancialControls } from "./progress-financial.js?v=15";
 import { createCostOverlays } from "./progress-overlays.js?v=15";
 import { createSensorPanel } from "./progress-sensors.js?v=15";
@@ -71,13 +72,24 @@ async function boot() {
   wireNavControls(view);
 
   // Bottom-center turntable orbit (no timeline on this view).
-  createSpin(view);
+  const spin = createSpin(view);
 
   // Click a component to highlight it + show its real construction status.
   createProgressInteraction(view);
 
   // Slice tool: cut an interactive plane through the model.
   createSlice(view);
+
+  // Exploded view: lift the tower's zones apart.
+  createExplode({
+    scene,
+    view,
+    playback: {
+      isRunning: () => spin.isSpinning(),
+      pause: () => spin.stop(),
+      resume: () => spin.start()
+    }
+  });
 
   // Wire the Schedule (4D) ↔ Financials (5D) view toggle and its controls.
   createFinancialControls();

@@ -86,8 +86,10 @@ drivers.
 A custom **ArcGIS AI assistant** ([ArcGIS AI components](https://developers.arcgis.com/javascript/latest/references/arcgis-ai-components/), beta) on `progress.html` that reasons over the live Velocity feeds and ties them to the 4D / 5D dashboard. Ask about crane-wind and gas safety, whole-day trends, safe lift windows, or the **business impact** — how wind stand-downs and gas evacuations have driven the schedule delay and cost, every figure in **USD matching the Financials tab**. Built as a custom agent (`LLMAgent` + `FunctionTool` + Zod) in a self-contained Vite sub-project — see [`ai/README.md`](ai/README.md).
 
 ### Experience
-Custom hit-test tooltips, a sectioned help guide on every screen, an SDK slice / cut-plane tool
-and one-touch camera spin, over a dark, high-contrast theme (WCAG-tuned).
+Custom hit-test tooltips, a sectioned help guide on every screen, an SDK slice / cut-plane tool,
+an **exploded view** that springs the tower's podium, mid-rise and top apart (and back), and
+one-touch camera spin, over a dark, high-contrast theme (WCAG-tuned). The welcome modal ("title
+banner") is parked: it only opens with `?welcome` (see `js/welcome.js`).
 
 ## Views
 
@@ -115,6 +117,9 @@ stack throughout:
   sensor orbs
 - **`view.hitTest` + layer-view `highlight`** — click-to-inspect popups and tooltips
 - **Slice (cut-plane) analysis** — look straight inside the model
+- **Exploded view** — per-zone `SceneLayer` clones (`definitionExpression` on `BldgLevel`) lifted
+  with animated `relative-to-ground` elevation offsets, over a flattened build pad (a custom
+  `BaseElevationLayer` wrapping the scene's terrain) so every lifted element stays aligned
 
 ### Also uses
 
@@ -152,6 +157,7 @@ construction-timelapse/
    ├─ app.js · scene.js · config.js             Boot · WebScene/SceneView · configuration
    ├─ cinematic.js · spin.js                    Timeline playback · camera orbit
    ├─ dashboard.js · layers.js · slice.js       Planned HUD · layer isolation · cut-plane
+   ├─ explode.js                                Exploded view · flattened build pad
    ├─ interaction.js · visibility.js            Hit-test tooltips · ghosting
    ├─ assistant.js · help.js · help-content.js  Natural-language jump · help guide
    ├─ ids.js · audit.js                         IDS parse · live model audit

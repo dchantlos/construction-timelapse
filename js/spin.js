@@ -10,13 +10,13 @@
  * Grabbing the view (drag) cancels the orbit so manual navigation always wins.
  *
  * @param {import("@arcgis/core/views/SceneView").default} view
- * @returns {{ stop: () => void }}
+ * @returns {{ start: () => void, stop: () => void, isSpinning: () => boolean }}
  */
 export function createSpin(view) {
   const btn = document.getElementById("spinBtn");
   const icon = document.getElementById("spinIcon");
   const label = document.getElementById("spinLabel");
-  if (!btn) return { stop() {} };
+  if (!btn) return { start() {}, stop() {}, isSpinning: () => false };
 
   const DEG_PER_SEC = 6; // gentle, framerate-independent sweep
 
@@ -73,5 +73,5 @@ export function createSpin(view) {
     if (spinning) stop();
   });
 
-  return { stop };
+  return { start, stop, isSpinning: () => spinning };
 }

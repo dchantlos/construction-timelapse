@@ -8,6 +8,7 @@ import SceneView from "@arcgis/core/views/SceneView.js";
 import TimeExtent from "@arcgis/core/time/TimeExtent.js";
 
 import { WEBSCENE_ID, PORTAL_URL, FALLBACK_TIME_EXTENT } from "./config.js";
+import { installSitePad } from "./explode.js?v=1";
 
 // Assets (icons, workers, wasm) must resolve from the same CDN version.
 esriConfig.assetsPath = "https://js.arcgis.com/5.1/@arcgis/core/assets";
@@ -15,6 +16,8 @@ esriConfig.assetsPath = "https://js.arcgis.com/5.1/@arcgis/core/assets";
 /**
  * Build the WebScene + SceneView, strip the default UI chrome and apply the
  * WebScene's authored virtual lighting (even, camera-relative) with shadows.
+ * The scene reaches the view once loaded, with a flat build pad under the BIM
+ * model (see installSitePad in explode.js).
  *
  * @param {string} [webSceneId=WEBSCENE_ID] Portal item id to open. Defaults to
  *   the time-enabled planned-schedule scene; the progress view passes its own.
@@ -27,7 +30,6 @@ export function createView(webSceneId = WEBSCENE_ID) {
 
   const view = new SceneView({
     container: "viewDiv",
-    map: scene,
     qualityProfile: "high",
     // Remove every default widget — we provide our own custom controls.
     ui: { components: [] },
@@ -54,6 +56,18 @@ export function createView(webSceneId = WEBSCENE_ID) {
 
   // Disagreeable default popups stay off — we render our own tooltip.
   view.popupEnabled = false;
+
+  // Flatten the build pad under the BIM model (for the exploded view) before
+  // the view sees the ground — swapping elevation layers on a live view makes
+  // the whole scene jump. A scene that fails to load is still handed over, so
+  // view.when() rejects with the real error as before.
+  scene
+    .load()
+    .then(() => installSitePad(scene))
+    .catch(() => {})
+    .finally(() => {
+      view.map = scene;
+    });
 
   return { scene, view };
 }
