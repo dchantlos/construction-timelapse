@@ -12,10 +12,12 @@
 // =============================================================================
 
 import Basemap from "@arcgis/core/Basemap.js";
+import esriConfig from "@arcgis/core/config.js";
 import SceneLayer from "@arcgis/core/layers/SceneLayer.js";
 import VectorTileLayer from "@arcgis/core/layers/VectorTileLayer.js";
 import esriId from "@arcgis/core/identity/IdentityManager.js";
 import OAuthInfo from "@arcgis/core/identity/OAuthInfo.js";
+import esriRequest from "@arcgis/core/request.js";
 
 import { PHOTOREAL_OAUTH, PROJECT } from "./config.js?v=15";
 
@@ -167,17 +169,102 @@ function toast(text, tone = "info") {
 }
 
 /**
- * Google only streams to the custom apps an ArcGIS organization allows: "Error
- * loading root tile" after a successful sign-in usually means this site isn't
- * an allowed referrer (Organization › Settings › Map › Allow use in ArcGIS
- * Enterprise and custom applications › Add allowed referrers).
+ * Google only streams to the custom apps an ArcGIS organization allows. After
+ * sign-in the SDK fetches the signed-in user's organization key
+ * (portals/self/modules/g3dtiles) and requests root.json with it; "Error
+ * loading root tile" means Google rejected that request — usually because this
+ * site isn't an allowed referrer of that organization (Organization › Settings
+ * › Map › Allow use in ArcGIS Enterprise and custom applications › Add allowed
+ * referrers). The toast names the organization and quotes Google's reason.
  */
 const REFERRER = `${location.origin}/`;
-const REFUSED_REASON = `Google's 3D tiles didn't load for ${REFERRER} — it needs to be an allowed referrer in your ArcGIS organization`;
-const REFUSED_HELP =
-  `Google's Photorealistic 3D tiles didn't load for this site. To stream them to a custom app, an ArcGIS ` +
-  `admin must open Organization › Settings › Map, turn on "Allow use in ArcGIS Enterprise and custom ` +
-  `applications" and add ${REFERRER} under "Add allowed referrers" — then reload this page.`;
+const GOOGLE_ROOT = /tile\.googleapis\.com\/v1\/3dtiles\/root\.json/i;
+
+/** The last root.json request, kept in memory only to ask Google why it failed. */
+let lastRootRequest = null;
+let watchingRequests = false;
+
+function watchGoogleRequests() {
+  if (watchingRequests) return;
+  esriConfig.request.interceptors.push({
+    urls: GOOGLE_ROOT,
+    before(params) {
+      lastRootRequest = { url: params.url, query: { ...(params.requestOptions?.query ?? {}) } };
+    }
+  });
+  watchingRequests = true;
+}
+
+/** Repeat the failed root.json request to read Google's reason: { status, message } or null. */
+async function googleRefusal() {
+  if (!lastRootRequest) return null;
+  try {
+    const url = new URL(lastRootRequest.url);
+    for (const [name, value] of Object.entries(lastRootRequest.query)) {
+      if (value != null && value !== "") url.searchParams.set(name, value);
+    }
+    const res = await fetch(url, { credentials: "omit", cache: "no-store", signal: AbortSignal.timeout(8000) });
+    if (res.ok) return null;
+    const text = await res.text();
+    let message = text.trim().slice(0, 240);
+    try {
+      message = JSON.parse(text)?.error?.message ?? message;
+    } catch {
+      // not JSON — keep the text
+    }
+    return { status: res.status, message };
+  } catch {
+    return null; // network error: nothing useful to quote
+  }
+}
+
+/** The organization the visitor signed in to: { name, g3d } or null (never prompts). */
+async function signedInOrg() {
+  if (!esriId.findCredential(SHARING_URL)) return null;
+  try {
+    const { data } = await esriRequest(`${SHARING_URL}/rest/portals/self`, {
+      query: { f: "json" },
+      authMode: "no-prompt",
+      timeout: 8000
+    });
+    if (!data?.user) return null; // the token wasn't accepted
+    return { name: data.name || data.urlKey || null, g3d: data.g3dTilesEnabled };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Why Photorealistic 3D failed and what an admin has to change: { reason, help }.
+ * The key always comes from the organization the visitor signs in to, so that
+ * organization (not necessarily the one that owns the scenes) must allow this site.
+ */
+async function diagnoseFailure(err) {
+  const [org, refusal] = await Promise.all([signedInOrg(), googleRefusal()]);
+  const orgName = org?.name ?? "your ArcGIS organization";
+  if (org?.g3d === false || /g3dTilesEnabled-false/i.test(err?.name ?? "")) {
+    return {
+      org,
+      refusal,
+      reason: `${orgName} doesn't allow the Google Photorealistic 3D basemap`,
+      help:
+        `${orgName} doesn't have the Google Photorealistic 3D basemap turned on. An admin must turn on ` +
+        `"Allow members to use Google Photorealistic 3D basemap" in Organization › Settings › Map — then reload this page.`
+    };
+  }
+  const detail = refusal?.message ?? (refusal ? null : err?.message);
+  return {
+    org,
+    refusal,
+    reason: `Google's 3D tiles didn't load for ${REFERRER} with ${orgName}'s key${detail ? ` — ${detail}` : ""}`,
+    help:
+      `Google's Photorealistic 3D tiles didn't load (signed in to ${orgName}).` +
+      `${refusal?.message ? ` Google said: “${refusal.message}”` : detail ? ` (${detail})` : ""} To stream them ` +
+      `to a custom app, an admin of ${orgName} must open Organization › Settings › Map, turn on "Allow use in ` +
+      `ArcGIS Enterprise and custom applications" and add exactly ${REFERRER} (the site address, without a ` +
+      `path) under "Add allowed referrers" — then reload this page.`
+  };
+}
 
 // ---------- Toggle ---------------------------------------------------------------
 
@@ -210,7 +297,8 @@ export function createBasemapToggle({ scene, initial, onChange }) {
 
   let mode = initial ?? "dark";
   let busy = false;
-  let unavailable = null; // reason Photorealistic can't load for this visitor
+  let unavailable = null; // { reason, help } once Photorealistic failed for this visitor
+  watchGoogleRequests();
 
   function render() {
     const on = mode === "photoreal";
@@ -223,7 +311,7 @@ export function createBasemapToggle({ scene, initial, onChange }) {
       : on
         ? "Photorealistic 3D basemap on — click for the dark basemap"
         : unavailable
-          ? `Photorealistic 3D basemap unavailable: ${unavailable}`
+          ? `Photorealistic 3D basemap unavailable: ${unavailable.reason}`
           : "Photorealistic 3D basemap (Google, ArcGIS sign-in required)";
   }
 
@@ -232,6 +320,21 @@ export function createBasemapToggle({ scene, initial, onChange }) {
     rememberMode(mode);
     render();
     onChange?.(mode);
+  }
+
+  /** Back to the dark basemap, explaining what an admin has to change. */
+  async function fallBack(err) {
+    // A failed layer can't reload, so the toggle stays off until a page reload.
+    scene.basemap = darkBasemap(scene);
+    unavailable = await diagnoseFailure(err);
+    busy = false;
+    setMode("dark");
+    toast(unavailable.help, "warn");
+    console.warn(
+      "[BASEMAP] Photorealistic basemap failed to load",
+      { organization: unavailable.org?.name, google: unavailable.refusal },
+      err
+    );
   }
 
   async function showPhotoreal() {
@@ -255,13 +358,7 @@ export function createBasemapToggle({ scene, initial, onChange }) {
       setMode("photoreal");
       toast("Photorealistic 3D basemap on, with the scene's 3D mask along the alignment.");
     } catch (err) {
-      // A failed layer can't reload, so the toggle stays off until a page reload.
-      unavailable = REFUSED_REASON;
-      scene.basemap = darkBasemap(scene);
-      busy = false;
-      setMode("dark");
-      toast(REFUSED_HELP, "warn");
-      console.warn("[BASEMAP] Photorealistic basemap failed to load", err);
+      await fallBack(err);
     }
   }
 
@@ -271,7 +368,7 @@ export function createBasemapToggle({ scene, initial, onChange }) {
       scene.basemap = darkBasemap(scene);
       setMode("dark");
     } else if (unavailable) {
-      toast(REFUSED_HELP, "warn");
+      toast(unavailable.help, "warn");
     } else {
       showPhotoreal();
     }
@@ -286,13 +383,7 @@ export function createBasemapToggle({ scene, initial, onChange }) {
   // Started on Photorealistic with a stored sign-in: if Google still refuses
   // (e.g. the organization doesn't enable it for this site), fall back.
   if (mode === "photoreal") {
-    Promise.all(googleLayers(authored).map((layer) => layer.load())).catch((err) => {
-      unavailable = REFUSED_REASON;
-      scene.basemap = darkBasemap(scene);
-      setMode("dark");
-      toast(REFUSED_HELP, "warn");
-      console.warn("[BASEMAP] Photorealistic basemap failed to load", err);
-    });
+    Promise.all(googleLayers(authored).map((layer) => layer.load())).catch(fallBack);
   }
 
   render();

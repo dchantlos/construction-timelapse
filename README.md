@@ -29,7 +29,7 @@ and feature flags — and every module reads the active one.
 | 4D dashboard | Trades staggered floor-by-floor | Each system's real build curve, read from its `Sched_StartDate` statistics |
 | Click an element | Trade, planned date and phase | The element's own name, dates, phase, chainage and work front |
 | Exploded view | Podium, mid-rise and top lifted apart (`BldgLevel`) | Foundations → piers → bearings → girders → deck → finishes (`Sched_Category`) |
-| Camera orbit | Play orbits the tower; **Spin** on the progress view | Off — the sequencing view opens on the whole 1.5 km corridor (fitted beside the dashboard at the authored angle), and Reset returns there |
+| Camera orbit | Play orbits the tower; **Spin** on the progress view | Off — the sequencing view opens on the whole 1.5 km corridor (fitted beside the dashboard at the authored angle) and the progress view on the deck at Ch ~400, looking along the viaduct to its bend; Reset returns to each |
 | Playback | 45 s sweep | 20 s sweep; the complete model loads behind the loading screen first, and the map steps forward only once each step has drawn, so no element appears late or out of order |
 | Progress (4D) | Configured 60% target vs. late `CStatus` buckets | Planned / installed / overdue summed from `Prog_*` fields |
 | Financials (5D) + AIA report | Configured contract figures (USD) | Summed live from `Fin_*` fields (SGD), one G703 line per system |
@@ -42,13 +42,15 @@ a dark basemap styled like the tower's (Dark Gray Canvas, 3D labels, glass conte
 are never asked to sign in. The **Photorealistic 3D** button in the right-hand stack (or
 `?basemap=photoreal`) signs in through the app's OAuth client and swaps the authored basemap
 back in, mask included; the exploded view is switched off while it's on, because the mesh then
-acts as the ground. To use it, the signing-in account's organization must allow the basemap in
+acts as the ground. The Google key comes from **the organization of the account that signs in**
+(not necessarily the one that owns the scenes), so that organization must allow the basemap in
 custom apps — an administrator opens **Organization › Settings › Map**, turns on **Allow members
 to use Google Photorealistic 3D basemap** and **Allow use in ArcGIS Enterprise and custom
-applications**, and adds this site under **Add allowed referrers** (`https://dchantlos.github.io/`).
-Without that, Google answers *Error loading root tile*; the app says so, names the referrer to
-add and stays on the dark basemap (reload after the change). The OAuth client's redirect URIs
-must also include `oauth-callback.html`.
+applications**, and adds exactly `https://dchantlos.github.io/` (the site address, without the
+`/construction-timelapse/` path) under **Add allowed referrers**. Otherwise Google refuses the
+tiles (*Error loading root tile*): the app stays on the dark basemap and its message names the
+signed-in organization, quotes Google's reason and lists the setting to change (reload after the
+change). The OAuth client's redirect URIs must also include `oauth-callback.html`.
 
 ## The openBIM data lifecycle
 

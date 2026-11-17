@@ -6,7 +6,9 @@
 // how many components have actually slipped behind.
 // =============================================================================
 
-import { createView } from "./scene.js?v=15";
+import Camera from "@arcgis/core/Camera.js";
+
+import { createView } from "./scene.js?v=16";
 import { createLayerVisibility } from "./visibility.js?v=13";
 import { createSpin } from "./spin.js?v=13";
 import { collectConstructionStatus } from "./progress-stats.js?v=14";
@@ -19,9 +21,21 @@ import { renderFinancialPanel, createFinancialControls } from "./progress-financ
 import { createCostOverlays } from "./progress-overlays.js?v=15";
 import { createSensorPanel } from "./progress-sensors.js?v=15";
 import { createVelocityLive } from "./velocity-live.js?v=8";
-import { createBasemapToggle } from "./basemap.js?v=2";
+import { createBasemapToggle } from "./basemap.js?v=3";
 import { PROGRESS_WEBSCENE_ID, PROJECT } from "./config.js?v=15";
 import { installAiBridge } from "./ai-bridge.js?v=4";
+
+/**
+ * Where the roadway's progress view opens (and Reset view returns): above the
+ * deck at chainage ~400 m, looking north-east along the viaduct past the
+ * blue/orange joint to its bend. The authored scene camera sits at the west
+ * end. Web Mercator metres; the field of view stays the SDK default (55°).
+ */
+const LINEAR_OPENING_CAMERA = {
+  position: { x: 11563317.89, y: 143711.16, z: 41.54, spatialReference: { wkid: 102100 } },
+  heading: 33.05,
+  tilt: 79.57
+};
 
 /** Surface any error directly on the boot veil so failures are never silent. */
 function showBootError(message) {
@@ -59,6 +73,10 @@ async function boot() {
   }
   clearTimeout(watchdog);
 
+  // Open the roadway on its deck view (before the veil lifts, so there's no
+  // jump, and before the nav controls record it as the home view).
+  if (PROJECT.id === "linear") view.camera = Camera.fromJSON(LINEAR_OPENING_CAMERA);
+
   // Fade out the boot veil once the scene is interactive.
   document.getElementById("boot").classList.add("is-hidden");
 
@@ -73,7 +91,7 @@ async function boot() {
   wireNavControls(view);
 
   // Bottom-center turntable orbit (no timeline on this view) — the tower only;
-  // the roadway's 1.5 km corridor keeps its authored view.
+  // the roadway's 1.5 km corridor keeps its deck view.
   const spin = PROJECT.id !== "linear" ? createSpin(view) : null;
 
   // Click a component to highlight it + show its real construction status.
