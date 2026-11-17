@@ -162,8 +162,22 @@ function toast(text, tone = "info") {
   toastEl.dataset.tone = tone;
   toastEl.classList.add("is-visible");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toastEl.classList.remove("is-visible"), 5200);
+  // Long instructions stay up long enough to read.
+  toastTimer = setTimeout(() => toastEl.classList.remove("is-visible"), Math.max(5200, text.length * 60));
 }
+
+/**
+ * Google only streams to the custom apps an ArcGIS organization allows: "Error
+ * loading root tile" after a successful sign-in usually means this site isn't
+ * an allowed referrer (Organization › Settings › Map › Allow use in ArcGIS
+ * Enterprise and custom applications › Add allowed referrers).
+ */
+const REFERRER = `${location.origin}/`;
+const REFUSED_REASON = `Google's 3D tiles didn't load for ${REFERRER} — it needs to be an allowed referrer in your ArcGIS organization`;
+const REFUSED_HELP =
+  `Google's Photorealistic 3D tiles didn't load for this site. To stream them to a custom app, an ArcGIS ` +
+  `admin must open Organization › Settings › Map, turn on "Allow use in ArcGIS Enterprise and custom ` +
+  `applications" and add ${REFERRER} under "Add allowed referrers" — then reload this page.`;
 
 // ---------- Toggle ---------------------------------------------------------------
 
@@ -242,14 +256,11 @@ export function createBasemapToggle({ scene, initial, onChange }) {
       toast("Photorealistic 3D basemap on, with the scene's 3D mask along the alignment.");
     } catch (err) {
       // A failed layer can't reload, so the toggle stays off until a page reload.
-      unavailable = err?.message ?? "the basemap didn't load";
+      unavailable = REFUSED_REASON;
       scene.basemap = darkBasemap(scene);
       busy = false;
       setMode("dark");
-      toast(
-        "Photorealistic 3D isn't enabled for this account or site — ask your ArcGIS admin to allow it.",
-        "warn"
-      );
+      toast(REFUSED_HELP, "warn");
       console.warn("[BASEMAP] Photorealistic basemap failed to load", err);
     }
   }
@@ -260,7 +271,7 @@ export function createBasemapToggle({ scene, initial, onChange }) {
       scene.basemap = darkBasemap(scene);
       setMode("dark");
     } else if (unavailable) {
-      toast(`Photorealistic 3D basemap unavailable: ${unavailable}`, "warn");
+      toast(REFUSED_HELP, "warn");
     } else {
       showPhotoreal();
     }
@@ -276,13 +287,11 @@ export function createBasemapToggle({ scene, initial, onChange }) {
   // (e.g. the organization doesn't enable it for this site), fall back.
   if (mode === "photoreal") {
     Promise.all(googleLayers(authored).map((layer) => layer.load())).catch((err) => {
-      unavailable = err?.message ?? "the basemap didn't load";
+      unavailable = REFUSED_REASON;
       scene.basemap = darkBasemap(scene);
       setMode("dark");
-      toast(
-        "Photorealistic 3D isn't enabled for this account or site — showing the dark basemap.",
-        "warn"
-      );
+      toast(REFUSED_HELP, "warn");
+      console.warn("[BASEMAP] Photorealistic basemap failed to load", err);
     });
   }
 

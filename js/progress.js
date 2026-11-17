@@ -6,7 +6,7 @@
 // how many components have actually slipped behind.
 // =============================================================================
 
-import { createView } from "./scene.js?v=14";
+import { createView } from "./scene.js?v=15";
 import { createLayerVisibility } from "./visibility.js?v=13";
 import { createSpin } from "./spin.js?v=13";
 import { collectConstructionStatus } from "./progress-stats.js?v=14";
@@ -19,7 +19,7 @@ import { renderFinancialPanel, createFinancialControls } from "./progress-financ
 import { createCostOverlays } from "./progress-overlays.js?v=15";
 import { createSensorPanel } from "./progress-sensors.js?v=15";
 import { createVelocityLive } from "./velocity-live.js?v=8";
-import { createBasemapToggle } from "./basemap.js?v=1";
+import { createBasemapToggle } from "./basemap.js?v=2";
 import { PROGRESS_WEBSCENE_ID, PROJECT } from "./config.js?v=15";
 import { installAiBridge } from "./ai-bridge.js?v=4";
 

@@ -8,7 +8,7 @@ import TimeExtent from "@arcgis/core/time/TimeExtent.js";
 
 import { WEBSCENE_ID, PORTAL_URL, FALLBACK_TIME_EXTENT } from "./config.js?v=15";
 import { installSitePad } from "./explode.js?v=2";
-import { preparePublicBasemap } from "./basemap.js?v=1";
+import { preparePublicBasemap } from "./basemap.js?v=2";
 
 // Assets (icons, workers, wasm) resolve from the CDN build this module came
 // from. Don't override esriConfig.assetsPath: an explicit value points the

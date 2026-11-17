@@ -13,13 +13,18 @@ import { PROJECT } from "./config.js?v=15";
  * `view.updating` flickers on/off as tiles arrive, so we debounce it: the orbit
  * only begins once the true building center exists, preventing the pivot (and
  * the whole orbit) from landing way off. A hard cap guarantees the animation
- * still starts on slow connections.
+ * still starts on slow connections. Also used to load a whole model before
+ * playback starts (app.js).
  *
  * @param {import("@arcgis/core/views/SceneView").default} view
- * @param {{ quietMs?: number, maxWaitMs?: number }} [opts]
+ * @param {{ quietMs?: number, maxWaitMs?: number, isUpdating?: () => boolean }} [opts]
+ *   `isUpdating` narrows the wait to specific layers (default: the whole view)
  * @returns {Promise<void>}
  */
-function whenSceneIdle(view, { quietMs = 600, maxWaitMs = 10000 } = {}) {
+export function whenSceneIdle(
+  view,
+  { quietMs = 600, maxWaitMs = 10000, isUpdating = () => view.updating } = {}
+) {
   return new Promise((resolve) => {
     let quietTimer = null;
     let capTimer = null;
@@ -37,7 +42,7 @@ function whenSceneIdle(view, { quietMs = 600, maxWaitMs = 10000 } = {}) {
 
     capTimer = setTimeout(finish, maxWaitMs);
     handle = reactiveUtils.watch(
-      () => view.updating,
+      isUpdating,
       (updating) => {
         if (updating) {
           if (quietTimer) {
@@ -64,12 +69,25 @@ function whenSceneIdle(view, { quietMs = 600, maxWaitMs = 10000 } = {}) {
  * because cumulative-from-start playback can stall depending on the authored
  * stops — manual interpolation guarantees the timeline always advances.
  *
+ * Every time change makes the scene layers re-filter their features. A large
+ * model can't finish that within one frame, so with `settle` the map (and the
+ * dates) advance in steps that each finish drawing before the next, while the
+ * scrubber thumb still glides every frame — otherwise the heavier layers fall
+ * behind and elements show up late or out of order.
+ *
  * @param {import("@arcgis/core/views/SceneView").default} view
  * @param {import("@arcgis/core/widgets/TimeSlider").default} timeSlider
  * @param {TimeExtent} fullTimeExtent
- * @param {{ orbit?: boolean }} [options] orbit the camera while playing (default true)
+ * @param {{ orbit?: boolean, duration?: number, settle?: boolean }} [options]
+ *   orbit the camera while playing (default true); ms for one full
+ *   construction sweep (45 s); step the map only once each step has drawn
  */
-export function createCinematic(view, timeSlider, fullTimeExtent, { orbit = true } = {}) {
+export function createCinematic(
+  view,
+  timeSlider,
+  fullTimeExtent,
+  { orbit = true, duration = 45000, settle = false } = {}
+) {
   const btn = document.getElementById("cinematicBtn");
   const icon = document.getElementById("cineIcon");
   const label = document.getElementById("cineLabel");
@@ -84,9 +102,13 @@ export function createCinematic(view, timeSlider, fullTimeExtent, { orbit = true
   slider.step = String(Math.max(1, Math.round((endMs - startMs) / 500)));
   slider.value = String(startMs);
 
-  const DURATION = 45000; // full construction sweep, in ms
+  const DURATION = duration; // full construction sweep, in ms
   const ORBIT_DEG_PER_SEC = 4; // gentle, framerate-independent sweep
   const ORBIT_TILT = 62; // held constant so the pitch never drifts
+  // Settled steps: at least STEP_MIN_MS apart, and no more than STEP_MAX_MS
+  // even if something else (labels, basemap tiles) keeps the view busy.
+  const STEP_MIN_MS = 120;
+  const STEP_MAX_MS = 700;
 
   const fmtDate = new Intl.DateTimeFormat("en-US", {
     month: "short",
@@ -101,6 +123,9 @@ export function createCinematic(view, timeSlider, fullTimeExtent, { orbit = true
   let elapsed = 0; // ms of playback progress (0..DURATION)
   let heading = 0;
   let orbitCenter = null;
+  let thumbMs = startMs; // where the scrubber thumb is
+  let shownMs = startMs; // what the map (and dates) show
+  let lastStepTs = 0;
 
   /** Solid cyan left of the thumb, dark gray to the right. */
   function paintTrack(ms) {
@@ -109,14 +134,25 @@ export function createCinematic(view, timeSlider, fullTimeExtent, { orbit = true
       `linear-gradient(90deg, #48dfe5 0%, #48dfe5 ${pct}%, #2a3142 ${pct}%, #2a3142 100%)`;
   }
 
+  /** Move the scrubber thumb and its track fill. */
+  function moveThumb(ms) {
+    thumbMs = ms;
+    slider.value = String(ms);
+    paintTrack(ms);
+  }
+
   /** Apply an epoch timestamp to the map, slider thumb, and date label. */
-  function applyMs(ms, { moveThumb = true } = {}) {
+  function applyMs(ms, { moveThumb: move = true } = {}) {
     const end = new Date(ms);
     timeSlider.timeExtent = new TimeExtent({ start: fullTimeExtent.start, end });
     view.timeExtent = timeSlider.timeExtent; // filter the 3D scene
-    if (moveThumb) slider.value = String(ms);
+    shownMs = ms;
+    if (move) moveThumb(ms);
+    else {
+      thumbMs = ms;
+      paintTrack(ms);
+    }
     dateEl.textContent = fmtDate.format(end);
-    paintTrack(ms);
   }
 
   function frame(ts) {
@@ -128,7 +164,17 @@ export function createCinematic(view, timeSlider, fullTimeExtent, { orbit = true
     // Advance the timeline (loop back to the start when complete).
     elapsed += dt;
     if (elapsed >= DURATION) elapsed = 0;
-    applyMs(startMs + (elapsed / DURATION) * (endMs - startMs));
+    const ms = startMs + (elapsed / DURATION) * (endMs - startMs);
+    if (settle) {
+      moveThumb(ms);
+      const since = ts - lastStepTs;
+      if (since >= STEP_MIN_MS && (!view.updating || since >= STEP_MAX_MS)) {
+        applyMs(ms);
+        lastStepTs = ts;
+      }
+    } else {
+      applyMs(ms);
+    }
 
     // Gently orbit the camera around the building (heading only; tilt held).
     if (orbit) {
@@ -146,6 +192,7 @@ export function createCinematic(view, timeSlider, fullTimeExtent, { orbit = true
   async function start() {
     playing = true;
     lastTs = 0;
+    lastStepTs = 0;
 
     // Reflect the playing state immediately so the button stays responsive
     // while we wait for the scene to finish loading below.
@@ -172,7 +219,11 @@ export function createCinematic(view, timeSlider, fullTimeExtent, { orbit = true
     rafId = requestAnimationFrame(frame);
   }
 
-  function stop() {
+  /**
+   * Pause playback. A settled map can trail the thumb by one step, so it
+   * catches up on the exact date unless the caller is about to move it.
+   */
+  function stop({ catchUp = true } = {}) {
     playing = false;
     if (rafId) cancelAnimationFrame(rafId);
     rafId = null;
@@ -180,13 +231,15 @@ export function createCinematic(view, timeSlider, fullTimeExtent, { orbit = true
     btn.classList.remove("is-playing");
     icon.textContent = "\u25B6";
     label.textContent = "Play";
+
+    if (catchUp && thumbMs !== shownMs) applyMs(thumbMs);
   }
 
   btn.addEventListener("click", () => (playing ? stop() : start()));
 
   // --- Scrubbing: dragging interrupts playback and scrubs the timeline ------
   slider.addEventListener("input", () => {
-    if (playing) stop(); // interrupt auto-play
+    if (playing) stop({ catchUp: false }); // interrupt auto-play
     const ms = +slider.value;
     elapsed = ((ms - startMs) / (endMs - startMs)) * DURATION;
     applyMs(ms, { moveThumb: false });
@@ -201,11 +254,11 @@ export function createCinematic(view, timeSlider, fullTimeExtent, { orbit = true
    * @param {Date|number} date
    */
   function scrubTo(date) {
-    if (playing) stop();
+    if (playing) stop({ catchUp: false });
     const ms = Math.max(startMs, Math.min(endMs, +date));
     elapsed = ((ms - startMs) / (endMs - startMs)) * DURATION;
     applyMs(ms);
   }
 
-  return { start, stop, scrubTo, isPlaying: () => playing };
+  return { start, stop: () => stop(), scrubTo, isPlaying: () => playing };
 }
