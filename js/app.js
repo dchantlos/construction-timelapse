@@ -26,6 +26,8 @@ import { BUILDING_LAYERS, PROJECT, TIME_STEP } from "./config.js?v=15";
 const CORRIDOR = PROJECT.id === "linear";
 const CORRIDOR_SWEEP_MS = 20000; // the tower's orbiting sweep takes 45 s
 const CORRIDOR_FILL = 0.8; // share of the free screen area the corridor spans
+const CORRIDOR_PRIME_MAX_MS = 25000; // longest wait for the whole model
+const CORRIDOR_VEIL_MAX_MS = 30000; // the loading screen never outstays this
 
 /** Surface any error directly on the boot veil so failures are never silent. */
 function showBootError(message) {
@@ -64,8 +66,11 @@ async function boot() {
   clearTimeout(watchdog);
 
   // Fade out the boot veil once the scene is interactive — the corridor keeps
-  // it up until its whole model has loaded (below).
-  if (!CORRIDOR) document.getElementById("boot").classList.add("is-hidden");
+  // it up until its whole model has loaded (below), but a stalled request
+  // must never leave the visitor behind it.
+  const hideVeil = () => document.getElementById("boot").classList.add("is-hidden");
+  if (CORRIDOR) setTimeout(hideVeil, CORRIDOR_VEIL_MAX_MS);
+  else hideVeil();
 
   // --- 4D TimeSlider ---------------------------------------------------------
   const fullTimeExtent = await resolveTimeExtent(scene, view);
@@ -184,16 +189,19 @@ async function boot() {
   if (CORRIDOR) {
     setBootText("Loading the roadway model");
     cinematic.scrubTo(fullTimeExtent.end);
-    const layerViews = await Promise.all(
-      corridorLayers(scene).map((layer) => view.whenLayerView(layer).catch(() => null))
-    );
-    await whenSceneIdle(view, {
-      quietMs: 800,
-      maxWaitMs: 25000,
-      isUpdating: () => layerViews.some((lv) => lv?.updating)
-    });
+    const loaded = (async () => {
+      const layerViews = await Promise.all(
+        corridorLayers(scene).map((layer) => view.whenLayerView(layer).catch(() => null))
+      );
+      await whenSceneIdle(view, {
+        quietMs: 800,
+        maxWaitMs: CORRIDOR_PRIME_MAX_MS,
+        isUpdating: () => layerViews.some((lv) => lv?.updating)
+      });
+    })();
+    await Promise.race([loaded, new Promise((done) => setTimeout(done, CORRIDOR_PRIME_MAX_MS))]);
     cinematic.scrubTo(fullTimeExtent.start);
-    document.getElementById("boot").classList.add("is-hidden");
+    hideVeil();
   }
 
   // Autoplay the cinematic sequence (timeline, plus the tower's camera orbit)
