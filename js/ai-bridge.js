@@ -8,7 +8,7 @@
 // live config module instance.
 // =============================================================================
 
-import { FINANCIALS, ENVIRONMENTAL_RISK } from "./config.js?v=13";
+import { FINANCIALS, ENVIRONMENTAL_RISK } from "./config.js?v=15";
 
 export function installAiBridge() {
   let summary = null;

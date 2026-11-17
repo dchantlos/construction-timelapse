@@ -2,31 +2,133 @@
 // progress-financial.js — the "Financials (5D)" left-panel view.
 //
 // Translates the physical 4D schedule slippage (days behind, overdue component
-// count) into dollars: a cost-vs-schedule doughnut, EVM health (CPI/SPI), the
-// current pay-application draw, and schedule-driven risk & variance. Fixed
-// contract figures come from FINANCIALS; the risk numbers are recomputed from
-// the live CStatus summary so the money always tracks the real progress.
+// count) into money: a cost-vs-schedule doughnut, EVM health (CPI/SPI), the
+// current pay-application draw, and schedule-driven risk & variance. The tower
+// configures its contract figures (FINANCIALS) and recomputes the risk numbers
+// from the live CStatus summary; the roadway sums every figure live from its
+// elements' Fin_* fields (see financialModel), so the money always tracks the
+// real progress.
 // =============================================================================
 
-import { PLANNED_PROGRESS_PCT, FINANCIALS, ENVIRONMENTAL_RISK } from "./config.js?v=13";
+import { PLANNED_PROGRESS_PCT, FINANCIALS, ENVIRONMENTAL_RISK, PROJECT, pageHref } from "./config.js?v=15";
 import {
   refreshRiskContext,
   wireDrillDownModal,
   openDrillDownModal,
-} from "./progress-drilldown.js?v=14";
+} from "./progress-drilldown.js?v=15";
 
 /** Circumference of the SVG ring (2πr, r=52) — matches .ring__bar dasharray. */
 const RING_CIRCUMFERENCE = 327;
 
-const money = (n) => `$${Math.round(n).toLocaleString("en-US")}`;
+/** Currency symbol of the active project ("$", "S$"). */
+const SYMBOL = FINANCIALS.currency?.symbol ?? "$";
+
+export const money = (n) =>
+  `${n < 0 ? "-" : ""}${SYMBOL}${Math.abs(Math.round(n)).toLocaleString("en-US")}`;
 const count = (n) => Number(n).toLocaleString("en-US");
 
 /** Compact "$2.2M" / "$140k" style for headline callouts. */
-function compact(n) {
+export function compact(n) {
   const abs = Math.abs(n);
-  if (abs >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
-  if (abs >= 1_000) return `$${Math.round(n / 1_000)}k`;
+  if (abs >= 1_000_000) return `${SYMBOL}${(n / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000) return `${SYMBOL}${Math.round(n / 1_000)}k`;
   return money(n);
+}
+
+/** "Jul 5 – Aug 3, 2027" from the billing period's start/end dates. */
+function periodLabel(start, end) {
+  const s = Date.parse(start);
+  const e = Date.parse(end);
+  if (!Number.isFinite(s) || !Number.isFinite(e)) return "Current period";
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: PROJECT.timeZone,
+  });
+  return fmt.formatRange ? fmt.formatRange(s, e) : `${fmt.format(s)} – ${fmt.format(e)}`;
+}
+
+/**
+ * The 5D figures for the active project, from a progress summary: the tower's
+ * configured contract constants, or — for the attribute-driven roadway — live
+ * sums of its elements' Fin_* fields. The draw always reconciles:
+ * (work + materials) less retainage = net payment due.
+ *
+ * @param {object} [summary] collectConstructionStatus().summary
+ */
+export function financialModel(summary = {}) {
+  const f = FINANCIALS;
+  const planned = summary.plannedPct ?? PLANNED_PROGRESS_PCT;
+  const effective = Math.max(0, planned - (summary.behindPct ?? 0));
+  const behind = summary.behind ?? 0;
+
+  if (f.model !== "attributes") {
+    const gross = f.draw.workCompleted + f.draw.materialsStored;
+    const retainage = gross * (f.draw.retainagePct / 100);
+    const delayDays = Math.round(summary.daysBehind ?? 0);
+    return {
+      contractValue: f.contractValue,
+      costToDate: f.costToDate,
+      estAtCompletion: f.estAtCompletion,
+      expendedPct: f.budgetExpendedPct,
+      cpi: f.cpi,
+      spi: f.spi,
+      planned,
+      effective,
+      behind,
+      draw: {
+        period: f.draw.period,
+        work: f.draw.workCompleted,
+        materials: f.draw.materialsStored,
+        retainagePct: f.draw.retainagePct,
+        gross,
+        retainage,
+        net: gross - retainage,
+      },
+      delayDays,
+      delayImpact: delayDays * f.dailyLiquidatedDamages,
+      delayedCost: f.delayedComponentsCost,
+      pending: f.pendingChangeOrders,
+    };
+  }
+
+  const s = summary.sums ?? {};
+  const budget = s.Fin_Budget ?? 0;
+  const actual = s.Fin_ActualCost ?? 0;
+  const earned = s.Fin_EarnedValue ?? 0;
+  const plannedValue = s.Fin_PlannedValue ?? 0;
+  const work = s.Fin_PeriodWork ?? 0;
+  // Net change in stored materials: stock incorporated this period comes off.
+  const materials = s.Fin_StoredMovement ?? 0;
+  const retainagePct = summary.max?.Fin_RetainPct ?? 5;
+  const gross = work + materials;
+  const retainage = gross * (retainagePct / 100);
+  const delayDays = Math.round(summary.criticalDelayDays ?? 0);
+  return {
+    contractValue: budget,
+    costToDate: actual,
+    estAtCompletion: s.Fin_EstAtCompletion ?? 0,
+    expendedPct: budget ? (actual / budget) * 100 : 0,
+    cpi: actual ? earned / actual : 0,
+    spi: plannedValue ? earned / plannedValue : 0,
+    planned,
+    effective,
+    behind,
+    draw: {
+      period: periodLabel(summary.values?.Fin_PeriodStart, summary.values?.Fin_PeriodEnd),
+      work,
+      materials,
+      retainagePct,
+      gross,
+      retainage,
+      net: gross - retainage,
+    },
+    delayDays,
+    delayImpact: delayDays * f.dailyLiquidatedDamages,
+    delayedCost: s.Fin_OverdueValue ?? 0,
+    pending: f.changeOrders.reduce((sum, c) => sum + c.amount, 0),
+  };
 }
 
 /** Map a risk-card id to the mock ArcGIS layer the UI would highlight. */
@@ -36,6 +138,9 @@ const RISK_LAYERS = {
   pending: "pending_change_orders",
   environmental: "environmental_sensors",
 };
+
+/** The latest figures, for the billing button, CSV fallback and map banners. */
+let model = financialModel();
 
 /** Latest count-up targets, refreshed each render, replayed on first reveal. */
 const countTargets = { finCostToDate: 0, finNet: 0 };
@@ -48,12 +153,9 @@ const countTargets = { finCostToDate: 0, finNet: 0 };
  * @param {{ behind?: number, behindPct?: number, daysBehind?: number }} summary
  */
 export function renderFinancialPanel(summary = {}) {
-  const f = FINANCIALS;
-  const behind = summary.behind ?? 0;
-  const behindPct = summary.behindPct ?? 0;
-  const daysBehind = Math.round(summary.daysBehind ?? 0);
-  const effective = Math.max(0, PLANNED_PROGRESS_PCT - behindPct);
-  const expended = f.budgetExpendedPct;
+  const m = (model = financialModel(summary));
+  const { behind, effective, delayDays, delayImpact } = m;
+  const expended = m.expendedPct;
 
   // --- Executive doughnut: blue cost up to schedule, red overrun sliver ------
   setRingArc("finRingCost", 0, Math.min(effective, expended));
@@ -61,10 +163,10 @@ export function renderFinancialPanel(summary = {}) {
   setText("finExpendedPct", `${expended.toFixed(1)}%`);
 
   // --- Big three -------------------------------------------------------------
-  setText("finContract", money(f.contractValue));
-  setText("finCostToDate", money(f.costToDate));
-  setText("finEac", money(f.estAtCompletion));
-  const overrun = f.estAtCompletion - f.contractValue;
+  setText("finContract", money(m.contractValue));
+  setText("finCostToDate", money(m.costToDate));
+  setText("finEac", money(m.estAtCompletion));
+  const overrun = m.estAtCompletion - m.contractValue;
   setText(
     "finEacNote",
     overrun > 0
@@ -73,31 +175,35 @@ export function renderFinancialPanel(summary = {}) {
   );
 
   // --- EVM health check ------------------------------------------------------
-  setText("finCpi", f.cpi.toFixed(2));
-  setText("finSpi", f.spi.toFixed(2));
+  setText("finCpi", m.cpi.toFixed(2));
+  setText("finSpi", m.spi.toFixed(2));
+  setText("finCpiSub", `Earning ${SYMBOL}${m.cpi.toFixed(2)} per ${SYMBOL}1 spent`);
+  setText(
+    "finSpiSub",
+    `${Math.round(effective)}% effective vs ${Math.round(m.planned)}% planned`
+  );
 
   // --- Current billing draw --------------------------------------------------
-  const gross = f.draw.workCompleted + f.draw.materialsStored;
-  const retainage = gross * (f.draw.retainagePct / 100);
-  const net = gross - retainage;
-  setText("finDrawPeriod", f.draw.period);
-  setText("finWork", money(f.draw.workCompleted));
-  setText("finMaterials", money(f.draw.materialsStored));
-  setText("finRetainage", `-${money(retainage)}`);
-  setText("finNet", money(net));
-  countTargets.finCostToDate = f.costToDate;
-  countTargets.finNet = net;
+  const d = m.draw;
+  setText("finDrawPeriod", d.period);
+  setText("finWork", money(d.work));
+  setText("finMaterialsLabel", d.materials < 0 ? "Materials Stored (net)" : "Materials Stored");
+  setText("finMaterials", money(d.materials));
+  setText("finRetainageLabel", `Less Retainage (${d.retainagePct}%)`);
+  setText("finRetainage", `-${money(d.retainage)}`);
+  setText("finNet", money(d.net));
+  countTargets.finCostToDate = m.costToDate;
+  countTargets.finNet = d.net;
 
   // --- Risk & variance (tie the headline penalty to real schedule slip) ------
-  const delayImpact = daysBehind * f.dailyLiquidatedDamages;
   setText("finDelay", money(delayImpact));
   setText(
     "finDelaySub",
-    `Penalty for ${daysBehind} day${daysBehind === 1 ? "" : "s"} behind schedule`
+    `Penalty for ${delayDays} day${delayDays === 1 ? "" : "s"} behind schedule`
   );
-  setText("finComp", money(f.delayedComponentsCost));
+  setText("finComp", money(m.delayedCost));
   setText("finCompSub", `Value of ${count(behind)} overdue components on map`);
-  setText("finChange", money(f.pendingChangeOrders));
+  setText("finChange", money(m.pending));
   const env = ENVIRONMENTAL_RISK;
   setText("finEnv", money(env.total));
   setText(
@@ -105,18 +211,25 @@ export function renderFinancialPanel(summary = {}) {
     `${env.windDaysLost} wind \u00b7 ${env.heatAdvisories} heat \u00b7 ${env.gasStandDowns} air-quality holds`
   );
 
-  // Feed the themed drill-down windows with the live totals + subtitles.
+  // Feed the themed drill-down windows with the live totals + subtitles. The
+  // roadway's liquidated damages break down by sectional-completion milestone.
+  const milestones = FINANCIALS.milestones?.map((ms) => ({
+    label: ms.label,
+    meta: `+${delayDays} d \u00b7 ${compact(ms.rate)}/day`,
+    amount: ms.rate * delayDays,
+  }));
   refreshRiskContext({
     schedule: {
       total: delayImpact,
-      sub: `${daysBehind} critical-path day${daysBehind === 1 ? "" : "s"} behind schedule`,
+      sub: `${delayDays} critical-path day${delayDays === 1 ? "" : "s"} behind schedule`,
+      ...(milestones ? { rows: milestones } : {}),
     },
     delayed: {
-      total: f.delayedComponentsCost,
+      total: m.delayedCost,
       sub: `${count(behind)} overdue components on the 3D map`,
     },
     pending: {
-      total: f.pendingChangeOrders,
+      total: m.pending,
       sub: "Submitted CORs not yet in the contract sum",
     },
     environmental: {
@@ -206,7 +319,9 @@ function wireBillingButton() {
     button.classList.toggle("is-success", state === "success");
     button.disabled = state !== "idle";
     if (state === "loading") label.textContent = "Compiling AIA G702 Report…";
-    else if (state === "success") label.textContent = "Report Opened - $5.41M Due";
+    else if (state === "success")
+      // Truncated to two decimals, like the tower's original "$5.41M".
+      label.textContent = `Report Opened - ${SYMBOL}${(Math.floor(model.draw.net / 1e4) / 100).toFixed(2)}M Due`;
     else label.textContent = idleLabel;
   };
 
@@ -214,7 +329,7 @@ function wireBillingButton() {
     if (button.disabled) return;
     while (timers.length) window.clearTimeout(timers.pop());
     // Open synchronously (inside the user gesture) so it isn't pop-up blocked.
-    const reportWindow = window.open("report.html", "_blank");
+    const reportWindow = window.open(pageHref("./report.html"), "_blank");
     if (!reportWindow) downloadAiaCsv(); // blocked — still hand over the data
     setState("loading");
     timers.push(
@@ -242,7 +357,7 @@ function wireRiskFilters() {
       tone: "is-rose",
     },
     delayed: {
-      text: "Map Overlay Active: Highlighting 238 overdue components…",
+      text: () => `Map Overlay Active: Highlighting ${count(model.behind)} overdue components…`,
       tone: "is-amber",
     },
     pending: {
@@ -266,7 +381,7 @@ function wireRiskFilters() {
     banner.classList.remove("is-rose", "is-amber", "is-cyan", "is-violet");
     const meta = active ? BANNERS[active] : null;
     if (meta) {
-      banner.textContent = meta.text;
+      banner.textContent = typeof meta.text === "function" ? meta.text() : meta.text;
       banner.classList.add(meta.tone);
       banner.hidden = false;
     } else {
@@ -298,30 +413,27 @@ function wireRiskFilters() {
 
 /**
  * Fallback AIA G702 export used only when the report tab is pop-up blocked.
- * Figures are computed from FINANCIALS so the summary reconciles exactly:
- * work + materials = gross, less retainage = net.
+ * Figures come from the same model as the panel so the summary reconciles
+ * exactly: work + materials = gross, less retainage = net.
  */
 function downloadAiaCsv() {
-  const f = FINANCIALS;
-  const gross = f.draw.workCompleted + f.draw.materialsStored;
-  const retainage = gross * (f.draw.retainagePct / 100);
-  const net = gross - retainage;
+  const d = model.draw;
   const csv = [
     "AIA G702 — Application for Payment",
-    `Billing Period,${f.draw.period}`,
+    `Billing Period,"${d.period}"`,
     "",
     "Line,Amount",
-    `Work Completed This Period,${f.draw.workCompleted}`,
-    `Materials Presently Stored,${f.draw.materialsStored}`,
-    `Total Earned This Period,${gross}`,
-    `Less ${f.draw.retainagePct}% Retainage,-${retainage}`,
-    `Net Amount Due,${net}`,
+    `Work Completed This Period,${Math.round(d.work)}`,
+    `Materials Presently Stored,${Math.round(d.materials)}`,
+    `Total Earned This Period,${Math.round(d.gross)}`,
+    `Less ${d.retainagePct}% Retainage,-${Math.round(d.retainage)}`,
+    `Net Amount Due,${Math.round(d.net)}`,
   ].join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `AIA_G702_Draw_${f.draw.period.replace(/\s+/g, "_")}.csv`;
+  link.download = `AIA_G702_Draw_${d.period.replace(/[\s,–]+/g, "_")}.csv`;
   document.body.appendChild(link);
   link.click();
   link.remove();

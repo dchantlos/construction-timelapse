@@ -1,14 +1,48 @@
 # Construction Timelapse
 
-A **4D / 5D construction-monitoring digital twin** of *Meridian Tower*, built end-to-end on the
-**[ArcGIS Maps SDK for JavaScript 5.1](https://developers.arcgis.com/javascript/)**. It streams an
-**IFC-authored building model published as Esri I3S**, plays its construction sequence back over
-time, audits it **live against a buildingSMART IDS**, tracks real as-built progress in both
-schedule (4D) and cost (5D), and overlays **live environmental sensors** from ArcGIS Velocity.
+A **4D / 5D construction-monitoring digital twin**, built end-to-end on the
+**[ArcGIS Maps SDK for JavaScript 5.1](https://developers.arcgis.com/javascript/)**, with two
+demo projects you can switch between from the top bar:
+
+- **Vertical — *Meridian Tower***, a high-rise building. It streams an **IFC-authored building
+  model published as Esri I3S**, plays its construction sequence back over time, audits it
+  **live against a buildingSMART IDS**, tracks real as-built progress in both schedule (4D) and
+  cost (5D), and overlays **live environmental sensors** from ArcGIS Velocity.
+- **Linear — *Marina Bay East Elevated Roadway***, a 1.5 km viaduct in Singapore built from two
+  work fronts. Its 4D sequence, as-built status, 5D financials and AIA pay application are all
+  summed live from each element's own schedule, progress and cost fields.
 
 > **openBIM at the core** — the model is **IFC → I3S**, validated against a **buildingSMART
 > IDS 1.0** specification in the browser, and findings export to **BCF 2.1**. IFC in, IDS
 > checked, BCF out.
+
+## Vertical and linear projects
+
+The **Vertical | Linear** switch in the top bar reopens the current view (planned sequencing or
+simulated progress) for the other project; links are shareable (`?project=linear`). Each project
+is a block in `js/config.js` — scenes, layer labels and colours, phases, explode zones, 5D inputs
+and feature flags — and every module reads the active one.
+
+| | Vertical — Meridian Tower | Linear — Marina Bay East Elevated Roadway |
+| --- | --- | --- |
+| Model | IFC building classes (`IfcSlab`, `IfcColumn`, `IfcWall`…) | IFC 4.3 infrastructure classes (`IfcPile`, `IfcBearing`, `IfcCourse`…) |
+| 4D dashboard | Trades staggered floor-by-floor | Each system's real build curve, read from its `Sched_StartDate` statistics |
+| Click an element | Trade, planned date and phase | The element's own name, dates, phase, chainage and work front |
+| Exploded view | Podium, mid-rise and top lifted apart (`BldgLevel`) | Foundations → piers → bearings → girders → deck → finishes (`Sched_Category`) |
+| Progress (4D) | Configured 60% target vs. late `CStatus` buckets | Planned / installed / overdue summed from `Prog_*` fields |
+| Financials (5D) + AIA report | Configured contract figures (USD) | Summed live from `Fin_*` fields (SGD), one G703 line per system |
+| IDS audit, IoT sensors, AI Site Analyst, Presentation Mode | ✓ | Not yet — hidden on this project |
+
+**Basemap.** The roadway's WebScenes are authored on **Google Photorealistic 3D** tiles with a 3D
+mask (a `replace` modification that flattens the mesh along the alignment). Google only streams
+to a signed-in ArcGIS user whose organization enables that basemap for the site, so visitors get
+a dark basemap styled like the tower's (Dark Gray Canvas, 3D labels, glass context buildings) and
+are never asked to sign in. The **Photorealistic 3D** button in the right-hand stack (or
+`?basemap=photoreal`) signs in through the app's OAuth client and swaps the authored basemap
+back in, mask included; the exploded view is switched off while it's on, because the mesh then
+acts as the ground. To use it, the signing-in account's organization must enable the Google
+Photorealistic 3D basemap and allow this site's referrer, and the OAuth client's redirect URIs
+must include `oauth-callback.html`.
 
 ## The openBIM data lifecycle
 
@@ -99,6 +133,16 @@ banner") is parked: it only opens with `?welcome` (see `js/welcome.js`).
 | `progress.html` | Real construction status (4D schedule + 5D cost) + live sensors |
 | `report.html` | AIA G702 / G703 Application for Payment |
 
+Every page opens the vertical project by default. URL options:
+
+| Option | Effect |
+| --- | --- |
+| `?project=linear` | Open the Marina Bay East Elevated Roadway instead of Meridian Tower |
+| `?basemap=photoreal` | Linear project: start on the Google Photorealistic 3D basemap if already signed in |
+| `?clean` | Hide the floating buttons for clean screenshots |
+| `?welcome` | Show the (parked) welcome modal |
+| `?present` | Vertical project: start the narrated Presentation Mode |
+
 ## Built on the ArcGIS Maps SDK for JavaScript 5.1
 
 The whole app is written directly against the
@@ -137,7 +181,8 @@ ES modules must be served over HTTP (not opened from `file://`). Any static serv
 python -m http.server 5533
 ```
 
-Then open <http://localhost:5533/index.html>.
+Then open <http://localhost:5533/index.html> (or
+<http://localhost:5533/index.html?project=linear> for the roadway).
 
 ## Project structure
 
@@ -146,7 +191,7 @@ construction-timelapse/
 ├─ index.html                      Planned 4D sequencing + IDS audit
 ├─ progress.html                   Real status (4D) + 5D cost + live sensors
 ├─ report.html                     AIA G702/G703 Application for Payment
-├─ oauth-callback.html             Popup OAuth relay for the AI Site Analyst
+├─ oauth-callback.html             Popup OAuth relay (AI Site Analyst · Photorealistic 3D sign-in)
 ├─ css/styles.css                  Design tokens + UI theme + ArcGIS widget overrides
 ├─ ids/construction-timelapse.ids  buildingSMART IDS 1.0 specification
 ├─ docs/velocity/                  ArcGIS Velocity feed data + generator
@@ -154,7 +199,8 @@ construction-timelapse/
 ├─ ai/                             AI Site Analyst — custom ArcGIS AI agent (Vite sub-project · see ai/README.md)
 ├─ assistant/                      Built AI assistant bundle (generated by ai/ · committed for Pages)
 └─ js/
-   ├─ app.js · scene.js · config.js             Boot · WebScene/SceneView · configuration
+   ├─ app.js · scene.js · config.js             Boot · WebScene/SceneView · projects + configuration
+   ├─ project-switch.js · basemap.js            Vertical | Linear switch · public / Photorealistic basemap
    ├─ cinematic.js · spin.js                    Timeline playback · camera orbit
    ├─ dashboard.js · layers.js · slice.js       Planned HUD · layer isolation · cut-plane
    ├─ explode.js                                Exploded view · flattened build pad

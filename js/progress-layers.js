@@ -4,21 +4,20 @@
 // every panel metric (ring, behind, overdue, breakdown) to that layer alone.
 // =============================================================================
 
-import { summarizeStatus } from "./progress-stats.js?v=13";
-import { BUILDING_LAYERS } from "./config.js?v=13";
+import { summarizeStatus } from "./progress-stats.js?v=14";
+import { BUILDING_LAYERS, layerLabel } from "./config.js?v=15";
 
 const fmt = (n) => n.toLocaleString("en-US");
 
-/** Strip the "(Current)" suffix to recover the clean building-type name. */
+/** Strip "(Current)" and name the layer by its configured label. */
 function cleanName(title = "") {
-  return title.replace(/\s*\(current\)\s*$/i, "").trim();
+  return layerLabel(title);
 }
 
 /** Match a building layer to its authored swatch color (falls back to accent). */
-function swatchColor(name) {
-  const entry = BUILDING_LAYERS.find(
-    (l) => l.id.toLowerCase() === name.toLowerCase()
-  );
+function swatchColor(title) {
+  const id = title.replace(/\s*\(current\)\s*$/i, "").trim().toLowerCase();
+  const entry = BUILDING_LAYERS.find((l) => l.id.toLowerCase() === id);
   return entry?.color ?? "#38e2ea";
 }
 
@@ -46,8 +45,8 @@ export function createProgressLayers(scene, data, onScope) {
 
   const rows = ordered.map((entry) => {
     const name = cleanName(entry.title);
-    const color = swatchColor(name);
-    const summary = summarizeStatus(entry.counts);
+    const color = swatchColor(entry.title);
+    const summary = summarizeStatus(entry.counts, entry);
 
     const li = document.createElement("li");
     li.tabIndex = 0;

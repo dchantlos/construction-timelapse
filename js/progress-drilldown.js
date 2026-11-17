@@ -6,9 +6,10 @@
 // mocked — but each card now has its own satisfying detail view.
 // =============================================================================
 
-import { ENVIRONMENTAL_RISK } from "./config.js?v=13";
+import { ENVIRONMENTAL_RISK, FINANCIALS } from "./config.js?v=15";
 
-const money = (n) => `$${Math.round(n).toLocaleString("en-US")}`;
+const SYMBOL = FINANCIALS.currency?.symbol ?? "$";
+const money = (n) => `${SYMBOL}${Math.round(n).toLocaleString("en-US")}`;
 
 /** Per-risk modal content: heading, glyph, colour theme, total caption, rows. */
 const RISK_DETAILS = {
@@ -64,6 +65,15 @@ const RISK_DETAILS = {
   },
 };
 
+// The roadway lists its own overdue work and change orders (config.js); its
+// liquidated-damages rows arrive live with the critical-path delay.
+if (FINANCIALS.delayedComponents) RISK_DETAILS.delayed.rows = FINANCIALS.delayedComponents;
+if (FINANCIALS.changeOrders) RISK_DETAILS.pending.rows = FINANCIALS.changeOrders;
+if (FINANCIALS.milestones) {
+  RISK_DETAILS.schedule.title = "Liquidated Damages by Milestone";
+  RISK_DETAILS.schedule.rows = [];
+}
+
 /** Live headline total + subtitle per risk, refreshed each panel render. */
 const riskContext = {
   schedule: { total: 0, sub: "" },
@@ -112,7 +122,7 @@ export function openDrillDownModal(riskId = "delayed") {
   const list = document.getElementById("finModalList");
   if (list) {
     list.textContent = "";
-    detail.rows.forEach((row, i) => {
+    (ctx.rows ?? detail.rows).forEach((row, i) => {
       const li = document.createElement("li");
       li.style.setProperty("--i", String(i));
       const wrap = document.createElement("div");

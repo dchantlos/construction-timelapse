@@ -5,11 +5,34 @@
 // dismisses it (button, backdrop, or Esc) before interacting with the twin.
 // =============================================================================
 
+import { PROJECT_ID } from "./config.js?v=15";
+
 const SHOW_BY_DEFAULT = false;
+
+// The markup carries the tower's copy; the roadway swaps in its own.
+const LINEAR_COPY = {
+  index: {
+    badge: "Pre-Construction · 4D Sequencing",
+    title: "Welcome to the Roadway Digital Twin",
+    desc: "Watch the Marina Bay East Elevated Roadway assemble itself exactly as the 4D schedule plans it — piles, piers, girders, deck and finishes, front by front."
+  },
+  progress: {
+    badge: "During Construction · As-Built Twin",
+    title: "Simulated Construction Progress",
+    desc: "Tracking the roadway against the plan — real status, 5D cost and the pay application, read straight from every element's data."
+  }
+};
 
 const modal = document.getElementById("welcome");
 const wanted =
   SHOW_BY_DEFAULT || new URLSearchParams(location.search).has("welcome");
+
+if (modal && wanted && PROJECT_ID === "linear") {
+  const copy = LINEAR_COPY[document.body.dataset.help] ?? LINEAR_COPY.index;
+  modal.querySelector(".welcome__badge").textContent = copy.badge;
+  modal.querySelector(".welcome__title").textContent = copy.title;
+  modal.querySelector(".welcome__desc").textContent = copy.desc;
+}
 
 if (modal && wanted) {
   modal.removeAttribute("hidden");

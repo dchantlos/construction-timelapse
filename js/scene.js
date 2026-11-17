@@ -2,26 +2,29 @@
 // scene.js — WebScene + SceneView creation, lighting, and time-extent resolution
 // =============================================================================
 
-import esriConfig from "@arcgis/core/config.js";
 import WebScene from "@arcgis/core/WebScene.js";
 import SceneView from "@arcgis/core/views/SceneView.js";
 import TimeExtent from "@arcgis/core/time/TimeExtent.js";
 
-import { WEBSCENE_ID, PORTAL_URL, FALLBACK_TIME_EXTENT } from "./config.js";
-import { installSitePad } from "./explode.js?v=1";
+import { WEBSCENE_ID, PORTAL_URL, FALLBACK_TIME_EXTENT } from "./config.js?v=15";
+import { installSitePad } from "./explode.js?v=2";
+import { preparePublicBasemap } from "./basemap.js?v=1";
 
-// Assets (icons, workers, wasm) must resolve from the same CDN version.
-esriConfig.assetsPath = "https://js.arcgis.com/5.1/@arcgis/core/assets";
+// Assets (icons, workers, wasm) resolve from the CDN build this module came
+// from. Don't override esriConfig.assetsPath: an explicit value points the
+// SDK's Calcite components (e.g. the sign-in dialog) at a path that 404s.
 
 /**
  * Build the WebScene + SceneView, strip the default UI chrome and apply the
  * WebScene's authored virtual lighting (even, camera-relative) with shadows.
  * The scene reaches the view once loaded, with a flat build pad under the BIM
- * model (see installSitePad in explode.js).
+ * model (see installSitePad in explode.js) and, for a scene authored on Google
+ * Photorealistic 3D, the public basemap swapped in first (see basemap.js) so
+ * visitors are never asked to sign in.
  *
  * @param {string} [webSceneId=WEBSCENE_ID] Portal item id to open. Defaults to
  *   the time-enabled planned-schedule scene; the progress view passes its own.
- * @returns {{ scene: WebScene, view: SceneView }}
+ * @returns {{ scene: WebScene, view: SceneView, basemapMode: Promise<"dark"|"photoreal"|null> }}
  */
 export function createView(webSceneId = WEBSCENE_ID) {
   const scene = new WebScene({
@@ -61,15 +64,19 @@ export function createView(webSceneId = WEBSCENE_ID) {
   // the view sees the ground — swapping elevation layers on a live view makes
   // the whole scene jump. A scene that fails to load is still handed over, so
   // view.when() rejects with the real error as before.
-  scene
+  let basemapMode = null;
+  const ready = scene
     .load()
-    .then(() => installSitePad(scene))
+    .then(async () => {
+      basemapMode = await preparePublicBasemap(scene);
+      installSitePad(scene);
+    })
     .catch(() => {})
     .finally(() => {
       view.map = scene;
     });
 
-  return { scene, view };
+  return { scene, view, basemapMode: ready.then(() => basemapMode) };
 }
 
 /**

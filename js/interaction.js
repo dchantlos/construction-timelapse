@@ -2,11 +2,77 @@
 // interaction.js — hitTest → neon highlight + custom glass tooltip
 // =============================================================================
 
-import { BUILDING_LAYERS, PHASES, FALLBACK_TIME_EXTENT } from "./config.js";
+import { BUILDING_LAYERS, PHASES, FALLBACK_TIME_EXTENT, PROJECT, layerLabel } from "./config.js?v=15";
 
-/** Reference-only context layers (e.g. SwissBuildings 3D) are never identifiable. */
-function isContextOnlyLayer(title = "") {
-  return title.replace(/[\s_]/g, "").toLowerCase().includes("swissbuilding");
+/**
+ * Reference-only context (SwissBuildings 3D, or any basemap layer such as the
+ * glass context buildings or the Photorealistic mesh) is never identifiable.
+ */
+export function isContextOnlyLayer(layer, map) {
+  const title = layer?.title ?? "";
+  if (title.replace(/[\s_]/g, "").toLowerCase().includes("swissbuilding")) return true;
+  const basemap = map?.basemap;
+  return !!(
+    basemap?.baseLayers?.includes(layer) ||
+    basemap?.referenceLayers?.includes(layer) ||
+    basemap?.groundLayers?.includes(layer)
+  );
+}
+
+/** Date formatter in the project's own time zone (local time when unset). */
+export function projectDateFormat(options) {
+  return new Intl.DateTimeFormat("en-US", { ...options, timeZone: PROJECT.timeZone });
+}
+
+/** Epoch ms from a date attribute (epoch number, Date or ISO string). */
+function toMs(value) {
+  if (value == null || value === "") return NaN;
+  if (typeof value === "number") return value;
+  if (value instanceof Date) return value.getTime();
+  return Date.parse(value);
+}
+
+/** "Jun 21 – 22, 2027" style range for an element's scheduled dates. */
+export function scheduleRange(start, end) {
+  const s = toMs(start);
+  const e = toMs(end);
+  if (!Number.isFinite(s)) return "—";
+  const fmt = projectDateFormat({ year: "numeric", month: "short", day: "numeric" });
+  if (!Number.isFinite(e) || fmt.format(s) === fmt.format(e)) return fmt.format(s);
+  return fmt.formatRange ? fmt.formatRange(s, e) : `${fmt.format(s)} – ${fmt.format(e)}`;
+}
+
+/** "Ch 1,184–1,216 m · East front" from an element's chainage attributes. */
+export function chainageLabel(attrs = {}) {
+  const fmt = (n) => Math.round(Number(n)).toLocaleString("en-US");
+  const a = Number(attrs.ChainageStart);
+  const b = Number(attrs.ChainageEnd);
+  let text = "";
+  if (Number.isFinite(a)) text = `Ch ${fmt(a)}${Number.isFinite(b) && Math.round(b) !== Math.round(a) ? `–${fmt(b)}` : ""} m`;
+  const front = attrs.Sched_WorkFront;
+  if (front && front !== "Project") text = text ? `${text} · ${front} front` : `${front} front`;
+  return text || "—";
+}
+
+/** Display name for a Sched_Phase value — the dashboard's phase name for its code. */
+export function phaseLabel(value) {
+  if (!value) return "—";
+  const code = String(value).match(/^\s*(\d+)\s/)?.[1];
+  const named = code && PHASES.find((p) => p.code === code)?.name;
+  return named ?? String(value).replace(/^\s*\d+\s+/, "").replace(/^./, (c) => c.toUpperCase());
+}
+
+/** Ask every BIM layer to return the project's tooltip attributes on hitTest. */
+export function requestTooltipFields(map, extra = []) {
+  const wanted = [...(PROJECT.tooltipFields ?? []), ...extra];
+  if (!wanted.length) return;
+  const ids = new Set(BUILDING_LAYERS.map((l) => l.id.toLowerCase()));
+  map?.allLayers.forEach((layer) => {
+    if (layer.type !== "scene") return;
+    const id = layer.title?.replace(/\s*\(current\)\s*$/i, "").trim().toLowerCase();
+    if (!ids.has(id)) return;
+    layer.outFields = [...new Set([...(layer.outFields ?? []), ...wanted])];
+  });
 }
 
 /**
@@ -22,6 +88,10 @@ export function createInteraction(view) {
   const tipTitle = document.getElementById("tipTitle");
   const tipScheduled = document.getElementById("tipScheduled");
   const tipPhase = document.getElementById("tipPhase");
+  const tipLocation = document.getElementById("tipLocation");
+
+  // Element-level details (the roadway) ride along with every hitTest.
+  requestTooltipFields(view.map);
 
   let highlightHandle = null;
 
@@ -92,6 +162,21 @@ export function createInteraction(view) {
     };
   }
 
+  /** Element-level details for projects whose features carry their schedule. */
+  function describeElement(graphic) {
+    const a = graphic.attributes ?? {};
+    const match = BUILDING_LAYERS.find((l) => l.id === graphic.layer?.title);
+    if (!match) return describe(graphic);
+    return {
+      tag: PROJECT.componentTag,
+      label: a.Name || layerLabel(match.id),
+      scheduled: scheduleRange(a.Sched_StartDate, a.Sched_EndDate),
+      phaseName: phaseLabel(a.Sched_Phase),
+      location: chainageLabel(a),
+      color: match.color
+    };
+  }
+
   view.on("click", async (event) => {
     let response;
     try {
@@ -105,7 +190,7 @@ export function createInteraction(view) {
       (r) =>
         r.type === "graphic" &&
         r.graphic?.layer &&
-        !isContextOnlyLayer(r.graphic.layer.title)
+        !isContextOnlyLayer(r.graphic.layer, view.map)
     );
 
     clearHighlight();
@@ -125,12 +210,13 @@ export function createInteraction(view) {
       console.warn("highlight failed", err);
     }
 
-    const info = describe(graphic);
+    const info = PROJECT.tooltipFields ? describeElement(graphic) : describe(graphic);
     tipTag.textContent = info.tag;
     tipTag.style.color = info.color;
     tipTitle.textContent = info.label;
     tipScheduled.textContent = info.scheduled;
     tipPhase.textContent = info.phaseName;
+    if (tipLocation) tipLocation.textContent = info.location ?? "—";
 
     tip.classList.add("is-visible");
     tip.setAttribute("aria-hidden", "false");

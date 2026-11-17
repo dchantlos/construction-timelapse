@@ -4,7 +4,7 @@
 // components that have slipped behind, and lists the full status breakdown.
 // =============================================================================
 
-import { PLANNED_PROGRESS_PCT, PROGRESS_STATUS } from "./config.js?v=13";
+import { PLANNED_PROGRESS_PCT, PROGRESS_STATUS } from "./config.js?v=15";
 
 /** Circumference of the SVG ring (2πr, r=52) — matches .ring__bar dasharray. */
 const RING_CIRCUMFERENCE = 327;
@@ -28,7 +28,8 @@ const pct = (n) => `${n.toFixed(1)}%`;
  */
 export function renderProgressPanel(stats, context = {}) {
   const hasData = stats.total > 0;
-  const planned = PLANNED_PROGRESS_PCT;
+  // The roadway's elements say where the plan should be; the tower configures it.
+  const planned = stats.plannedPct ?? PLANNED_PROGRESS_PCT;
   const effective = Math.max(0, planned - stats.behindPct);
 
   setText("progPlannedPct", `${Math.round(planned)}%`);

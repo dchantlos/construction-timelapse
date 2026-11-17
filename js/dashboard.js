@@ -2,25 +2,66 @@
 // dashboard.js — translates the TimeSlider position into live analytics
 // =============================================================================
 
-import { BUILDING_LAYERS, PHASES } from "./config.js";
+import { BUILDING_LAYERS, PHASES, PROJECT } from "./config.js?v=15";
 
 const RING_CIRCUMFERENCE = 327; // 2π·52 to match the SVG radius in styles.css
 const DAY_MS = 1000 * 60 * 60 * 24;
 
-// Floor-by-floor build: each trade rises with the building but is offset by its
-// place in the sequence, so structure leads, envelope follows, cladding lags and
-// the roof trails to the top — no trade finishes before the ones beneath it.
-const BUILD_TIMING = {
-  Slabs: { lead: 0.0, end: 0.9 },
-  Columns: { lead: 0.03, end: 0.9 },
-  "Structural Framing": { lead: 0.05, end: 0.92 },
-  Walls: { lead: 0.15, end: 0.95 },
-  Plates: { lead: 0.18, end: 0.95 },
-  "Curtain Wall Panels": { lead: 0.3, end: 1.0 },
-  Roofs: { lead: 0.7, end: 1.0 }
-};
+// Layers with authored `timing` (the tower) rise floor-by-floor, offset by their
+// place in the sequence. Layers without it (the roadway) follow their own
+// schedule: the share of elements whose Sched_StartDate has passed, i.e. what
+// the cumulative timeline is showing (see loadBuildCurves).
 const DEFAULT_TIMING = { lead: 0, end: 1 };
 const clamp01 = (n) => Math.min(1, Math.max(0, n));
+
+/** Count of sorted values ≤ x (binary search). */
+function countAtOrBefore(sorted, x) {
+  let lo = 0;
+  let hi = sorted.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (sorted[mid] <= x) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
+}
+
+/**
+ * Read each untimed building layer's scheduled start dates from its I3S
+ * statistics (every value with its count), as a sorted list of epoch ms.
+ * Layers whose statistics are missing or partial are simply left out.
+ *
+ * @param {import("@arcgis/core/WebScene").default} scene
+ * @param {string} [field="Sched_StartDate"]
+ * @returns {Promise<Map<string, number[]>>} layer id → sorted start times
+ */
+export async function loadBuildCurves(scene, field = "Sched_StartDate") {
+  const untimed = new Set(BUILDING_LAYERS.filter((l) => !l.timing).map((l) => l.id));
+  const curves = new Map();
+  const layers = scene.allLayers
+    .filter((layer) => layer.type === "scene" && untimed.has(layer.title))
+    .toArray();
+  await Promise.all(
+    layers.map(async (layer) => {
+      try {
+        const doc = await layer.queryCachedStatistics(field);
+        const stats = doc?.stats ?? doc ?? {};
+        const starts = [];
+        for (const { value, count } of stats.mostFrequentValues ?? []) {
+          const ms = Date.parse(value);
+          if (Number.isFinite(ms)) for (let i = 0; i < Number(count || 0); i++) starts.push(ms);
+        }
+        const total = Number(stats.totalValuesCount ?? stats.count ?? starts.length);
+        if (starts.length && starts.length >= total) {
+          curves.set(layer.title, starts.sort((a, b) => a - b));
+        }
+      } catch (err) {
+        console.warn(`Build curve unavailable for ${layer.title}`, err);
+      }
+    })
+  );
+  return curves;
+}
 
 /**
  * Wire up DOM references once and return an `update(timeExtent, fullExtent)`
@@ -41,13 +82,15 @@ export function createDashboard(options = {}) {
     cineProgress: document.getElementById("cineProgress")
   };
 
-  // Build the trade rows once (sorted so the fills cascade in build order); we
-  // only update each bar's width on tick.
-  const orderedLayers = [...BUILDING_LAYERS].sort(
-    (a, b) =>
-      (BUILD_TIMING[a.id] ?? DEFAULT_TIMING).lead -
-      (BUILD_TIMING[b.id] ?? DEFAULT_TIMING).lead
-  );
+  // Build the trade rows once (timed layers sorted so the fills cascade in
+  // build order; untimed ones keep their configured order); we only update
+  // each bar's width on tick.
+  const timed = BUILDING_LAYERS.every((layer) => layer.timing);
+  const orderedLayers = timed
+    ? [...BUILDING_LAYERS].sort((a, b) => a.timing.lead - b.timing.lead)
+    : [...BUILDING_LAYERS];
+  // Long lists switch to one-line rows so the whole dashboard fits.
+  el.layerList.classList.toggle("layer-list--compact", orderedLayers.length > 8);
   const layerRows = orderedLayers.map((layer) => {
     const li = document.createElement("li");
     li.style.setProperty("--layer-c", layer.color);
@@ -76,7 +119,8 @@ export function createDashboard(options = {}) {
     return {
       layer,
       li,
-      timing: BUILD_TIMING[layer.id] ?? DEFAULT_TIMING,
+      timing: layer.timing ?? DEFAULT_TIMING,
+      curve: null, // sorted element start times, once loadBuildCurves() lands
       fill: li.querySelector(".layer-bar__fill"),
       pctEl: li.querySelector(".layer-pct")
     };
@@ -85,7 +129,8 @@ export function createDashboard(options = {}) {
   const fmtDate = new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "2-digit",
-    year: "numeric"
+    year: "numeric",
+    timeZone: PROJECT.timeZone
   });
 
   /**
@@ -118,13 +163,20 @@ export function createDashboard(options = {}) {
     el.elapsedDays.textContent = `${Math.round(elapsed / DAY_MS)}d`;
     el.remainingDays.textContent = `${Math.round((total - elapsed) / DAY_MS)}d`;
 
-    // Per-trade progress: each rises floor-by-floor, offset by its build order,
-    // so all trades advance together (cascading) instead of one finishing before
-    // the next starts. `active` counts the trades currently under construction.
+    // Per-trade progress: timed trades rise floor-by-floor, offset by their
+    // build order, so all trades advance together (cascading) instead of one
+    // finishing before the next starts; scheduled ones read their own element
+    // start dates. `active` counts the trades currently under construction.
     let active = 0;
+    const now = +extent.end;
     for (const row of layerRows) {
-      const span = row.timing.end - row.timing.lead;
-      const p = clamp01(span > 0 ? (progress - row.timing.lead) / span : 0);
+      let p;
+      if (row.curve) {
+        p = countAtOrBefore(row.curve, now) / row.curve.length;
+      } else {
+        const span = row.timing.end - row.timing.lead;
+        p = clamp01(span > 0 ? (progress - row.timing.lead) / span : 0);
+      }
       const building = p > 0 && p < 0.999;
       if (building) active += 1;
       row.fill.style.width = `${(p * 100).toFixed(1)}%`;
@@ -145,5 +197,10 @@ export function createDashboard(options = {}) {
     }
   }
 
-  return { update, setIsolated };
+  /** Adopt build curves from loadBuildCurves() (layer id → sorted start times). */
+  function setCurves(curves) {
+    for (const row of layerRows) row.curve = curves.get(row.layer.id) ?? row.curve;
+  }
+
+  return { update, setIsolated, setCurves };
 }

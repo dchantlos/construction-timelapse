@@ -2,7 +2,7 @@
 // layers.js — interactive building-layer isolation ("ghosting") control
 // =============================================================================
 
-import { BUILDING_LAYERS } from "./config.js";
+import { BUILDING_LAYERS } from "./config.js?v=15";
 
 const GHOST_OPACITY = 0.15; // dimmed opacity for non-selected layers
 

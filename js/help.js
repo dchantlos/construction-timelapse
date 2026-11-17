@@ -8,7 +8,8 @@
 // page just needs that attribute plus a module <script> to this file.
 //
 
-import { HELP_CONTENT } from "./help-content.js?v=6";
+import { HELP_CONTENT } from "./help-content.js?v=7";
+import { PROJECT_ID } from "./config.js?v=15";
 
 const STYLE_ID = "help-widget-styles";
 
@@ -126,7 +127,8 @@ function el(tag, className, html) {
  * @returns {{ open: () => void, close: () => void } | null}
  */
 export function createHelp(pageKey) {
-  const content = HELP_CONTENT[pageKey];
+  // Projects other than the default have their own guide ("index-linear", …).
+  const content = HELP_CONTENT[`${pageKey}-${PROJECT_ID}`] ?? HELP_CONTENT[pageKey];
   if (!content) return null;
   injectStyles();
 

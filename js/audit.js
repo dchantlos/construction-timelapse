@@ -16,7 +16,7 @@ import {
   IFC_ENTITY_LAYERS,
   IDS_FIELD_MAP,
   IDS_CLASSIFICATION_FIELDS
-} from "./config.js";
+} from "./config.js?v=15";
 import { exportBcf, guidOf } from "./bcfExport.js?v=4";
 import { createBcfHighlighter } from "./bcfViewer.js?v=6";
 import SimpleRenderer from "@arcgis/core/renderers/SimpleRenderer.js";

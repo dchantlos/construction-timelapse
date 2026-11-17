@@ -6,21 +6,22 @@
 // how many components have actually slipped behind.
 // =============================================================================
 
-import { createView } from "./scene.js?v=13";
-import { createLayerVisibility } from "./visibility.js?v=12";
+import { createView } from "./scene.js?v=14";
+import { createLayerVisibility } from "./visibility.js?v=13";
 import { createSpin } from "./spin.js?v=13";
-import { collectConstructionStatus } from "./progress-stats.js?v=13";
-import { renderProgressPanel } from "./progress-panel.js?v=13";
-import { createProgressLayers } from "./progress-layers.js?v=14";
-import { createProgressInteraction } from "./progress-interaction.js?v=18";
+import { collectConstructionStatus } from "./progress-stats.js?v=14";
+import { renderProgressPanel } from "./progress-panel.js?v=14";
+import { createProgressLayers } from "./progress-layers.js?v=15";
+import { createProgressInteraction } from "./progress-interaction.js?v=19";
 import { createSlice } from "./slice.js?v=12";
-import { createExplode } from "./explode.js?v=1";
-import { renderFinancialPanel, createFinancialControls } from "./progress-financial.js?v=15";
+import { createExplode } from "./explode.js?v=2";
+import { renderFinancialPanel, createFinancialControls } from "./progress-financial.js?v=16";
 import { createCostOverlays } from "./progress-overlays.js?v=15";
 import { createSensorPanel } from "./progress-sensors.js?v=15";
 import { createVelocityLive } from "./velocity-live.js?v=8";
-import { PROGRESS_WEBSCENE_ID } from "./config.js?v=13";
-import { installAiBridge } from "./ai-bridge.js?v=3";
+import { createBasemapToggle } from "./basemap.js?v=1";
+import { PROGRESS_WEBSCENE_ID, PROJECT } from "./config.js?v=15";
+import { installAiBridge } from "./ai-bridge.js?v=4";
 
 /** Surface any error directly on the boot veil so failures are never silent. */
 function showBootError(message) {
@@ -40,7 +41,7 @@ window.addEventListener("unhandledrejection", (e) =>
 );
 
 async function boot() {
-  const { scene, view } = createView(PROGRESS_WEBSCENE_ID);
+  const { scene, view, basemapMode } = createView(PROGRESS_WEBSCENE_ID);
 
   // Watchdog: if the scene never becomes ready, say so instead of hanging.
   const watchdog = setTimeout(() => {
@@ -80,8 +81,8 @@ async function boot() {
   // Slice tool: cut an interactive plane through the model.
   createSlice(view);
 
-  // Exploded view: lift the tower's zones apart.
-  createExplode({
+  // Exploded view: lift the model's zones apart.
+  const explode = createExplode({
     scene,
     view,
     playback: {
@@ -91,20 +92,33 @@ async function boot() {
     }
   });
 
+  // Opt-in Photorealistic basemap (linear project); the exploded view's lift
+  // assumes the flat build pad, so it's off while the mesh is the ground.
+  createBasemapToggle({
+    scene,
+    initial: await basemapMode,
+    onChange: (mode) =>
+      explode.setEnabled(
+        mode !== "photoreal",
+        "Exploded view works on the dark basemap — turn Photorealistic 3D off to use it"
+      )
+  });
+
   // Wire the Schedule (4D) ↔ Financials (5D) view toggle and its controls.
   createFinancialControls();
 
-  // Live ArcGIS Velocity sensor network: pulsing 3D markers for every noise,
-  // dust, gas and wind sensor, plus the shared store that drives the panel.
-  createVelocityLive({ scene, view });
+  // Live ArcGIS Velocity sensor network (the tower site): pulsing 3D markers
+  // for every noise, dust, gas and wind sensor, plus the shared store that
+  // drives the panel.
+  if (PROJECT.features.sensors) createVelocityLive({ scene, view });
 
   // Bridge so the embedded AI assistant can read the live schedule/cost figures
   // (window.CT3D) for its IoT→cost analysis.
-  const aiBridge = installAiBridge();
+  const aiBridge = PROJECT.features.aiAnalyst ? installAiBridge() : null;
 
   // Live on-site environmental sensor panel (top-right, draggable) — its wind,
   // noise, dust and gas figures come straight from the Velocity feeds above.
-  createSensorPanel();
+  if (PROJECT.features.sensors) createSensorPanel();
 
   // "Filter 3D Map by Cost" pills recolor the building components in 3D.
   const overlays = createCostOverlays(scene);
@@ -122,7 +136,7 @@ async function boot() {
     const data = await collectConstructionStatus(scene);
     renderProgressPanel(data.summary);
     renderFinancialPanel(data.summary);
-    aiBridge.setSummary(data.summary);
+    aiBridge?.setSummary(data.summary);
     // Per-layer isolate: filters the render and every metric to one layer.
     createProgressLayers(scene, data, (summary, scope) =>
       renderProgressPanel(summary, { scope })

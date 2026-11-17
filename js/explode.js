@@ -1,8 +1,9 @@
 // =============================================================================
-// explode.js — "Exploded view" of the BIM tower, shared by both views.
+// explode.js — "Exploded view" of the BIM model, shared by both views.
 //
-// One click springs the tower's vertical zones apart (podium, mid-rise, top —
-// EXPLODE in config.js); a second click settles them back.
+// One click springs the model's zones apart (EXPLODE in config.js: the tower's
+// podium, mid-rise and top, or the viaduct's foundations → piers → bearings →
+// girders → deck → finishes); a second click settles them back.
 //
 // Each BIM scene layer is split once, on first use, into one layer per zone it
 // occupies: the original keeps its lowest zone (via definitionExpression) and
@@ -15,7 +16,8 @@
 // node, so the layer blinks). Relative placement adds the ground height under
 // each element, so installSitePad() flattens the terrain under the footprint to
 // one known height before the view starts; subtracting it keeps every lifted
-// element exactly aligned.
+// element exactly aligned. An integrated-mesh ground (the opt-in Photorealistic
+// basemap) breaks that, so setEnabled(false) restores the authored placement.
 // =============================================================================
 
 import BaseElevationLayer from "@arcgis/core/layers/BaseElevationLayer.js";
@@ -23,9 +25,12 @@ import Multipoint from "@arcgis/core/geometry/Multipoint.js";
 import Point from "@arcgis/core/geometry/Point.js";
 import * as reactiveUtils from "@arcgis/core/core/reactiveUtils.js";
 
-import { BUILDING_LAYERS, EXPLODE } from "./config.js?v=14";
+import { BUILDING_LAYERS, EXPLODE } from "./config.js?v=15";
 
 const BIM_TITLES = new Set(BUILDING_LAYERS.map((l) => l.id.toLowerCase()));
+
+/** Attribute the zones are defined on (storey number, or a category). */
+const ZONE_FIELD = EXPLODE.field ?? EXPLODE.levelField;
 
 /** BIM building layers on either view ("Slabs", "Slabs (Current)", …). */
 function isBimLayer(layer) {
@@ -209,31 +214,37 @@ function spring(t) {
 const easeInOutCubic = (x) =>
   x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 
-/** Where-clause selecting one zone's storeys. */
+/** SQL string literal (single quotes doubled). */
+const sqlString = (value) => `'${String(value).replace(/'/g, "''")}'`;
+
+/** Where-clause selecting one zone: a storey range or a set of categories. */
 function zoneWhere(zone) {
-  const f = EXPLODE.levelField;
-  return `(${f} >= ${zone.min} AND ${f} <= ${zone.max})`;
+  if (zone.values) return `(${ZONE_FIELD} IN (${zone.values.map(sqlString).join(", ")}))`;
+  return `(${ZONE_FIELD} >= ${zone.min} AND ${ZONE_FIELD} <= ${zone.max})`;
+}
+
+/** True if a statistics value (storey number or category) belongs to the zone. */
+function zoneHas(zone, value) {
+  if (zone.values) return zone.values.includes(String(value));
+  const level = Number(value);
+  return Number.isFinite(level) && level >= zone.min && level <= zone.max;
 }
 
 /**
  * Indices of the zones a layer has elements in, from its cached I3S
  * statistics. Falls back to every zone when the statistics can't prove which
- * storeys are present (a zone without elements just costs an empty clone).
+ * zones are present (a zone without elements just costs an empty clone).
  */
 async function occupiedZones(layer) {
   const all = EXPLODE.zones.map((_, i) => i);
   try {
-    const doc = await layer.queryCachedStatistics(EXPLODE.levelField);
+    const doc = await layer.queryCachedStatistics(ZONE_FIELD);
     const stats = doc?.stats ?? doc ?? {};
     const frequent = stats.mostFrequentValues ?? [];
     const counted = frequent.reduce((sum, v) => sum + Number(v.count || 0), 0);
     const total = Number(stats.count ?? stats.totalValuesCount ?? counted);
     if (frequent.length && counted >= total) {
-      const levels = frequent.map((v) => Number(v.value)).filter(Number.isFinite);
-      return all.filter((i) => {
-        const { min, max } = EXPLODE.zones[i];
-        return levels.some((level) => level >= min && level <= max);
-      });
+      return all.filter((i) => frequent.some((v) => zoneHas(EXPLODE.zones[i], v.value)));
     }
     if (Number.isFinite(stats.min) && Number.isFinite(stats.max)) {
       return all.filter((i) => {
@@ -242,7 +253,7 @@ async function occupiedZones(layer) {
       });
     }
   } catch (err) {
-    console.warn(`Exploded view: no ${EXPLODE.levelField} statistics for "${layer.title}"`, err);
+    console.warn(`Exploded view: no ${ZONE_FIELD} statistics for "${layer.title}"`, err);
   }
   return all;
 }
@@ -262,7 +273,7 @@ const MIRRORED = ["visible", "opacity", "renderer", "useViewTime", "outFields"];
 
 /** Keep a clone's live state in sync with its original layer. */
 function mirror(source, clone) {
-  for (const prop of MIRRORED) {
+  return MIRRORED.map((prop) =>
     reactiveUtils.watch(
       () => source[prop],
       (value) => {
@@ -271,8 +282,8 @@ function mirror(source, clone) {
         else clone[prop] = value;
       },
       { initial: true }
-    );
-  }
+    )
+  );
 }
 
 /**
@@ -285,13 +296,13 @@ function mirror(source, clone) {
  *   The view's timeline/orbit animation, if any. It's paused while the first
  *   use loads the zone layers (per-frame time and camera changes slow that
  *   several-fold), and the camera is left to it while it runs.
- * @returns {{ toggle: () => Promise<void>, isExploded: () => boolean }}
+ * @returns {{ toggle: () => Promise<void>, isExploded: () => boolean, setEnabled: (enabled: boolean, reason?: string) => void }}
  */
 export function createExplode({ scene, view, playback }) {
   const button = document.getElementById("explodeBtn");
   const originals = scene.allLayers.filter(isBimLayer).toArray();
   if (!button || !originals.length) {
-    return { toggle: async () => {}, isExploded: () => false };
+    return { toggle: async () => {}, isExploded: () => false, setEnabled: () => {} };
   }
 
   const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)");
@@ -303,6 +314,10 @@ export function createExplode({ scene, view, playback }) {
   let amount = 0; // current explode amount (springs past 1 briefly)
   let frame = 0;
   let fit = null; // { before, after } while revealTop()'s zoom-out applies
+  let disabledReason = null; // set while the exploded view can't be used
+  let clones = []; // zone clones added by split()
+  let handles = []; // clone mirror watchers
+  const authored = new Map(); // original layer → its authored filter + placement
 
   function render() {
     const on = target === 1;
@@ -311,11 +326,14 @@ export function createExplode({ scene, view, playback }) {
     button.classList.toggle("is-busy", busy);
     button.setAttribute("aria-pressed", String(on));
     button.setAttribute("aria-busy", String(busy));
-    button.title = busy
-      ? "Preparing the exploded view…"
-      : on
-        ? "Collapse the exploded view"
-        : "Exploded view: lift the floors apart";
+    button.setAttribute("aria-disabled", String(!!disabledReason));
+    button.title = disabledReason
+      ? disabledReason
+      : busy
+        ? "Preparing the exploded view…"
+        : on
+          ? "Collapse the exploded view"
+          : EXPLODE.title;
   }
 
   /** Split every BIM layer into per-zone layers (first use only). */
@@ -341,37 +359,61 @@ export function createExplode({ scene, view, playback }) {
     }
 
     const lifts = [];
-    const clones = [];
+    const added = [];
     const bases = [];
     for (const { layer, zones } of plans) {
       if (!zones.length) continue;
+      authored.set(layer, {
+        definitionExpression: layer.definitionExpression,
+        elevationInfo: layer.elevationInfo?.clone?.() ?? layer.elevationInfo ?? null
+      });
       const [base, ...rest] = zones;
       for (const k of rest) {
         const clone = layer.clone();
         clone.id = `${layer.id}-explode-${k}`;
         clone.listMode = "hide";
         clone.definitionExpression = zoneWhere(EXPLODE.zones[k]);
-        mirror(layer, clone);
-        clones.push(clone);
+        handles.push(...mirror(layer, clone));
+        added.push(clone);
         lifts.push({ layer: clone, lift: k * EXPLODE.gap });
       }
       if (base > 0) lifts.push({ layer, lift: base * EXPLODE.gap });
       if (rest.length) {
-        // The original keeps everything its clones don't carry (incl. unknown levels).
+        // The original keeps everything its clones don't carry (incl. unknown zones).
         const carried = rest.map((k) => zoneWhere(EXPLODE.zones[k])).join(" OR ");
         bases.push({
           layer,
-          where: `${EXPLODE.levelField} IS NULL OR NOT (${carried})`
+          where: `${ZONE_FIELD} IS NULL OR NOT (${carried})`
         });
       }
     }
 
     // Clones first draw in place, exactly over the originals; only then do the
-    // originals drop those storeys, so nothing flickers.
-    scene.addMany(clones);
-    await Promise.all(clones.map((clone) => settle(whenDrawn(view, clone), 8000)));
+    // originals drop those zones, so nothing flickers.
+    clones = added;
+    scene.addMany(added);
+    await Promise.all(added.map((clone) => settle(whenDrawn(view, clone), 8000)));
     for (const { layer, where } of bases) layer.definitionExpression = where;
     moving = lifts;
+  }
+
+  /** Undo split(): drop the clones and give the originals their authored state. */
+  function unsplit() {
+    cancelAnimationFrame(frame);
+    for (const handle of handles) handle.remove();
+    handles = [];
+    scene.removeMany(clones);
+    for (const clone of clones) clone.destroy();
+    clones = [];
+    for (const [layer, state] of authored) {
+      layer.definitionExpression = state.definitionExpression;
+      layer.elevationInfo = state.elevationInfo;
+    }
+    authored.clear();
+    moving = null;
+    target = 0;
+    amount = 0;
+    fit = null;
   }
 
   function apply(value) {
@@ -457,6 +499,7 @@ export function createExplode({ scene, view, playback }) {
   }
 
   async function toggle() {
+    if (disabledReason) return;
     target = target === 1 ? 0 : 1;
     if (!moving) {
       if (target === 0) {
@@ -479,7 +522,7 @@ export function createExplode({ scene, view, playback }) {
       })();
       render();
       await splitting;
-      if (!moving) return;
+      if (!moving || disabledReason) return;
     }
     render();
     animateTo(target);
@@ -487,8 +530,22 @@ export function createExplode({ scene, view, playback }) {
     else restoreCamera();
   }
 
+  /**
+   * Turn the exploded view off (with a tooltip reason) or back on. Disabling
+   * restores the authored layers — e.g. under the Photorealistic basemap, whose
+   * mesh ground would skew the `relative-to-ground` lift.
+   */
+  function setEnabled(enabled, reason = "The exploded view isn't available right now") {
+    disabledReason = enabled ? null : reason;
+    if (!enabled) {
+      if (splitting) splitting.then(() => disabledReason && moving && unsplit()).finally(render);
+      else if (moving) unsplit();
+    }
+    render();
+  }
+
   button.addEventListener("click", toggle);
   render();
 
-  return { toggle, isExploded: () => target === 1 };
+  return { toggle, isExploded: () => target === 1, setEnabled };
 }

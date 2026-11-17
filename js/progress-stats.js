@@ -8,7 +8,7 @@
 // =============================================================================
 
 import esriRequest from "@arcgis/core/request.js";
-import { PROGRESS_STATUS } from "./config.js?v=13";
+import { PROGRESS_STATUS, PROJECT, ATTRIBUTE_STAT_FIELDS, PORTAL_URL } from "./config.js?v=15";
 
 /** Non-construction basemap/context layers to hide from the progress panel's
  *  aggregate stats and its "Filter by Layer" list. */
@@ -24,7 +24,7 @@ function normalizeTitle(title = "") {
 
 /** True for context layers with no CStatus — the excluded set plus any
  *  "Places"/"Labels"/"SwissBuildings" variant (reference-only context layers). */
-function isExcludedLayer(title) {
+export function isExcludedLayer(title) {
   const n = normalizeTitle(title);
   return (
     EXCLUDED_LAYERS.has(n) ||
@@ -48,49 +48,89 @@ function layerResourceUrl(layer) {
 }
 
 /**
- * Fetch the CStatus value→count histogram for a single scene layer from its
- * precomputed statistics resource. Returns an empty object on any miss so the
- * overall aggregate degrades gracefully.
+ * Read a layer's precomputed I3S statistics: the CStatus value→count histogram
+ * and, for the attribute-driven (linear) project, the sum / max / most frequent
+ * value of every ATTRIBUTE_STAT_FIELDS field. Misses come back empty so the
+ * aggregate degrades gracefully.
  *
  * @param {object} layer A loaded SceneLayer.
- * @returns {Promise<Record<string, number>>}
+ * @returns {Promise<{ counts: Record<string, number>, sums: Record<string, number>, max: Record<string, number>, values: Record<string, string> }>}
  */
-async function fetchLayerStatusCounts(layer) {
+async function fetchLayerStats(layer) {
   const resource = layerResourceUrl(layer);
+  const result = { counts: {}, sums: {}, max: {}, values: {} };
 
-  // 1. Layer JSON → locate the CStatus statistics href.
+  // 1. Layer JSON → locate each field's statistics href.
   const meta = await esriRequest(resource, {
     query: { f: "json" },
     responseType: "json"
   });
-  const infos = meta.data?.statisticsInfo ?? [];
-  const info = infos.find((s) => s.name === PROGRESS_STATUS.field);
-  if (!info?.href) return {};
+  const hrefs = new Map((meta.data?.statisticsInfo ?? []).map((s) => [s.name, s.href]));
+  const fields = [
+    PROGRESS_STATUS.field,
+    ...(PROJECT.progressModel === "attributes" ? ATTRIBUTE_STAT_FIELDS : [])
+  ];
 
-  // 2. Resolve the (relative) href against the layer resource and read stats.
-  const statsUrl = new URL(info.href, `${resource}/`).toString();
-  const stats = await esriRequest(statsUrl, {
-    query: { f: "json" },
-    responseType: "json"
-  });
-
-  const bag = stats.data?.stats ?? stats.data ?? {};
-  const counts = {};
-  for (const entry of bag.mostFrequentValues ?? []) {
-    if (entry?.value == null) continue;
-    counts[entry.value] = (counts[entry.value] ?? 0) + Number(entry.count || 0);
-  }
-  return counts;
+  // 2. Resolve the (relative) hrefs against the layer resource and read stats.
+  await Promise.all(
+    fields.map(async (field) => {
+      const href = hrefs.get(field);
+      if (!href) return;
+      const stats = await esriRequest(new URL(href, `${resource}/`).toString(), {
+        query: { f: "json" },
+        responseType: "json"
+      });
+      const bag = stats.data?.stats ?? stats.data ?? {};
+      if (field === PROGRESS_STATUS.field) {
+        for (const entry of bag.mostFrequentValues ?? []) {
+          if (entry?.value == null) continue;
+          result.counts[entry.value] = (result.counts[entry.value] ?? 0) + Number(entry.count || 0);
+        }
+        return;
+      }
+      if (Number.isFinite(bag.sum)) result.sums[field] = bag.sum;
+      if (Number.isFinite(bag.max)) result.max[field] = bag.max;
+      const top = bag.mostFrequentValues?.[0]?.value;
+      if (typeof top === "string") result.values[field] = top;
+    })
+  );
+  return result;
 }
 
 /**
- * Summarize a CStatus value→count map into the shape the panel renders.
+ * Summarize a CStatus value→count map into the shape the panel renders. With
+ * attribute sums (the linear project) the planned target, slippage and lateness
+ * come from the elements' Prog_* fields instead of the status buckets.
  *
  * @param {Record<string, number>} counts
- * @returns {{ total:number, counts:Record<string,number>, behind:number, behindPct:number, daysBehind:number, installed:number, installedPct:number }}
+ * @param {{ sums?: Record<string, number>, max?: Record<string, number>, values?: Record<string, string> }} [attributes]
+ * @returns {{ total:number, counts:Record<string,number>, behind:number, behindPct:number, daysBehind:number, installed:number, installedPct:number, plannedPct?:number, criticalDelayDays?:number, sums?:Record<string,number>, max?:Record<string,number>, values?:Record<string,string> }}
  */
-export function summarizeStatus(counts) {
+export function summarizeStatus(counts, attributes) {
   const total = Object.values(counts).reduce((sum, n) => sum + n, 0);
+
+  if (attributes?.sums && Object.keys(attributes.sums).length) {
+    const { sums, max = {}, values = {} } = attributes;
+    const behind = sums.Prog_Overdue ?? 0;
+    const installed = sums.Prog_Installed ?? counts[PROGRESS_STATUS.installedValue] ?? 0;
+    return {
+      total,
+      counts,
+      behind,
+      behindPct: total ? (behind / total) * 100 : 0,
+      // Average lateness of the overdue elements.
+      daysBehind: behind ? (sums.Prog_OverdueDays ?? 0) / behind : 0,
+      installed,
+      installedPct: total ? (installed / total) * 100 : 0,
+      plannedPct: total ? ((sums.Prog_Planned ?? 0) / total) * 100 : 0,
+      // Forecast slip of the latest work: the critical-path delay.
+      criticalDelayDays: max.Prog_DelayDays ?? 0,
+      sums,
+      max,
+      values
+    };
+  }
+
   const behind = PROGRESS_STATUS.behindValues.reduce(
     (sum, value) => sum + (counts[value] ?? 0),
     0
@@ -116,39 +156,85 @@ export function summarizeStatus(counts) {
   };
 }
 
+/** Add one layer's sums / maxima / labels into running totals. */
+function accumulate(into, from) {
+  for (const [k, v] of Object.entries(from.sums)) into.sums[k] = (into.sums[k] ?? 0) + v;
+  for (const [k, v] of Object.entries(from.max)) into.max[k] = Math.max(into.max[k] ?? -Infinity, v);
+  for (const [k, v] of Object.entries(from.values)) into.values[k] ??= v;
+}
+
 /**
- * Collect CStatus per building layer plus a whole-building aggregate, excluding
+ * Collect CStatus per building layer plus a whole-project aggregate, excluding
  * non-status context layers (Construction Objects, Places, Labels, Buildings).
  *
  * @param {import("@arcgis/core/WebScene").default} scene
- * @returns {Promise<{
- *   layers: Array<{ layer: object, title: string, counts: Record<string, number> }>,
- *   summary: ReturnType<typeof summarizeStatus>
- * }>}
+ * @returns {ReturnType<typeof collectLayerStats>}
  */
 export async function collectConstructionStatus(scene) {
   const sceneLayers = scene.allLayers
     .filter((layer) => layer.type === "scene")
-    .filter((layer) => !isExcludedLayer(layer.title))
+    .filter((layer) => !scene.basemap?.baseLayers?.includes(layer))
     .toArray();
+  return collectLayerStats(sceneLayers);
+}
+
+/**
+ * The scene-service layers of a WebScene item, read straight from its JSON (no
+ * view needed) — for pages like report.html that only want the statistics.
+ *
+ * @param {string} itemId
+ * @returns {Promise<Array<{ title: string, url: string }>>}
+ */
+export async function loadWebSceneLayers(itemId) {
+  const { data } = await esriRequest(
+    `${PORTAL_URL}/sharing/rest/content/items/${itemId}/data`,
+    { query: { f: "json" }, responseType: "json" }
+  );
+  const layers = [];
+  const walk = (list = []) => {
+    for (const layer of list) {
+      if (layer.layerType === "ArcGISSceneServiceLayer" && layer.url) {
+        layers.push({ title: layer.title, url: layer.url });
+      }
+      walk(layer.layers);
+    }
+  };
+  walk(data?.operationalLayers);
+  return layers;
+}
+
+/**
+ * Read the statistics of each building layer and aggregate them.
+ *
+ * @param {Array<{ title: string, url: string, layerId?: number }>} sceneLayers
+ *   SceneLayers, or plain { title, url } descriptors.
+ * @returns {Promise<{
+ *   layers: Array<{ layer: object, title: string, counts: Record<string, number>, sums: Record<string, number>, max: Record<string, number>, values: Record<string, string> }>,
+ *   summary: ReturnType<typeof summarizeStatus>
+ * }>}
+ */
+export async function collectLayerStats(sceneLayers) {
+  const statusLayers = sceneLayers.filter((layer) => !isExcludedLayer(layer.title));
 
   const layers = await Promise.all(
-    sceneLayers.map(async (layer) => ({
+    statusLayers.map(async (layer) => ({
       layer,
       title: layer.title,
-      counts: await fetchLayerStatusCounts(layer).catch((err) => {
+      ...(await fetchLayerStats(layer).catch((err) => {
         console.warn(`CStatus stats unavailable for ${layer.title}`, err);
-        return {};
-      })
+        return { counts: {}, sums: {}, max: {}, values: {} };
+      }))
     }))
   );
 
   const aggregate = {};
-  for (const { counts } of layers) {
-    for (const [value, count] of Object.entries(counts)) {
+  const attributes = { sums: {}, max: {}, values: {} };
+  for (const entry of layers) {
+    for (const [value, count] of Object.entries(entry.counts)) {
       aggregate[value] = (aggregate[value] ?? 0) + count;
     }
+    accumulate(attributes, entry);
   }
 
-  return { layers, summary: summarizeStatus(aggregate) };
+  return { layers, summary: summarizeStatus(aggregate, attributes) };
 }

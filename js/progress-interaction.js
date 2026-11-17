@@ -7,13 +7,9 @@
 // planned-sequencing view.
 // =============================================================================
 
-import { BUILDING_LAYERS, PROGRESS_STATUS } from "./config.js?v=13";
+import { BUILDING_LAYERS, PROGRESS_STATUS, PROJECT } from "./config.js?v=15";
 import { openSensorPopupForGraphic, closeSensorPopup } from "./velocity-live.js?v=8";
-
-/** Reference-only context layers (e.g. SwissBuildings 3D) are never identifiable. */
-function isContextOnlyLayer(title = "") {
-  return title.replace(/[\s_]/g, "").toLowerCase().includes("swissbuilding");
-}
+import { isContextOnlyLayer, requestTooltipFields, scheduleRange, chainageLabel } from "./interaction.js?v=3";
 
 // Friendly label + colour for each CStatus value, keyed for O(1) lookup.
 const STATUS_BY_VALUE = new Map(PROGRESS_STATUS.buckets.map((b) => [b.value, b]));
@@ -31,16 +27,13 @@ export function createProgressInteraction(view) {
   const tipTitle = document.getElementById("tipTitle");
   const tipStatus = document.getElementById("tipStatus");
   const tipSchedule = document.getElementById("tipSchedule");
+  const tipLocation = document.getElementById("tipLocation");
+  const tipPlanned = document.getElementById("tipPlanned");
   if (!tip) return;
 
-  // Make sure the status field rides along in hitTest results on every 3D layer.
-  view.map?.allLayers.forEach((layer) => {
-    if (layer.type !== "scene") return;
-    const current = layer.outFields ?? [];
-    if (!current.includes(PROGRESS_STATUS.field)) {
-      layer.outFields = [...new Set([...current, PROGRESS_STATUS.field])];
-    }
-  });
+  // Make sure the status field (plus any element details) rides along in
+  // hitTest results on every building layer — context layers don't carry it.
+  requestTooltipFields(view.map, [PROGRESS_STATUS.field]);
 
   let highlightHandle = null;
 
@@ -97,6 +90,25 @@ export function createProgressInteraction(view) {
     return { status: bucket.label, schedule, color: bucket.color };
   }
 
+  /** Schedule verdict from an element's own progress fields (the roadway). */
+  function elementSchedule(attrs) {
+    if (readStatus(attrs) === PROGRESS_STATUS.installedValue) return "Complete";
+    if (Number(attrs.Prog_Overdue) === 1) {
+      const days = Math.round(Number(attrs.Prog_OverdueDays) || 0);
+      return days > 0 ? `Behind · ${days} d overdue` : "Behind · due now";
+    }
+    if (attrs.Prog_TaskState === "In progress") return "In progress";
+    const delay = Math.round(Number(attrs.Prog_DelayDays) || 0);
+    return delay > 0 ? `Upcoming · forecast +${delay} d` : "Upcoming";
+  }
+
+  /** True for a building element that carries its own schedule attributes. */
+  function hasElementDetails(graphic) {
+    if (!PROJECT.tooltipFields) return false;
+    const title = (graphic?.layer?.title ?? "").toLowerCase();
+    return BUILDING_LAYERS.some((l) => title.includes(l.id.toLowerCase()));
+  }
+
   view.on("click", async (event) => {
     let response;
     try {
@@ -110,7 +122,7 @@ export function createProgressInteraction(view) {
       (r) =>
         r.type === "graphic" &&
         r.graphic?.layer &&
-        !isContextOnlyLayer(r.graphic.layer.title)
+        !isContextOnlyLayer(r.graphic.layer, view.map)
     );
 
     clearHighlight();
@@ -141,13 +153,19 @@ export function createProgressInteraction(view) {
       console.warn("highlight failed", err);
     }
 
-    const info = describeStatus(readStatus(graphic.attributes));
-    tipTag.textContent = "Building Component";
+    const attrs = graphic.attributes ?? {};
+    const info = describeStatus(readStatus(attrs));
+    const element = hasElementDetails(graphic);
+    tipTag.textContent = PROJECT.componentTag;
     tipTag.style.color = info.color;
-    tipTitle.textContent = componentLabel(graphic);
+    tipTitle.textContent = (element && attrs.Name) || componentLabel(graphic);
     tipStatus.textContent = info.status;
     tipStatus.style.color = info.color;
-    tipSchedule.textContent = info.schedule;
+    tipSchedule.textContent = element ? elementSchedule(attrs) : info.schedule;
+    if (tipLocation) tipLocation.textContent = element ? chainageLabel(attrs) : "—";
+    if (tipPlanned) {
+      tipPlanned.textContent = element ? scheduleRange(attrs.Sched_StartDate, attrs.Sched_EndDate) : "—";
+    }
 
     tip.classList.add("is-visible");
     tip.setAttribute("aria-hidden", "false");

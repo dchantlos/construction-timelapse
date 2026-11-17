@@ -15,8 +15,10 @@
     <style>
       /* ===================================================================
          AIA G702 / G703 — Application and Certificate for Payment
-         Standalone report page for the 4D Construction Monitor. Reads its
-         figures from js/config.js so every total reconciles with the panel.
+         Standalone report page for the 4D Construction Monitor. The tower
+         reads its figures from js/config.js; the roadway (?project=linear)
+         sums them live from its elements' Fin_* fields through the same
+         model as the 5D panel — either way every total reconciles with it.
          =================================================================== */
       :root {
         --bg: #060912;
@@ -582,6 +584,14 @@
     <!-- Privacy-friendly page-visit analytics (GoatCounter) -->
     <script data-goatcounter="https://dchantlos.goatcounter.com/count"
             async src="//gc.zgo.at/count.js"></script>
+    <!-- The linear project reads its live figures through @arcgis/core (lazily). -->
+    <script type="importmap">
+      {
+        "imports": {
+          "@arcgis/core/": "https://js.arcgis.com/5.1/@arcgis/core/"
+        }
+      }
+    </script>
   </head>
 
   <body data-help="report">
@@ -597,13 +607,13 @@
         <div class="brand">
           <div class="brand__mark">&#9650;</div>
           <div>
-            <div class="brand__name">Meridian Tower</div>
-            <div class="brand__sub">Downtown Core District</div>
+            <div class="brand__name" id="rProject">Meridian Tower</div>
+            <div class="brand__sub" id="rPlace">Downtown Core District</div>
           </div>
         </div>
         <div class="head__badges">
           <span class="pill pill--cyan">AIA Document G702</span>
-          <span class="pill">Application No. 07</span>
+          <span class="pill" id="rAppNo">Application No. 07</span>
         </div>
       </header>
 
@@ -616,7 +626,7 @@
         <span class="meta__chip">Billing Period <b id="mPeriod">—</b></span>
         <span class="meta__chip">Issued <b id="mIssued">—</b></span>
         <span class="meta__chip">Contract <b id="mContract">—</b></span>
-        <span class="meta__chip">To Owner <b>Meridian Development Partners</b></span>
+        <span class="meta__chip">To Owner <b id="rOwner">Meridian Development Partners</b></span>
       </div>
 
       <section class="hero">
@@ -660,7 +670,7 @@
           <div class="card">
             <div class="card__k">Original Contract</div>
             <div class="card__v" id="cContract">—</div>
-            <div class="card__note">Lump-sum GMP</div>
+            <div class="card__note" id="cContractNote">Lump-sum GMP</div>
           </div>
           <div class="card">
             <div class="card__k">Cost to Date</div>
@@ -716,46 +726,25 @@
     </main>
 
     <script type="module">
-      import { FINANCIALS } from "./js/config.js?v=13";
+      import {
+        FINANCIALS,
+        PROJECT,
+        PROGRESS_WEBSCENE_ID,
+        BUILDING_LAYERS,
+        layerLabel,
+      } from "./js/config.js?v=15";
 
-      const PROJECT = "Meridian Tower";
-      const APP_NO = "07";
       const f = FINANCIALS;
-
-      // ---- Reconciling draw math (single source: config.js) ----------------
-      const gross = f.draw.workCompleted + f.draw.materialsStored;
-      const retainage = gross * (f.draw.retainagePct / 100);
-      const net = gross - retainage;
-      const overrun = f.estAtCompletion - f.contractValue;
-
-      // Work-this-period split — fractions sum to 1 so the rows always total
-      // f.draw.workCompleted exactly (last row absorbs any rounding).
-      const lineDefs = [
-        { desc: "Div 03 — Concrete & Foundations", scheduled: 32_000_000, frac: 0.3 },
-        { desc: "Div 05 — Structural Steel", scheduled: 41_000_000, frac: 0.36 },
-        { desc: "Div 08 — Curtain Wall & Envelope", scheduled: 22_000_000, frac: 0.2 },
-        { desc: "Div 23 — MEP Rough-in", scheduled: 18_000_000, frac: 0.14 },
-      ];
-      let allocated = 0;
-      lineDefs.forEach((it, i) => {
-        it.amount =
-          i === lineDefs.length - 1
-            ? f.draw.workCompleted - allocated
-            : Math.round(f.draw.workCompleted * it.frac);
-        allocated += it.amount;
-      });
+      const SYMBOL = f.currency?.symbol ?? "$";
+      const APP_NO = PROJECT.report.applicationNo;
 
       // ---- Formatting helpers ----------------------------------------------
-      const usd = new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-        maximumFractionDigits: 0,
-      });
-      const money = (n) => usd.format(Math.round(n));
+      const money = (n) =>
+        `${n < 0 ? "-" : ""}${SYMBOL}${Math.abs(Math.round(n)).toLocaleString("en-US")}`;
       const compact = (n) => {
         const a = Math.abs(n);
-        if (a >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
-        if (a >= 1_000) return `$${Math.round(n / 1_000)}k`;
+        if (a >= 1_000_000) return `${SYMBOL}${(n / 1_000_000).toFixed(1)}M`;
+        if (a >= 1_000) return `${SYMBOL}${Math.round(n / 1_000)}k`;
         return money(n);
       };
       const issued = new Date().toLocaleDateString("en-US", {
@@ -768,78 +757,177 @@
         if (el) el.textContent = t;
       };
 
-      // ---- Populate static text --------------------------------------------
-      setText("mPeriod", f.draw.period);
-      setText("mIssued", issued);
-      setText("mContract", compact(f.contractValue));
-      setText("fStamp", issued);
-      setText("heroNote", `${money(gross)} earned · less ${f.draw.retainagePct}% retainage`);
+      // ---- Figures: configured (tower) --------------------------------------
+      // Reconciling draw math (single source: config.js).
+      function configuredFigures() {
+        const gross = f.draw.workCompleted + f.draw.materialsStored;
+        const retainage = gross * (f.draw.retainagePct / 100);
 
-      setText("tGross", money(gross));
-      setText("tRetainLabel", `Less ${f.draw.retainagePct}% Retainage`);
-      setText("tRetain", `(${money(retainage)})`);
-      setText("tNet", money(net));
-
-      setText("cContract", money(f.contractValue));
-      setText("cCost", money(f.costToDate));
-      setText("cCostNote", `${f.budgetExpendedPct.toFixed(1)}% of contract expended`);
-      setText("cEac", money(f.estAtCompletion));
-      setText(
-        "cEacNote",
-        overrun >= 0 ? `▲ ${compact(overrun)} over budget` : `▼ ${compact(-overrun)} under budget`
-      );
-      document.getElementById("cEacNote").className =
-        "card__note " + (overrun >= 0 ? "up" : "good");
-      setText("cCpi", f.cpi.toFixed(2));
-      setText("cCpiNote", f.cpi >= 1 ? "On or under budget" : "Earning below cost");
-      setText("cSpi", f.spi.toFixed(2));
-      setText("cSpiNote", f.spi >= 1 ? "On or ahead of plan" : "Behind planned schedule");
-
-      setText("rDelay", `${compact(f.dailyLiquidatedDamages * 14)}/mo`);
-      setText("rDelayed", money(f.delayedComponentsCost));
-      setText("rCo", money(f.pendingChangeOrders));
-
-      // ---- G703 continuation rows ------------------------------------------
-      const body = document.getElementById("g703Body");
-      const rowHtml = (desc, sched, amt, cls = "") =>
-        `<tr class="${cls}"><td class="desc">${desc}</td>` +
-        `<td class="num">${sched === null ? "—" : money(sched)}</td>` +
-        `<td class="num amount">${money(amt)}</td></tr>`;
-      body.innerHTML =
-        lineDefs.map((it) => rowHtml(it.desc, it.scheduled, it.amount)).join("") +
-        rowHtml("Materials Presently Stored", null, f.draw.materialsStored, "materials");
-
-      // ---- CSV export (reconciling) ----------------------------------------
-      function buildCsv() {
-        const rows = [
-          ["AIA G702/G703 — Application and Certificate for Payment"],
-          ["Project", PROJECT],
-          ["Application No.", APP_NO],
-          ["Billing Period", f.draw.period],
-          ["Issued", issued],
-          [],
-          ["Description of Work", "Scheduled Value", "Completed This Period"],
-          ...lineDefs.map((it) => [it.desc, it.scheduled, it.amount]),
-          ["Materials Presently Stored", "", f.draw.materialsStored],
-          [],
-          ["Total Earned This Period", "", gross],
-          [`Less ${f.draw.retainagePct}% Retainage`, "", -retainage],
-          ["Net Amount Due This Application", "", net],
+        // Work-this-period split — fractions sum to 1 so the rows always total
+        // f.draw.workCompleted exactly (last row absorbs any rounding).
+        const lineDefs = [
+          { desc: "Div 03 — Concrete & Foundations", scheduled: 32_000_000, frac: 0.3 },
+          { desc: "Div 05 — Structural Steel", scheduled: 41_000_000, frac: 0.36 },
+          { desc: "Div 08 — Curtain Wall & Envelope", scheduled: 22_000_000, frac: 0.2 },
+          { desc: "Div 23 — MEP Rough-in", scheduled: 18_000_000, frac: 0.14 },
         ];
-        return rows.map((r) => r.join(",")).join("\n");
+        let allocated = 0;
+        lineDefs.forEach((it, i) => {
+          it.amount =
+            i === lineDefs.length - 1
+              ? f.draw.workCompleted - allocated
+              : Math.round(f.draw.workCompleted * it.frac);
+          allocated += it.amount;
+        });
+
+        return {
+          period: f.draw.period,
+          contractValue: f.contractValue,
+          costToDate: f.costToDate,
+          expendedPct: f.budgetExpendedPct,
+          estAtCompletion: f.estAtCompletion,
+          cpi: f.cpi,
+          spi: f.spi,
+          lines: lineDefs,
+          materials: { label: "Materials Presently Stored", amount: f.draw.materialsStored },
+          gross,
+          retainagePct: f.draw.retainagePct,
+          retainage,
+          net: gross - retainage,
+          delayLabel: `${compact(f.dailyLiquidatedDamages * 14)}/mo`,
+          delayed: f.delayedComponentsCost,
+          pending: f.pendingChangeOrders,
+        };
       }
 
-      document.getElementById("btnCsv").addEventListener("click", () => {
-        const blob = new Blob([buildCsv()], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `AIA_G702_Draw_${f.draw.period.replace(/\s+/g, "_")}.csv`;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        URL.revokeObjectURL(url);
-      });
+      // ---- Figures: live (roadway) -------------------------------------------
+      // Summed from every element's Fin_* fields through the same model as the
+      // 5D panel, with one continuation line per system (layer).
+      async function liveFigures() {
+        const [{ loadWebSceneLayers, collectLayerStats }, { financialModel }] = await Promise.all([
+          import("./js/progress-stats.js?v=14"),
+          import("./js/progress-financial.js?v=16"),
+        ]);
+        const data = await collectLayerStats(await loadWebSceneLayers(PROGRESS_WEBSCENE_ID));
+        const m = financialModel(data.summary);
+        if (!m.contractValue) throw new Error("No cost data in the published layers");
+        const rank = (title) =>
+          BUILDING_LAYERS.findIndex(
+            (l) => l.id === title.replace(/\s*\(current\)\s*$/i, "").trim()
+          );
+        const lines = data.layers
+          .filter((entry) => entry.sums.Fin_Budget)
+          .sort((a, b) => rank(a.title) - rank(b.title))
+          .map((entry) => ({
+            desc: layerLabel(entry.title),
+            scheduled: entry.sums.Fin_Budget,
+            amount: entry.sums.Fin_PeriodWork ?? 0,
+          }));
+        return {
+          period: m.draw.period,
+          contractValue: m.contractValue,
+          costToDate: m.costToDate,
+          expendedPct: m.expendedPct,
+          estAtCompletion: m.estAtCompletion,
+          cpi: m.cpi,
+          spi: m.spi,
+          lines,
+          materials: { label: "Materials Stored — Net Change", amount: m.draw.materials },
+          gross: m.draw.gross,
+          retainagePct: m.draw.retainagePct,
+          retainage: m.draw.retainage,
+          net: m.draw.net,
+          delayLabel: compact(m.delayImpact),
+          delayed: m.delayedCost,
+          pending: m.pending,
+        };
+      }
+
+      // ---- Populate ----------------------------------------------------------
+      function render(fig) {
+        const overrun = fig.estAtCompletion - fig.contractValue;
+
+        setText("mPeriod", fig.period);
+        setText("mIssued", issued);
+        setText("mContract", compact(fig.contractValue));
+        setText("fStamp", issued);
+        setText("heroNote", `${money(fig.gross)} earned · less ${fig.retainagePct}% retainage`);
+
+        setText("tGross", money(fig.gross));
+        setText("tRetainLabel", `Less ${fig.retainagePct}% Retainage`);
+        setText("tRetain", `(${money(fig.retainage)})`);
+        setText("tNet", money(fig.net));
+
+        setText("cContract", money(fig.contractValue));
+        setText("cCost", money(fig.costToDate));
+        setText("cCostNote", `${fig.expendedPct.toFixed(1)}% of contract expended`);
+        setText("cEac", money(fig.estAtCompletion));
+        setText(
+          "cEacNote",
+          overrun >= 0 ? `▲ ${compact(overrun)} over budget` : `▼ ${compact(-overrun)} under budget`
+        );
+        document.getElementById("cEacNote").className =
+          "card__note " + (overrun >= 0 ? "up" : "good");
+        setText("cCpi", fig.cpi.toFixed(2));
+        setText("cCpiNote", fig.cpi >= 1 ? "On or under budget" : "Earning below cost");
+        setText("cSpi", fig.spi.toFixed(2));
+        setText("cSpiNote", fig.spi >= 1 ? "On or ahead of plan" : "Behind planned schedule");
+
+        setText("rDelay", fig.delayLabel);
+        setText("rDelayed", money(fig.delayed));
+        setText("rCo", money(fig.pending));
+
+        // G703 continuation rows.
+        const body = document.getElementById("g703Body");
+        const rowHtml = (desc, sched, amt, cls = "") =>
+          `<tr class="${cls}"><td class="desc">${desc}</td>` +
+          `<td class="num">${sched === null ? "—" : money(sched)}</td>` +
+          `<td class="num amount">${money(amt)}</td></tr>`;
+        body.innerHTML =
+          fig.lines.map((it) => rowHtml(it.desc, it.scheduled, it.amount)).join("") +
+          rowHtml(fig.materials.label, null, fig.materials.amount, "materials");
+
+        // CSV export (reconciling).
+        function buildCsv() {
+          const cell = (v) => (/[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : v);
+          const rows = [
+            ["AIA G702/G703 — Application and Certificate for Payment"],
+            ["Project", PROJECT.name],
+            ["Application No.", APP_NO],
+            ["Billing Period", fig.period],
+            ["Issued", issued],
+            [],
+            ["Description of Work", "Scheduled Value", "Completed This Period"],
+            ...fig.lines.map((it) => [it.desc, Math.round(it.scheduled), Math.round(it.amount)]),
+            [fig.materials.label, "", Math.round(fig.materials.amount)],
+            [],
+            ["Total Earned This Period", "", Math.round(fig.gross)],
+            [`Less ${fig.retainagePct}% Retainage`, "", -Math.round(fig.retainage)],
+            ["Net Amount Due This Application", "", Math.round(fig.net)],
+          ];
+          return rows.map((r) => r.map(cell).join(",")).join("\n");
+        }
+
+        document.getElementById("btnCsv").onclick = () => {
+          const blob = new Blob([buildCsv()], { type: "text/csv;charset=utf-8;" });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `AIA_G702_Draw_${fig.period.replace(/[\s,–]+/g, "_")}.csv`;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          URL.revokeObjectURL(url);
+        };
+      }
+
+      // ---- Project header ----------------------------------------------------
+      document.title = `AIA G702 · Application for Payment · ${PROJECT.name}`;
+      setText("rProject", PROJECT.name);
+      setText("rPlace", PROJECT.place);
+      setText("rAppNo", `Application No. ${APP_NO}`);
+      setText("rOwner", PROJECT.report.owner);
+      setText("cContractNote", PROJECT.report.contractNote);
 
       document.getElementById("btnPrint").addEventListener("click", () => window.print());
 
@@ -859,16 +947,30 @@
         requestAnimationFrame(step);
       }
 
-      window.addEventListener("load", () => {
-        setTimeout(() => {
-          document.getElementById("splash").classList.add("is-gone");
-          document.getElementById("doc").classList.add("is-revealed");
-          countUp("heroNet", net, 1600);
-          const bar = document.getElementById("cCostBar");
-          if (bar) requestAnimationFrame(() => (bar.style.width = `${f.budgetExpendedPct}%`));
-        }, 850);
-      });
+      const figures =
+        f.model === "attributes" ? liveFigures() : Promise.resolve(configuredFigures());
+      const loaded =
+        document.readyState === "complete"
+          ? Promise.resolve()
+          : new Promise((resolve) => window.addEventListener("load", resolve, { once: true }));
+
+      figures.then(render).catch(() => {});
+      Promise.all([figures, loaded])
+        .then(([fig]) => {
+          setTimeout(() => {
+            document.getElementById("splash").classList.add("is-gone");
+            document.getElementById("doc").classList.add("is-revealed");
+            countUp("heroNet", fig.net, 1600);
+            const bar = document.getElementById("cCostBar");
+            if (bar) requestAnimationFrame(() => (bar.style.width = `${Math.min(100, fig.expendedPct)}%`));
+          }, 850);
+        })
+        .catch((err) => {
+          console.error("[REPORT]", err);
+          const text = document.querySelector(".splash__text");
+          if (text) text.textContent = "Couldn't load the live project figures — please try again.";
+        });
     </script>
-    <script type="module" src="./js/help.js?v=2"></script>
+    <script type="module" src="./js/help.js?v=8"></script>
   </body>
 </html>

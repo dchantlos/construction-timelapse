@@ -5,17 +5,17 @@
 import TimeSlider from "@arcgis/core/widgets/TimeSlider.js";
 import * as reactiveUtils from "@arcgis/core/core/reactiveUtils.js";
 
-import { createView, resolveTimeExtent } from "./scene.js?v=13";
-import { createDashboard } from "./dashboard.js?v=1";
-import { createLayerControl } from "./layers.js?v=1";
-import { createLayerVisibility } from "./visibility.js";
-import { createCinematic } from "./cinematic.js?v=22";
-import { createAssistant } from "./assistant.js?v=23";
-import { createInteraction } from "./interaction.js?v=2";
+import { createView, resolveTimeExtent } from "./scene.js?v=14";
+import { createDashboard, loadBuildCurves } from "./dashboard.js?v=2";
+import { createLayerControl } from "./layers.js?v=2";
+import { createLayerVisibility } from "./visibility.js?v=13";
+import { createCinematic } from "./cinematic.js?v=23";
+import { createAssistant } from "./assistant.js?v=24";
+import { createInteraction } from "./interaction.js?v=3";
 import { createSlice } from "./slice.js";
-import { createAudit } from "./audit.js?v=26";
-import { createExplode } from "./explode.js?v=1";
-import { TIME_STEP } from "./config.js";
+import { createExplode } from "./explode.js?v=2";
+import { createBasemapToggle } from "./basemap.js?v=1";
+import { PROJECT, TIME_STEP } from "./config.js?v=15";
 
 /** Surface any error directly on the boot veil so failures are never silent. */
 function showBootError(message) {
@@ -35,7 +35,7 @@ window.addEventListener("unhandledrejection", (e) =>
 );
 
 async function boot() {
-  const { scene, view } = createView();
+  const { scene, view, basemapMode } = createView();
 
   // Watchdog: if the scene never becomes ready, say so instead of hanging.
   const watchdog = setTimeout(() => {
@@ -93,6 +93,13 @@ async function boot() {
     () => timeSlider.timeExtent,
     (extent) => dashboard.update(extent, fullTimeExtent)
   );
+  // Layers without authored timing (the roadway) follow their own schedule,
+  // read from each layer's Sched_StartDate statistics.
+  loadBuildCurves(scene).then((curves) => {
+    if (!curves.size) return;
+    dashboard.setCurves(curves);
+    dashboard.update(timeSlider.timeExtent, fullTimeExtent);
+  });
 
   // Restore all layers to their default visibility/opacity.
   document.getElementById("resetLayers").addEventListener("click", () => {
@@ -110,11 +117,15 @@ async function boot() {
   // --- Slice tool (interactive cut-plane through the model) ------------------
   createSlice(view);
 
-  // --- IDS model audit (buildingSMART openBIM validation) --------------------
-  createAudit({ scene, view, layerControl });
+  // --- IDS model audit (buildingSMART openBIM validation; tower only) --------
+  if (PROJECT.features.audit) {
+    import("./audit.js?v=27").then(({ createAudit }) =>
+      createAudit({ scene, view, layerControl })
+    );
+  }
 
-  // --- Exploded view (lift the tower's zones apart) --------------------------
-  createExplode({
+  // --- Exploded view (lift the model's zones apart) --------------------------
+  const explode = createExplode({
     scene,
     view,
     playback: {
@@ -122,6 +133,19 @@ async function boot() {
       pause: () => cinematic.stop(),
       resume: () => cinematic.start()
     }
+  });
+
+  // --- Opt-in Photorealistic basemap (linear project) ------------------------
+  // The exploded view's lift assumes the flat build pad, so it's off while the
+  // Photorealistic mesh is the ground.
+  createBasemapToggle({
+    scene,
+    initial: await basemapMode,
+    onChange: (mode) =>
+      explode.setEnabled(
+        mode !== "photoreal",
+        "Exploded view works on the dark basemap — turn Photorealistic 3D off to use it"
+      )
   });
 
   // --- Timeline assistant (local date/phrase command box) --------------------

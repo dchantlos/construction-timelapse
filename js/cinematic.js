@@ -5,6 +5,8 @@
 import TimeExtent from "@arcgis/core/time/TimeExtent.js";
 import * as reactiveUtils from "@arcgis/core/core/reactiveUtils.js";
 
+import { PROJECT } from "./config.js?v=15";
+
 /**
  * Resolve once the SceneView has stopped streaming tiles and stayed idle for a
  * short quiet period — i.e. everything is loaded and the picture is stable.
@@ -87,7 +89,8 @@ export function createCinematic(view, timeSlider, fullTimeExtent) {
   const fmtDate = new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "2-digit",
-    year: "numeric"
+    year: "numeric",
+    timeZone: PROJECT.timeZone
   });
 
   let playing = false;

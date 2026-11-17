@@ -7,6 +7,11 @@
 // the authored construction window, then hand it to the scrubber's scrubTo().
 //
 
+import { PROJECT } from "./config.js?v=15";
+
+/** A date inside the active project's build window, used in the hints. */
+const EXAMPLE = PROJECT.assistantExample;
+
 const MONTHS = {
   jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
   jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11
@@ -55,12 +60,41 @@ function fractionOf(text) {
 const fmtDate = new Intl.DateTimeFormat("en-US", {
   month: "short",
   day: "2-digit",
-  year: "numeric"
+  year: "numeric",
+  timeZone: PROJECT.timeZone
 });
+
+/**
+ * Midnight on a calendar day in the project's time zone (local midnight when
+ * the project doesn't set one), so a typed date lands on the same day the
+ * dashboard shows, wherever the visitor is.
+ */
+function calendarDate(year, month, day) {
+  const tz = PROJECT.timeZone;
+  if (!tz) return new Date(year, month, day);
+  const guess = Date.UTC(year, month, day);
+  // The zone's offset at that instant: its wall-clock time read back as UTC.
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      hourCycle: "h23",
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric"
+    })
+      .formatToParts(guess)
+      .map((p) => [p.type, p.value])
+  );
+  const wall = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute, +parts.second);
+  return new Date(guess - (wall - guess));
+}
 
 // Charming-but-snarky replies for anything outside this tool's job description.
 const QUIPS = [
-  "Hard hat, not crystal ball — I only move the construction timeline. Give me a date or a build percentage (e.g. \u201CNov 1 2025\u201D or \u201C40%\u201D).",
+  `Hard hat, not crystal ball — I only move the construction timeline. Give me a date or a build percentage (e.g. \u201C${EXAMPLE}\u201D or \u201C40%\u201D).`,
   "That’s above my pay grade. I’m a one-trick crane: feed me a construction date or a build percentage and I’ll get to work.",
   "Nice try! I’m not built for that. I scrub the build timeline — toss me a date or a percentage like \u201C60%\u201D.",
   "I’d love to, but I only speak timeline. Request a construction date or a build percentage and we’re golden.",
@@ -157,8 +191,9 @@ export function createAssistant({ fullTimeExtent, onDate }) {
     log.scrollTop = log.scrollHeight;
   }
 
+  input.placeholder = `e.g. ${EXAMPLE}, 60%, halfway…`;
   bubble(
-    "Type a date or phrase to jump the build there — e.g. \u201CNov 1 2025\u201D, \u201C25%\u201D, \u201Ca quarter\u201D, \u201Chalfway\u201D, or \u201Ccompletion\u201D.",
+    `Type a date or phrase to jump the build there — e.g. \u201C${EXAMPLE}\u201D, \u201C25%\u201D, \u201Ca quarter\u201D, \u201Chalfway\u201D, or \u201Ccompletion\u201D.`,
     "bot"
   );
 
@@ -208,14 +243,14 @@ export function createAssistant({ fullTimeExtent, onDate }) {
     // ISO date  2025-11-01
     const iso = text.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
     if (iso) {
-      const d = new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
+      const d = calendarDate(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
       if (!isNaN(+d)) return { date: at(+d), label: fmtDate.format(d) };
     }
 
     // US date  11/1/2025
     const us = text.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
     if (us) {
-      const d = new Date(Number(us[3]), Number(us[1]) - 1, Number(us[2]));
+      const d = calendarDate(Number(us[3]), Number(us[1]) - 1, Number(us[2]));
       if (!isNaN(+d)) return { date: at(+d), label: fmtDate.format(d) };
     }
 
@@ -230,7 +265,7 @@ export function createAssistant({ fullTimeExtent, onDate }) {
         const mid = (startMs + endMs) / 2;
         let best = null;
         for (let y = startY; y <= endY; y++) {
-          const cand = new Date(y, mo, day);
+          const cand = calendarDate(y, mo, day);
           if (+cand >= startMs && +cand <= endMs) { best = cand; break; }
           if (!best || Math.abs(+cand - mid) < Math.abs(+best - mid)) best = cand;
         }
@@ -251,13 +286,19 @@ export function createAssistant({ fullTimeExtent, onDate }) {
         if (v > 31) year = v;
         else if (v >= 1) day = v;
       }
-      const d = new Date(year, month, day);
+      const d = calendarDate(year, month, day);
       if (!isNaN(+d)) return { date: at(+d), label: fmtDate.format(d) };
     }
 
-    // Last resort: let the engine try (handles "Nov 1, 2025" etc.)
+    // Last resort: let the engine try (handles "Nov 1, 2025" etc.), keeping
+    // the calendar day it read.
     const loose = new Date(raw);
-    if (!isNaN(+loose)) return { date: at(+loose), label: fmtDate.format(loose) };
+    if (!isNaN(+loose)) {
+      const d = PROJECT.timeZone
+        ? calendarDate(loose.getFullYear(), loose.getMonth(), loose.getDate())
+        : loose;
+      return { date: at(+d), label: fmtDate.format(d) };
+    }
 
     return null;
   }
