@@ -8,7 +8,7 @@
 // page just needs that attribute plus a module <script> to this file.
 //
 
-import { HELP_CONTENT } from "./help-content.js?v=7";
+import { HELP_CONTENT } from "./help-content.js?v=8";
 import { PROJECT_ID } from "./config.js?v=15";
 
 const STYLE_ID = "help-widget-styles";

@@ -9,7 +9,7 @@ import { createView, resolveTimeExtent } from "./scene.js?v=14";
 import { createDashboard, loadBuildCurves } from "./dashboard.js?v=2";
 import { createLayerControl } from "./layers.js?v=2";
 import { createLayerVisibility } from "./visibility.js?v=13";
-import { createCinematic } from "./cinematic.js?v=23";
+import { createCinematic } from "./cinematic.js?v=24";
 import { createAssistant } from "./assistant.js?v=24";
 import { createInteraction } from "./interaction.js?v=3";
 import { createSlice } from "./slice.js";
@@ -111,7 +111,11 @@ async function boot() {
   createLayerVisibility(scene);
 
   // --- Cinematic playback + interaction --------------------------------------
-  const cinematic = createCinematic(view, timeSlider, fullTimeExtent);
+  // The camera orbit suits the compact tower; the 1.5 km roadway keeps its
+  // authored view while the timeline plays.
+  const cinematic = createCinematic(view, timeSlider, fullTimeExtent, {
+    orbit: PROJECT.id !== "linear"
+  });
   createInteraction(view);
 
   // --- Slice tool (interactive cut-plane through the model) ------------------
@@ -157,7 +161,8 @@ async function boot() {
   // --- Custom navigation controls --------------------------------------------
   wireNavControls(view);
 
-  // Autoplay the cinematic sequence (timeline + camera orbit) on first visit.
+  // Autoplay the cinematic sequence (timeline, plus the tower's camera orbit)
+  // on first visit.
   cinematic.start();
 }
 

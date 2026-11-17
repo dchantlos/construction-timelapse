@@ -29,6 +29,7 @@ and feature flags — and every module reads the active one.
 | 4D dashboard | Trades staggered floor-by-floor | Each system's real build curve, read from its `Sched_StartDate` statistics |
 | Click an element | Trade, planned date and phase | The element's own name, dates, phase, chainage and work front |
 | Exploded view | Podium, mid-rise and top lifted apart (`BldgLevel`) | Foundations → piers → bearings → girders → deck → finishes (`Sched_Category`) |
+| Camera orbit | Play orbits the tower; **Spin** on the progress view | Off — the camera holds the authored view of the 1.5 km corridor |
 | Progress (4D) | Configured 60% target vs. late `CStatus` buckets | Planned / installed / overdue summed from `Prog_*` fields |
 | Financials (5D) + AIA report | Configured contract figures (USD) | Summed live from `Fin_*` fields (SGD), one G703 line per system |
 | IDS audit, IoT sensors, AI Site Analyst, Presentation Mode | ✓ | Not yet — hidden on this project |

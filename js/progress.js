@@ -72,8 +72,9 @@ async function boot() {
   // Custom navigation controls.
   wireNavControls(view);
 
-  // Bottom-center turntable orbit (no timeline on this view).
-  const spin = createSpin(view);
+  // Bottom-center turntable orbit (no timeline on this view) — the tower only;
+  // the roadway's 1.5 km corridor keeps its authored view.
+  const spin = PROJECT.id !== "linear" ? createSpin(view) : null;
 
   // Click a component to highlight it + show its real construction status.
   createProgressInteraction(view);
@@ -85,7 +86,7 @@ async function boot() {
   const explode = createExplode({
     scene,
     view,
-    playback: {
+    playback: spin && {
       isRunning: () => spin.isSpinning(),
       pause: () => spin.stop(),
       resume: () => spin.start()

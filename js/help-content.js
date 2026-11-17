@@ -180,7 +180,7 @@ export const HELP_CONTENT = {
       },
       {
         q: "Play & scrub the timeline",
-        a: "Use the bar along the bottom.<ul><li><strong>Play</strong> — watch the viaduct rise from piles to road markings while the camera gently orbits.</li><li><strong>Slider</strong> — drag to jump to any date; the date read-out follows you. Dragging pauses playback.</li></ul>"
+        a: "Use the bar along the bottom.<ul><li><strong>Play</strong> — watch the viaduct rise from piles to road markings; the camera stays where you put it, so pan or zoom to follow either work front.</li><li><strong>Slider</strong> — drag to jump to any date; the date read-out follows you. Dragging pauses playback.</li></ul>"
       },
       {
         q: "Construction Dashboard (left)",
@@ -243,8 +243,8 @@ export const HELP_CONTENT = {
         a: "Produces a formal <strong>AIA G702 / G703</strong> Application for Payment with one line per system, reconciled to the dashboard."
       },
       {
-        q: "Navigate & Spin",
-        a: "Zoom, reset, <strong>◫ Slice</strong> or <strong>⇕ Explode</strong> the viaduct on the right, flip on the <strong>Photorealistic 3D</strong> basemap after signing in, and press <strong>Spin</strong> at the bottom to orbit."
+        q: "Navigate the model",
+        a: "Zoom, reset, <strong>◫ Slice</strong> or <strong>⇕ Explode</strong> the viaduct on the right, and flip on the <strong>Photorealistic 3D</strong> basemap after signing in."
       },
       {
         q: "Vertical or linear?",

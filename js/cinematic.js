@@ -1,5 +1,5 @@
 // =============================================================================
-// cinematic.js — manual time scrubber + auto-play + slow camera orbit
+// cinematic.js — manual time scrubber + auto-play (+ optional camera orbit)
 // =============================================================================
 
 import TimeExtent from "@arcgis/core/time/TimeExtent.js";
@@ -57,7 +57,8 @@ function whenSceneIdle(view, { quietMs = 600, maxWaitMs = 10000 } = {}) {
  * Couples a manually interpolated time progression with a smooth camera orbit
  * so the building appears to assemble itself while the camera circles it, and
  * exposes a custom <input type="range"> scrubber that drives the same timeline.
- * Dragging the slider auto-pauses playback.
+ * Dragging the slider auto-pauses playback. Without the orbit (`orbit: false`)
+ * the timeline plays while the camera stays wherever the visitor put it.
  *
  * We drive `timeSlider.timeExtent` ourselves (instead of `timeSlider.play()`)
  * because cumulative-from-start playback can stall depending on the authored
@@ -66,8 +67,9 @@ function whenSceneIdle(view, { quietMs = 600, maxWaitMs = 10000 } = {}) {
  * @param {import("@arcgis/core/views/SceneView").default} view
  * @param {import("@arcgis/core/widgets/TimeSlider").default} timeSlider
  * @param {TimeExtent} fullTimeExtent
+ * @param {{ orbit?: boolean }} [options] orbit the camera while playing (default true)
  */
-export function createCinematic(view, timeSlider, fullTimeExtent) {
+export function createCinematic(view, timeSlider, fullTimeExtent, { orbit = true } = {}) {
   const btn = document.getElementById("cinematicBtn");
   const icon = document.getElementById("cineIcon");
   const label = document.getElementById("cineLabel");
@@ -129,12 +131,14 @@ export function createCinematic(view, timeSlider, fullTimeExtent) {
     applyMs(startMs + (elapsed / DURATION) * (endMs - startMs));
 
     // Gently orbit the camera around the building (heading only; tilt held).
-    heading = (heading + ORBIT_DEG_PER_SEC * (dt / 1000)) % 360;
-    view
-      .goTo({ target: orbitCenter, heading, tilt: ORBIT_TILT }, { animate: false })
-      .catch(() => {
-        /* goTo rejects when interrupted — safe to ignore */
-      });
+    if (orbit) {
+      heading = (heading + ORBIT_DEG_PER_SEC * (dt / 1000)) % 360;
+      view
+        .goTo({ target: orbitCenter, heading, tilt: ORBIT_TILT }, { animate: false })
+        .catch(() => {
+          /* goTo rejects when interrupted — safe to ignore */
+        });
+    }
 
     rafId = requestAnimationFrame(frame);
   }
@@ -153,11 +157,13 @@ export function createCinematic(view, timeSlider, fullTimeExtent) {
     // view.center while tiles are still loading puts the pivot in the wrong
     // place and throws the entire orbit way off. Wait for the view to settle,
     // then capture the true building center.
-    await whenSceneIdle(view);
-    if (!playing) return; // user paused during the load wait
+    if (orbit) {
+      await whenSceneIdle(view);
+      if (!playing) return; // user paused during the load wait
 
-    orbitCenter = view.center.clone();
-    heading = view.camera.heading;
+      orbitCenter = view.center.clone();
+      heading = view.camera.heading;
+    }
 
     // Restart from the beginning if we're already at the end.
     if (+timeSlider.timeExtent?.end >= endMs) elapsed = 0;
