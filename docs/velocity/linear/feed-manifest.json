@@ -15,6 +15,14 @@
   "scenarioStart": 1817247600000,
   "sourceStepMilliseconds": 60000,
   "stepsPerTrack": 1440,
+  "elevationSource": {
+    "controlsFile": "elevation-controls.json",
+    "sourceModel": "Marina Bay Elevated Roadway - ArcGIS.ifc",
+    "sourceSha256": "9009033e5869e7ae30fd7c4401a3b6ee1cacf8b73723d76a2814e4c787ad95e9",
+    "heightUnit": "metre",
+    "sceneHeightReference": "EGM96_height",
+    "verticalReferenceNote": "Uses the IFC map-converted heights already aligned numerically to the demonstration scene; not a surveyed EGM96 transformation."
+  },
   "httpSimulator": {
     "featuresPerExecution": 2,
     "intervalMilliseconds": 1000,
@@ -29,6 +37,8 @@
       "bytes": 390676,
       "sha256": "f48308f57d8ba18fbaf32cae5149634637ec885dd365a216ddd28309bcb9e9a6",
       "title": "Approach embankment settlement",
+      "zField": null,
+      "elevationMode": "on-the-ground",
       "rawUrl": "https://raw.githubusercontent.com/dchantlos/construction-timelapse/main/docs/velocity/linear/velocity_linear_settlement_feed.csv",
       "fields": [
         {
@@ -114,6 +124,8 @@
       "bytes": 331917,
       "sha256": "e3934d04c8aa38bc97a93fa6440c354b523cb12183e50962975d83498b3f48fb",
       "title": "Piezometer pore-water pressure",
+      "zField": null,
+      "elevationMode": "on-the-ground",
       "rawUrl": "https://raw.githubusercontent.com/dchantlos/construction-timelapse/main/docs/velocity/linear/velocity_linear_groundwater_feed.csv",
       "fields": [
         {
@@ -199,6 +211,8 @@
       "bytes": 399574,
       "sha256": "733ba96ca1dd69c728a7ee2372a63a00987456156487428d35acfe7185e0d6da",
       "title": "Construction vibration at receptors",
+      "zField": null,
+      "elevationMode": "on-the-ground",
       "rawUrl": "https://raw.githubusercontent.com/dchantlos/construction-timelapse/main/docs/velocity/linear/velocity_linear_vibration_feed.csv",
       "fields": [
         {
@@ -293,9 +307,11 @@
       "filename": "velocity_linear_concrete_feed.csv",
       "tracks": 2,
       "observations": 2880,
-      "bytes": 414321,
-      "sha256": "e6e31c2b5c440113366e93942a86602e9d011493a6ddec29466f8e4d39b9432d",
+      "bytes": 434493,
+      "sha256": "b325e0cf5903712c0002645f1ac3589a6a15c53196f87ec208b6b03bdbab4cfd",
       "title": "Deck concrete thermal monitoring",
+      "zField": "Elevation_m",
+      "elevationMode": "absolute-height",
       "rawUrl": "https://raw.githubusercontent.com/dchantlos/construction-timelapse/main/docs/velocity/linear/velocity_linear_concrete_feed.csv",
       "fields": [
         {
@@ -325,6 +341,10 @@
         {
           "name": "WorkFront",
           "type": "String"
+        },
+        {
+          "name": "Elevation_m",
+          "type": "Float64"
         },
         {
           "name": "CoreTemp_C",
@@ -389,6 +409,8 @@
       "bytes": 370229,
       "sha256": "2d386b95777f672f4218f6a0b303b0d253be26f376fd0aeacdd3bfa1c7309625",
       "title": "Temporary drainage and treatment outlets",
+      "zField": null,
+      "elevationMode": "on-the-ground",
       "rawUrl": "https://raw.githubusercontent.com/dchantlos/construction-timelapse/main/docs/velocity/linear/velocity_linear_runoff_feed.csv",
       "fields": [
         {
@@ -475,9 +497,11 @@
       "filename": "velocity_linear_paving_feed.csv",
       "tracks": 2,
       "observations": 2880,
-      "bytes": 359390,
-      "sha256": "97dcd3107a707c3e10f43cce8e4b48fe4c0cc91a2144aa925b6acb6d8da1950a",
+      "bytes": 379406,
+      "sha256": "890fa718825ec1ec831fb2d70ef1795ae191c09b3ca81f2cefb32d77ea0db9d5",
       "title": "Asphalt roller temperature and compaction passes",
+      "zField": "Elevation_m",
+      "elevationMode": "absolute-height",
       "rawUrl": "https://raw.githubusercontent.com/dchantlos/construction-timelapse/main/docs/velocity/linear/velocity_linear_paving_feed.csv",
       "fields": [
         {
@@ -507,6 +531,10 @@
         {
           "name": "WorkFront",
           "type": "String"
+        },
+        {
+          "name": "Elevation_m",
+          "type": "Float64"
         },
         {
           "name": "SurfaceTemp_C",
@@ -571,6 +599,8 @@
       "bytes": 352795,
       "sha256": "ce65d71800bfc55fbc194bde42dd6241868d1edeb76dce2cef7ff4212fdaa71d",
       "title": "Work-zone approach traffic",
+      "zField": null,
+      "elevationMode": "on-the-ground",
       "rawUrl": "https://raw.githubusercontent.com/dchantlos/construction-timelapse/main/docs/velocity/linear/velocity_linear_traffic_feed.csv",
       "fields": [
         {
