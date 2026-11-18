@@ -1,0 +1,653 @@
+{
+  "description": "Synthetic roadway construction data for ArcGIS Velocity HTTP Simulator. Not site measurements or engineering acceptance criteria.",
+  "spatialReference": 3857,
+  "coordinateFields": {
+    "x": "Longitude",
+    "y": "Latitude",
+    "units": "metres, NOT degrees"
+  },
+  "timestampField": "Timestamp",
+  "timestampUnit": "epoch milliseconds UTC",
+  "timestampIndex": 0,
+  "trackIdField": "TrackID",
+  "originalTimeField": "ScenarioTimestamp",
+  "scenarioTimeZone": "Asia/Singapore",
+  "scenarioStart": 1817247600000,
+  "sourceStepMilliseconds": 60000,
+  "stepsPerTrack": 1440,
+  "httpSimulator": {
+    "featuresPerExecution": 2,
+    "intervalMilliseconds": 1000,
+    "repeatSimulation": true,
+    "convertToCurrentTime": true
+  },
+  "feeds": [
+    {
+      "filename": "velocity_linear_settlement_feed.csv",
+      "tracks": 2,
+      "observations": 2880,
+      "bytes": 390676,
+      "sha256": "f48308f57d8ba18fbaf32cae5149634637ec885dd365a216ddd28309bcb9e9a6",
+      "title": "Approach embankment settlement",
+      "rawUrl": "https://raw.githubusercontent.com/dchantlos/construction-timelapse/main/docs/velocity/linear/velocity_linear_settlement_feed.csv",
+      "fields": [
+        {
+          "name": "Timestamp",
+          "type": "Int64"
+        },
+        {
+          "name": "SensorID",
+          "type": "String"
+        },
+        {
+          "name": "TrackID",
+          "type": "String"
+        },
+        {
+          "name": "Longitude",
+          "type": "Float64"
+        },
+        {
+          "name": "Latitude",
+          "type": "Float64"
+        },
+        {
+          "name": "Chainage_m",
+          "type": "Float64"
+        },
+        {
+          "name": "WorkFront",
+          "type": "String"
+        },
+        {
+          "name": "Settlement_mm",
+          "type": "Float64"
+        },
+        {
+          "name": "SettlementRate_mm_h",
+          "type": "Float64"
+        },
+        {
+          "name": "ReferenceID",
+          "type": "String"
+        },
+        {
+          "name": "MovementState",
+          "type": "String"
+        },
+        {
+          "name": "Quality",
+          "type": "String"
+        },
+        {
+          "name": "IsSimulated",
+          "type": "Int32"
+        },
+        {
+          "name": "ScenarioTimestamp",
+          "type": "Int64"
+        }
+      ],
+      "sensors": [
+        {
+          "SensorID": "LIN-SET-W01",
+          "TrackID": "MBE-LIN-SET-W01",
+          "WorkFront": "West",
+          "StartChainage_m": 112,
+          "Longitude": 11563094.25,
+          "Latitude": 143714.33
+        },
+        {
+          "SensorID": "LIN-SET-E01",
+          "TrackID": "MBE-LIN-SET-E01",
+          "WorkFront": "East",
+          "StartChainage_m": 1472,
+          "Longitude": 11564358.04,
+          "Latitude": 144101.13
+        }
+      ]
+    },
+    {
+      "filename": "velocity_linear_groundwater_feed.csv",
+      "tracks": 2,
+      "observations": 2880,
+      "bytes": 331917,
+      "sha256": "e3934d04c8aa38bc97a93fa6440c354b523cb12183e50962975d83498b3f48fb",
+      "title": "Piezometer pore-water pressure",
+      "rawUrl": "https://raw.githubusercontent.com/dchantlos/construction-timelapse/main/docs/velocity/linear/velocity_linear_groundwater_feed.csv",
+      "fields": [
+        {
+          "name": "Timestamp",
+          "type": "Int64"
+        },
+        {
+          "name": "SensorID",
+          "type": "String"
+        },
+        {
+          "name": "TrackID",
+          "type": "String"
+        },
+        {
+          "name": "Longitude",
+          "type": "Float64"
+        },
+        {
+          "name": "Latitude",
+          "type": "Float64"
+        },
+        {
+          "name": "Chainage_m",
+          "type": "Float64"
+        },
+        {
+          "name": "WorkFront",
+          "type": "String"
+        },
+        {
+          "name": "PorePressure_kPa",
+          "type": "Float64"
+        },
+        {
+          "name": "PressureChange_kPa",
+          "type": "Float64"
+        },
+        {
+          "name": "TipDepth_m",
+          "type": "Float64"
+        },
+        {
+          "name": "PressureTrend",
+          "type": "String"
+        },
+        {
+          "name": "Quality",
+          "type": "String"
+        },
+        {
+          "name": "IsSimulated",
+          "type": "Int32"
+        },
+        {
+          "name": "ScenarioTimestamp",
+          "type": "Int64"
+        }
+      ],
+      "sensors": [
+        {
+          "SensorID": "LIN-PIE-W01",
+          "TrackID": "MBE-LIN-PIE-W01",
+          "WorkFront": "West",
+          "StartChainage_m": 128,
+          "Longitude": 11563108.26,
+          "Latitude": 143722.63
+        },
+        {
+          "SensorID": "LIN-PIE-E01",
+          "TrackID": "MBE-LIN-PIE-E01",
+          "WorkFront": "East",
+          "StartChainage_m": 1376,
+          "Longitude": 11564261.97,
+          "Latitude": 144106.26
+        }
+      ]
+    },
+    {
+      "filename": "velocity_linear_vibration_feed.csv",
+      "tracks": 2,
+      "observations": 2880,
+      "bytes": 399574,
+      "sha256": "733ba96ca1dd69c728a7ee2372a63a00987456156487428d35acfe7185e0d6da",
+      "title": "Construction vibration at receptors",
+      "rawUrl": "https://raw.githubusercontent.com/dchantlos/construction-timelapse/main/docs/velocity/linear/velocity_linear_vibration_feed.csv",
+      "fields": [
+        {
+          "name": "Timestamp",
+          "type": "Int64"
+        },
+        {
+          "name": "SensorID",
+          "type": "String"
+        },
+        {
+          "name": "TrackID",
+          "type": "String"
+        },
+        {
+          "name": "Longitude",
+          "type": "Float64"
+        },
+        {
+          "name": "Latitude",
+          "type": "Float64"
+        },
+        {
+          "name": "Chainage_m",
+          "type": "Float64"
+        },
+        {
+          "name": "WorkFront",
+          "type": "String"
+        },
+        {
+          "name": "PPV_X_mm_s",
+          "type": "Float64"
+        },
+        {
+          "name": "PPV_Y_mm_s",
+          "type": "Float64"
+        },
+        {
+          "name": "PPV_Z_mm_s",
+          "type": "Float64"
+        },
+        {
+          "name": "PPV_Max_mm_s",
+          "type": "Float64"
+        },
+        {
+          "name": "DominantFrequency_Hz",
+          "type": "Float64"
+        },
+        {
+          "name": "Window_s",
+          "type": "Int32"
+        },
+        {
+          "name": "WorkActivity",
+          "type": "String"
+        },
+        {
+          "name": "Quality",
+          "type": "String"
+        },
+        {
+          "name": "IsSimulated",
+          "type": "Int32"
+        },
+        {
+          "name": "ScenarioTimestamp",
+          "type": "Int64"
+        }
+      ],
+      "sensors": [
+        {
+          "SensorID": "LIN-VIB-W01",
+          "TrackID": "MBE-LIN-VIB-W01",
+          "WorkFront": "West",
+          "StartChainage_m": 704,
+          "Longitude": 11563599.51,
+          "Latitude": 143990.8
+        },
+        {
+          "SensorID": "LIN-VIB-E01",
+          "TrackID": "MBE-LIN-VIB-E01",
+          "WorkFront": "East",
+          "StartChainage_m": 1024,
+          "Longitude": 11563906.72,
+          "Latitude": 144091.36
+        }
+      ]
+    },
+    {
+      "filename": "velocity_linear_concrete_feed.csv",
+      "tracks": 2,
+      "observations": 2880,
+      "bytes": 414321,
+      "sha256": "e6e31c2b5c440113366e93942a86602e9d011493a6ddec29466f8e4d39b9432d",
+      "title": "Deck concrete thermal monitoring",
+      "rawUrl": "https://raw.githubusercontent.com/dchantlos/construction-timelapse/main/docs/velocity/linear/velocity_linear_concrete_feed.csv",
+      "fields": [
+        {
+          "name": "Timestamp",
+          "type": "Int64"
+        },
+        {
+          "name": "SensorID",
+          "type": "String"
+        },
+        {
+          "name": "TrackID",
+          "type": "String"
+        },
+        {
+          "name": "Longitude",
+          "type": "Float64"
+        },
+        {
+          "name": "Latitude",
+          "type": "Float64"
+        },
+        {
+          "name": "Chainage_m",
+          "type": "Float64"
+        },
+        {
+          "name": "WorkFront",
+          "type": "String"
+        },
+        {
+          "name": "CoreTemp_C",
+          "type": "Float64"
+        },
+        {
+          "name": "SurfaceTemp_C",
+          "type": "Float64"
+        },
+        {
+          "name": "TempDifference_C",
+          "type": "Float64"
+        },
+        {
+          "name": "AgeHours",
+          "type": "Float64"
+        },
+        {
+          "name": "PourID",
+          "type": "String"
+        },
+        {
+          "name": "CuringPhase",
+          "type": "String"
+        },
+        {
+          "name": "Quality",
+          "type": "String"
+        },
+        {
+          "name": "IsSimulated",
+          "type": "Int32"
+        },
+        {
+          "name": "ScenarioTimestamp",
+          "type": "Int64"
+        }
+      ],
+      "sensors": [
+        {
+          "SensorID": "LIN-CURE-W01",
+          "TrackID": "MBE-LIN-CURE-W01",
+          "WorkFront": "West",
+          "StartChainage_m": 432,
+          "Longitude": 11563406.36,
+          "Latitude": 143794.8
+        },
+        {
+          "SensorID": "LIN-CURE-E01",
+          "TrackID": "MBE-LIN-CURE-E01",
+          "WorkFront": "East",
+          "StartChainage_m": 1040,
+          "Longitude": 11563923.33,
+          "Latitude": 144070.71
+        }
+      ]
+    },
+    {
+      "filename": "velocity_linear_runoff_feed.csv",
+      "tracks": 2,
+      "observations": 2880,
+      "bytes": 370229,
+      "sha256": "2d386b95777f672f4218f6a0b303b0d253be26f376fd0aeacdd3bfa1c7309625",
+      "title": "Temporary drainage and treatment outlets",
+      "rawUrl": "https://raw.githubusercontent.com/dchantlos/construction-timelapse/main/docs/velocity/linear/velocity_linear_runoff_feed.csv",
+      "fields": [
+        {
+          "name": "Timestamp",
+          "type": "Int64"
+        },
+        {
+          "name": "SensorID",
+          "type": "String"
+        },
+        {
+          "name": "TrackID",
+          "type": "String"
+        },
+        {
+          "name": "Longitude",
+          "type": "Float64"
+        },
+        {
+          "name": "Latitude",
+          "type": "Float64"
+        },
+        {
+          "name": "Chainage_m",
+          "type": "Float64"
+        },
+        {
+          "name": "WorkFront",
+          "type": "String"
+        },
+        {
+          "name": "Turbidity_NTU",
+          "type": "Float64"
+        },
+        {
+          "name": "pH",
+          "type": "Float64"
+        },
+        {
+          "name": "WaterDepth_m",
+          "type": "Float64"
+        },
+        {
+          "name": "Flow_L_s",
+          "type": "Float64"
+        },
+        {
+          "name": "RunoffState",
+          "type": "String"
+        },
+        {
+          "name": "Quality",
+          "type": "String"
+        },
+        {
+          "name": "IsSimulated",
+          "type": "Int32"
+        },
+        {
+          "name": "ScenarioTimestamp",
+          "type": "Int64"
+        }
+      ],
+      "sensors": [
+        {
+          "SensorID": "LIN-WATER-W01",
+          "TrackID": "MBE-LIN-WATER-W01",
+          "WorkFront": "West",
+          "StartChainage_m": 256,
+          "Longitude": 11563222.74,
+          "Latitude": 143782.4
+        },
+        {
+          "SensorID": "LIN-WATER-E01",
+          "TrackID": "MBE-LIN-WATER-E01",
+          "WorkFront": "East",
+          "StartChainage_m": 1408,
+          "Longitude": 11564294.16,
+          "Latitude": 144099.18
+        }
+      ]
+    },
+    {
+      "filename": "velocity_linear_paving_feed.csv",
+      "tracks": 2,
+      "observations": 2880,
+      "bytes": 359390,
+      "sha256": "97dcd3107a707c3e10f43cce8e4b48fe4c0cc91a2144aa925b6acb6d8da1950a",
+      "title": "Asphalt roller temperature and compaction passes",
+      "rawUrl": "https://raw.githubusercontent.com/dchantlos/construction-timelapse/main/docs/velocity/linear/velocity_linear_paving_feed.csv",
+      "fields": [
+        {
+          "name": "Timestamp",
+          "type": "Int64"
+        },
+        {
+          "name": "SensorID",
+          "type": "String"
+        },
+        {
+          "name": "TrackID",
+          "type": "String"
+        },
+        {
+          "name": "Longitude",
+          "type": "Float64"
+        },
+        {
+          "name": "Latitude",
+          "type": "Float64"
+        },
+        {
+          "name": "Chainage_m",
+          "type": "Float64"
+        },
+        {
+          "name": "WorkFront",
+          "type": "String"
+        },
+        {
+          "name": "SurfaceTemp_C",
+          "type": "Float64"
+        },
+        {
+          "name": "RollerSpeed_kmh",
+          "type": "Float64"
+        },
+        {
+          "name": "PassCount",
+          "type": "Int32"
+        },
+        {
+          "name": "RollerCMV",
+          "type": "Float64"
+        },
+        {
+          "name": "CompactionValid",
+          "type": "Int32"
+        },
+        {
+          "name": "OperatingState",
+          "type": "String"
+        },
+        {
+          "name": "Quality",
+          "type": "String"
+        },
+        {
+          "name": "IsSimulated",
+          "type": "Int32"
+        },
+        {
+          "name": "ScenarioTimestamp",
+          "type": "Int64"
+        }
+      ],
+      "sensors": [
+        {
+          "SensorID": "LIN-ROLLER-W01",
+          "TrackID": "MBE-LIN-ROLLER-W01",
+          "WorkFront": "West",
+          "StartChainage_m": 192,
+          "Longitude": 11563177.89,
+          "Latitude": 143717.94
+        },
+        {
+          "SensorID": "LIN-ROLLER-E01",
+          "TrackID": "MBE-LIN-ROLLER-E01",
+          "WorkFront": "East",
+          "StartChainage_m": 1120,
+          "Longitude": 11564003.28,
+          "Latitude": 144070.14
+        }
+      ]
+    },
+    {
+      "filename": "velocity_linear_traffic_feed.csv",
+      "tracks": 2,
+      "observations": 2880,
+      "bytes": 352795,
+      "sha256": "ce65d71800bfc55fbc194bde42dd6241868d1edeb76dce2cef7ff4212fdaa71d",
+      "title": "Work-zone approach traffic",
+      "rawUrl": "https://raw.githubusercontent.com/dchantlos/construction-timelapse/main/docs/velocity/linear/velocity_linear_traffic_feed.csv",
+      "fields": [
+        {
+          "name": "Timestamp",
+          "type": "Int64"
+        },
+        {
+          "name": "SensorID",
+          "type": "String"
+        },
+        {
+          "name": "TrackID",
+          "type": "String"
+        },
+        {
+          "name": "Longitude",
+          "type": "Float64"
+        },
+        {
+          "name": "Latitude",
+          "type": "Float64"
+        },
+        {
+          "name": "Chainage_m",
+          "type": "Float64"
+        },
+        {
+          "name": "WorkFront",
+          "type": "String"
+        },
+        {
+          "name": "MeanSpeed_kmh",
+          "type": "Float64"
+        },
+        {
+          "name": "QueueLength_m",
+          "type": "Float64"
+        },
+        {
+          "name": "VehicleCount_1min",
+          "type": "Int32"
+        },
+        {
+          "name": "TrafficState",
+          "type": "String"
+        },
+        {
+          "name": "Quality",
+          "type": "String"
+        },
+        {
+          "name": "IsSimulated",
+          "type": "Int32"
+        },
+        {
+          "name": "ScenarioTimestamp",
+          "type": "Int64"
+        }
+      ],
+      "sensors": [
+        {
+          "SensorID": "LIN-TRAFFIC-W01",
+          "TrackID": "MBE-LIN-TRAFFIC-W01",
+          "WorkFront": "West",
+          "StartChainage_m": 64,
+          "Longitude": 11563064.43,
+          "Latitude": 143655.33
+        },
+        {
+          "SensorID": "LIN-TRAFFIC-E01",
+          "TrackID": "MBE-LIN-TRAFFIC-E01",
+          "WorkFront": "East",
+          "StartChainage_m": 1456,
+          "Longitude": 11564343.16,
+          "Latitude": 144064.41
+        }
+      ]
+    }
+  ]
+}
