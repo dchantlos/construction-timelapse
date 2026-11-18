@@ -24,7 +24,7 @@ Weather and regional air quality are intentionally not simulated in these files.
 
 In Velocity, create a new feed, choose **HTTP Simulator**, and use the raw URL for one CSV.
 
-| Setting | Value for every CSV in this folder |
+| Setting | Value |
 | --- | --- |
 | URL or file path | The full raw CSV URL from the table above |
 | Authentication | None for these public GitHub files |
@@ -36,11 +36,16 @@ In Velocity, create a new feed, choose **HTTP Simulator**, and use the raw URL f
 | Time field index | **0**: `Timestamp` is the first column |
 | Convert to current time | **Enabled** |
 | Start-time field | `Timestamp`, numeric epoch milliseconds |
+| Date format | **Epoch milliseconds**, not Epoch seconds or Other (string) |
+| End-time field | None / leave unset |
 | Track ID field | `TrackID`, String |
+| Location type | **X/Y fields**, producing point geometry |
 | X field | `Longitude` |
 | Y field | `Latitude` |
 | Spatial reference | **Web Mercator, EPSG:3857 / WKID:102100** |
-| Z field | None |
+| Z field | **`Elevation_m` for paving and concrete**; none for the other five feeds |
+| Z units | **Metres** for the two Z-enabled feeds |
+| M (measure) field | **None / leave unset for all seven feeds** |
 
 **The names `Longitude` and `Latitude` follow the existing vertical CSVs, but their values are Web Mercator metres, NOT geographic degrees. Do not select EPSG:4326.** Coordinates are approximately X 11.56 million and Y 144 thousand. Using degrees would place the data incorrectly or reject the features.
 
@@ -49,6 +54,48 @@ The source data describes 24 hours at one-minute cadence, starting at 07:00 Sing
 `Timestamp` is rewritten to current time by the simulator. `ScenarioTimestamp` preserves the original sequence time and should remain a normal numeric attribute, not the start-time field. Repeating the file restarts the construction scenario, including concrete age and settlement baseline movement; it is not a continuous engineering history.
 
 On the schema screen, check numeric fields have not been imported as text. [feed-manifest.json](feed-manifest.json) lists every field and its type for each feed. It is a reference, not an automatic Velocity deployment template.
+
+## Z and M Checklist
+
+| Feed | Does the data have Z? | Z (altitude) field | Z units | Does the data have M? |
+| --- | --- | --- | --- | --- |
+| Paving | Yes | `Elevation_m` | Metres | No |
+| Concrete | Yes | `Elevation_m` | Metres | No |
+| Settlement | No | None | Not applicable | No |
+| Groundwater | No | None | Not applicable | No |
+| Vibration | No | None | Not applicable | No |
+| Runoff | No | None | Not applicable | No |
+| Traffic | No | None | Not applicable | No |
+
+**Lowercase `_m` in a field name means metres; it does not mean geometry M.** `Elevation_m` provides Z altitude. `Chainage_m` remains an ordinary distance-along-road attribute in every feed. These feeds are positioned using X/Y (and optionally Z), not a calibrated linear-referencing route. Leave the M (measure) selector and any route/measure mappings unset for this setup.
+
+## Confirm Schema
+
+Select **Delimited**, delimiter **comma**, and **Has header row = Yes**. Click **Derive schema** before correcting the field types; deriving again can reset manual choices. Keep the supplied column names.
+
+| Fields | Type to confirm |
+| --- | --- |
+| `Timestamp`, `ScenarioTimestamp` | Int64 |
+| `SensorID`, `TrackID`, `WorkFront`, `Quality`, state/category fields, `ReferenceID`, `PourID` when present | String |
+| `Longitude`, `Latitude`, `Chainage_m`, `Elevation_m` when present | Float64 |
+| `IsSimulated`, `Window_s`, `PassCount`, `CompactionValid`, `VehicleCount_1min` when present | Int32 |
+| Other sensor measurement fields | Float64 |
+
+In **Identify key fields**, set Location to **X/Y fields**, set X/Y and WKID as above, and use the Z/M checklist. Under **Date and time**, choose **Epoch milliseconds**, start time **Timestamp**, and no end time. Under **Tracking**, select **TrackID**. Keep `ScenarioTimestamp` as an attribute, not the time used for replay. No separate HTTP polling schedule is needed: the simulator's sending interval controls the replay.
+
+Give each feed a distinct name, such as `MBE_Linear_Paving_Sim` or `MBE_Linear_Concrete_Sim`. Save, start, and inspect the received data before using it in an analytic.
+
+## Elevation on the Roadway
+
+The **paving** and **concrete** CSVs include `Elevation_m` (Float64). Use this field for geometry Z when configuring the feed, retain Z through the analytic/output, and display its scene layer using **absolute height**, not on-the-ground or relative-to-ground. Keep the layer's additional elevation offset at zero: the supplied values already contain the intended position.
+
+- **Paving rollers:** the asphalt surface was sampled from the source IFC at every distinct roller X/Y. The field includes an assumed **2 m antenna mounting height** above that surface. Heights vary along the ramps: approximately 17.881-25.788 m on the West track and 16.298-24.386 m on the East track.
+- **Concrete probes:** the positions are at mid-depth inside the intersected deck slabs: **25.235 m West** and **25.042 m East**. Core and surface temperature measurements share the core probe's map location. Use a symbol callout or a slice to inspect an embedded probe rather than changing its data elevation just to make it visible.
+- **Other feeds:** the existing ground/receptor stations remain X/Y-only. Display them on the terrain; do not assign the roadway's deck height to groundwater, runoff, or off-road monitoring locations. `TipDepth_m` is still an attribute describing a buried piezometer, not geometry Z.
+
+The published progress scene uses Web Mercator with **EGM96 metre heights**. These Z values use the IFC's existing map-converted heights, already aligned numerically to that demonstration scene. They are model-derived demo coordinates, not survey-certified elevations or a newly performed vertical-datum transformation.
+
+The raw URLs have not changed. **If you created the paving or concrete feed using the earlier X/Y-only CSV, re-sample/reconfigure its schema to include `Elevation_m` and set geometry Z.** Recreate the feed/output if its saved geometry schema cannot be updated. Merely restarting an old two-dimensional feed will not add Z. Check that received geometry includes `z`, not just an elevation attribute, before connecting a stream service to the website.
 
 ## Shared Fields
 
@@ -74,6 +121,7 @@ The locations follow the conceptual roadway alignment. Fixed geotechnical points
 4. Watch for changes: traffic queues grow and speeds fall; runoff responds to a rainfall episode; concrete warms then cools; rollers move along short sections and pause during a modeled weather hold.
 5. Retain `IsSimulated` and confirm numeric units. Do not sum different measurements into one value.
 6. Set sharing to the intended audience. A public source CSV does not make your Velocity service public automatically.
+7. For paving/concrete, confirm the stream geometry retains Z and the scene displays it at absolute height. Check the rollers at both ends of their ramp tracks, not just at one position.
 
 The feed can be consumed as a stream layer. Add a real-time analytic and a **Stream Layer output** when you need processing before display, and a feature-layer output if you need a stored observation history. Configure outputs according to your organization's Velocity subscription and retention requirements.
 
@@ -100,7 +148,9 @@ node --test docs/velocity/linear/feeds.test.mjs
 node docs/velocity/linear/generate_feeds.mjs
 ```
 
-It is deterministic: the same source generates the same CSV bytes. It preserves identical existing files and refuses to overwrite a changed dataset. The manifest records SHA-256 hashes, schema, source cadence, and sensor IDs. Review any future change to a generated file before replacing it.
+It is deterministic: the same source generates the same CSV bytes. It preserves identical existing files and refuses to overwrite a changed dataset by default. For an intentional source/schema update, use `node docs/velocity/linear/generate_feeds.mjs --update`; this first checks each changed CSV against its previous manifest hash and refuses to replace an externally edited file. The manifest records SHA-256 hashes, schema, source cadence, sensor IDs, and each feed's Z field/elevation mode.
+
+[elevation-controls.json](elevation-controls.json) records the 12 checked model surface intersections, source IFC identifiers, mounting offsets, and model SHA-256. [extract_elevations.py](extract_elevations.py) creates those controls using IfcOpenShell, NumPy, and pyproj: it reads unique feed positions as a JSON array from standard input and accepts `--model` and `--output` paths. It does not modify the IFC. CSV generation on GitHub uses the checked controls and needs no IFC or Python installation. Changing a roller path or probe X/Y requires re-sampling; unknown positions are rejected rather than given a guessed elevation.
 
 The data-only GitHub workflow tests the generator and publishes only this folder's CSVs and manifest. It does not publish local website edits, change the vertical feeds, or create Velocity services.
 
