@@ -7,6 +7,7 @@ on:
     paths:
       - docs/velocity/linear/generate_feeds.mjs
       - docs/velocity/linear/feeds.test.mjs
+      - docs/velocity/linear/elevation-controls.json
       - .github/workflows/linear-velocity-feeds.yml
 
 permissions:
@@ -30,7 +31,7 @@ jobs:
       - name: Validate feed data
         run: node --test docs/velocity/linear/feeds.test.mjs
       - name: Generate CSVs and schema manifest
-        run: node docs/velocity/linear/generate_feeds.mjs
+        run: node docs/velocity/linear/generate_feeds.mjs --update
       - name: Publish generated data only
         shell: bash
         run: |

@@ -1,7 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { FEEDS, START_MS, STEP_MS, STEPS, COMMON_FIELDS, TRAILING_FIELDS, buildFeed, toCsv, projectPoint } from "./generate_feeds.mjs";
+import { readFileSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { createHash } from "node:crypto";
+import { FEEDS, START_MS, STEP_MS, STEPS, COMMON_FIELDS, TRAILING_FIELDS, ELEVATION_CONTROLS,
+  buildFeed, toCsv, projectPoint, elevationAt, generateFiles } from "./generate_feeds.mjs";
 
 test("preserves the proven vertical feed's first five fields and Web Mercator units", () => {
   const vertical = readFileSync(new URL("../velocity_noise_feed.csv", import.meta.url), "utf8").split("\n")[0];
@@ -117,4 +121,55 @@ test("water observations preserve units and plausible bounded example values", (
     assert.ok(!("TSS_mg_L" in row));
   }
   for (const row of buildFeed(FEEDS.find(feed => feed.name === "groundwater")).rows) assert.ok(row.PorePressure_kPa > 0 && row.TipDepth_m > 0);
+});
+
+test("deck feeds carry checked IFC-derived Z, with changing roller elevations and probes inside slabs", () => {
+  assert.equal(ELEVATION_CONTROLS.samples.length, 12);
+  assert.match(ELEVATION_CONTROLS.sourceSha256, /^[a-f0-9]{64}$/);
+  for (const feed of FEEDS) {
+    const built = buildFeed(feed);
+    const elevated = ["concrete", "paving"].includes(feed.name);
+    assert.equal(built.fields.includes("Elevation_m"), elevated);
+    if (!elevated) continue;
+    const levels = new Map();
+    for (const row of built.rows) {
+      const sample = ELEVATION_CONTROLS.samples.find(candidate => candidate.SensorID === row.SensorID &&
+        candidate.Longitude === row.Longitude && candidate.Latitude === row.Latitude);
+      assert.ok(sample, `${row.SensorID}: no sampled IFC surface`);
+      assert.equal(row.Elevation_m, sample.Elevation_m);
+      assert.ok(row.Elevation_m > 0 && row.Elevation_m < 40);
+      if (feed.name === "paving") {
+        assert.equal(sample.IfcType, "IfcCourse");
+        assert.ok(Math.abs(row.Elevation_m - sample.SurfaceTop_m - 2) < 0.001);
+      } else {
+        assert.equal(sample.IfcType, "IfcSlab");
+        assert.ok(row.Elevation_m > sample.SurfaceBottom_m && row.Elevation_m < sample.SurfaceTop_m);
+      }
+      if (!levels.has(row.SensorID)) levels.set(row.SensorID, new Set());
+      levels.get(row.SensorID).add(row.Elevation_m);
+    }
+    assert.ok([...levels.values()].every(values => feed.name === "paving" ? values.size === 5 : values.size === 1));
+  }
+  assert.throws(() => elevationAt("paving", "LIN-ROLLER-W01", 0, 0), /No verified IFC elevation/);
+});
+
+test("intentional regeneration checks the previous manifest before replacing any CSV", context => {
+  const outputDirectory = mkdtempSync(join(tmpdir(), "roadway-elevation-test-"));
+  context.after(() => rmSync(outputDirectory, { recursive: true, force: true }));
+  generateFiles({ outputDirectory });
+  const csvPath = join(outputDirectory, "velocity_linear_paving_feed.csv");
+  const manifestPath = join(outputDirectory, "feed-manifest.json");
+  const original = readFileSync(csvPath, "utf8");
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+  assert.equal(manifest.feeds.find(feed => feed.filename.includes("paving")).zField, "Elevation_m");
+  assert.equal(manifest.feeds.find(feed => feed.filename.includes("traffic")).zField, null);
+  const previousVersion = original.replace(",Elevation_m,", ",PreviousElevation_m,");
+  writeFileSync(csvPath, previousVersion);
+  manifest.feeds.find(feed => feed.filename.includes("paving")).sha256 = createHash("sha256").update(previousVersion).digest("hex");
+  writeFileSync(manifestPath, JSON.stringify(manifest));
+  assert.throws(() => generateFiles({ outputDirectory }), /Refusing to overwrite/);
+  generateFiles({ outputDirectory, update: true });
+  assert.equal(readFileSync(csvPath, "utf8"), original);
+  writeFileSync(csvPath, original + "unexpected edit\n");
+  assert.throws(() => generateFiles({ outputDirectory, update: true }), /fails its saved hash/);
 });

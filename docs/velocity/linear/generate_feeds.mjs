@@ -9,11 +9,22 @@ export const STEPS = 1440;
 export const COMMON_FIELDS = ["Timestamp", "SensorID", "TrackID", "Longitude", "Latitude", "Chainage_m", "WorkFront"];
 export const TRAILING_FIELDS = ["Quality", "IsSimulated", "ScenarioTimestamp"];
 const directory = dirname(fileURLToPath(import.meta.url));
+export const ELEVATION_CONTROLS = JSON.parse(readFileSync(join(directory, "elevation-controls.json"), "utf8"));
+const elevationKey = (feed, sensorId, longitude, latitude) => [feed, sensorId, longitude.toFixed(2), latitude.toFixed(2)].join("|");
+const elevationSamples = new Map(ELEVATION_CONTROLS.samples.map(sample => [
+  elevationKey(sample.feed, sample.SensorID, sample.Longitude, sample.Latitude), sample.Elevation_m
+]));
 const round = (value, places = 2) => {
   const rounded = Number(value.toFixed(places));
   return Object.is(rounded, -0) ? 0 : rounded;
 };
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
+
+export function elevationAt(feed, sensorId, longitude, latitude) {
+  const elevation = elevationSamples.get(elevationKey(feed, sensorId, longitude, latitude));
+  if (!Number.isFinite(elevation)) throw new Error(`No verified IFC elevation for ${sensorId} at ${longitude}, ${latitude}`);
+  return elevation;
+}
 
 export function projectPoint(longitude, latitude) {
   const radians = Math.PI / 180;
@@ -87,7 +98,7 @@ export const FEEDS = [
   },
   {
     name: "concrete", title: "Deck concrete thermal monitoring", fieldTypes: {
-      CoreTemp_C: "Float64", SurfaceTemp_C: "Float64", TempDifference_C: "Float64", AgeHours: "Float64",
+      Elevation_m: "Float64", CoreTemp_C: "Float64", SurfaceTemp_C: "Float64", TempDifference_C: "Float64", AgeHours: "Float64",
       PourID: "String", CuringPhase: "String"
     },
     sensors: [station("LIN-CURE-W01", 103.87584669, 1.29162121, 432, "West"), station("LIN-CURE-E01", 103.88049071, 1.2940992, 1040, "East")],
@@ -95,7 +106,8 @@ export const FEEDS = [
       const age = 4 + index * 3 + tick / 60;
       const core = round(30 + 33 * pulse(age, 14, 7));
       const surface = round(30 + 12 * pulse(age, 14, 8));
-      return { CoreTemp_C: core, SurfaceTemp_C: surface, TempDifference_C: round(Math.abs(core - surface)),
+      return { Elevation_m: elevationAt("concrete", sensor.id, sensor.x, sensor.y),
+        CoreTemp_C: core, SurfaceTemp_C: surface, TempDifference_C: round(Math.abs(core - surface)),
         AgeHours: round(age), PourID: `MBE-${sensor.front.toUpperCase()}-POUR-01`, CuringPhase: age < 14 ? "Warming" : "Cooling" };
     }
   },
@@ -114,7 +126,7 @@ export const FEEDS = [
   },
   {
     name: "paving", title: "Asphalt roller temperature and compaction passes", fieldTypes: {
-      SurfaceTemp_C: "Float64", RollerSpeed_kmh: "Float64", PassCount: "Int32", RollerCMV: "Float64",
+      Elevation_m: "Float64", SurfaceTemp_C: "Float64", RollerSpeed_kmh: "Float64", PassCount: "Int32", RollerCMV: "Float64",
       CompactionValid: "Int32", OperatingState: "String"
     },
     sensors: [
@@ -127,10 +139,13 @@ export const FEEDS = [
       const phase = (tick + index * 4) % 8;
       const distance = working ? phase <= 4 ? phase / 4 : (8 - phase) / 4 : 0;
       const pass = working ? Math.floor((tick + index * 4) / 4) % 8 + 1 : 0;
+      const longitude = round(sensor.start[0] + (sensor.end[0] - sensor.start[0]) * distance);
+      const latitude = round(sensor.start[1] + (sensor.end[1] - sensor.start[1]) * distance);
       return {
-        Longitude: round(sensor.start[0] + (sensor.end[0] - sensor.start[0]) * distance),
-        Latitude: round(sensor.start[1] + (sensor.end[1] - sensor.start[1]) * distance),
+        Longitude: longitude,
+        Latitude: latitude,
         Chainage_m: round(sensor.chainage + 176 * distance),
+        Elevation_m: elevationAt("paving", sensor.id, longitude, latitude),
         SurfaceTemp_C: round(working ? 150 - pass * 3 + Math.sin(tick / 12) : 30 + 3 * pulse(hour, 15, 3)),
         RollerSpeed_kmh: working ? round(Math.hypot(sensor.end[0] - sensor.start[0], sensor.end[1] - sensor.start[1]) / 4 * 0.06) : 0,
         PassCount: pass, RollerCMV: working ? round(18 + pass * 3 + Math.sin(tick / 10)) : 0,
@@ -182,15 +197,13 @@ export function toCsv(fields, rows) {
   return [fields.join(","), ...rows.map(row => fields.map(field => cell(row[field])).join(","))].join("\n") + "\n";
 }
 
-export function generateFiles() {
+export function generateFiles({ update = false, outputDirectory = directory } = {}) {
+  const artifacts = [];
   const records = FEEDS.map(feed => {
     const { fields, rows } = buildFeed(feed);
     const content = toCsv(fields, rows);
     const filename = `velocity_linear_${feed.name}_feed.csv`;
-    const destination = join(directory, filename);
-    if (existsSync(destination)) {
-      if (readFileSync(destination, "utf8") !== content) throw new Error(`Refusing to overwrite changed dataset: ${filename}`);
-    } else writeFileSync(destination, content, { flag: "wx" });
+    artifacts.push({ filename, content });
     return { filename, tracks: feed.sensors.length, observations: rows.length, bytes: Buffer.byteLength(content),
       sha256: createHash("sha256").update(content).digest("hex") };
   });
@@ -202,22 +215,39 @@ export function generateFiles() {
     timestampField: "Timestamp", timestampUnit: "epoch milliseconds UTC", timestampIndex: 0, trackIdField: "TrackID",
     originalTimeField: "ScenarioTimestamp", scenarioTimeZone: "Asia/Singapore", scenarioStart: START_MS,
     sourceStepMilliseconds: STEP_MS, stepsPerTrack: STEPS,
+    elevationSource: { controlsFile: "elevation-controls.json", sourceModel: ELEVATION_CONTROLS.sourceModel,
+      sourceSha256: ELEVATION_CONTROLS.sourceSha256, heightUnit: "metre", sceneHeightReference: ELEVATION_CONTROLS.sceneHeightReference,
+      verticalReferenceNote: ELEVATION_CONTROLS.verticalReferenceNote },
     httpSimulator: { featuresPerExecution: 2, intervalMilliseconds: 1000, repeatSimulation: true, convertToCurrentTime: true },
     feeds: FEEDS.map((feed, index) => ({ ...records[index], title: feed.title,
+      zField: feed.fieldTypes.Elevation_m ? "Elevation_m" : null,
+      elevationMode: feed.fieldTypes.Elevation_m ? "absolute-height" : "on-the-ground",
       rawUrl: `https://raw.githubusercontent.com/dchantlos/construction-timelapse/main/docs/velocity/linear/${records[index].filename}`,
       fields: buildFeed(feed).fields.map(name => ({ name, type: feed.fieldTypes[name] ?? fieldTypes[name] })),
       sensors: feed.sensors.map(sensor => ({ SensorID: sensor.id, TrackID: sensor.track, WorkFront: sensor.front,
         StartChainage_m: sensor.chainage, Longitude: sensor.start?.[0] ?? sensor.x, Latitude: sensor.start?.[1] ?? sensor.y }))
     }))
   };
-  const manifestPath = join(directory, "feed-manifest.json");
-  const content = JSON.stringify(manifest, null, 2) + "\n";
-  if (existsSync(manifestPath)) {
-    if (readFileSync(manifestPath, "utf8") !== content) throw new Error("Refusing to overwrite a changed feed manifest");
-  } else writeFileSync(manifestPath, content, { flag: "wx" });
+  const manifestPath = join(outputDirectory, "feed-manifest.json");
+  const previousManifest = existsSync(manifestPath) ? JSON.parse(readFileSync(manifestPath, "utf8")) : null;
+  artifacts.push({ filename: "feed-manifest.json", content: JSON.stringify(manifest, null, 2) + "\n" });
+  const changes = artifacts.filter(artifact => {
+    const destination = join(outputDirectory, artifact.filename);
+    if (!existsSync(destination)) return true;
+    const previousContent = readFileSync(destination, "utf8");
+    if (previousContent === artifact.content) return false;
+    if (!update) throw new Error(`Refusing to overwrite changed dataset: ${artifact.filename}; use --update after review`);
+    if (artifact.filename !== "feed-manifest.json") {
+      const expected = previousManifest?.feeds?.find(feed => feed.filename === artifact.filename)?.sha256;
+      const actual = createHash("sha256").update(previousContent).digest("hex");
+      if (expected !== actual) throw new Error(`Existing dataset fails its saved hash: ${artifact.filename}`);
+    }
+    return true;
+  });
+  for (const artifact of changes) writeFileSync(join(outputDirectory, artifact.filename), artifact.content);
   return records;
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  console.log(JSON.stringify(generateFiles(), null, 2));
+  console.log(JSON.stringify(generateFiles({ update: process.argv.includes("--update") }), null, 2));
 }
