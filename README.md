@@ -141,6 +141,10 @@ banner") is parked: it only opens with `?welcome` (see `js/welcome.js`).
 | `progress.html` | Real construction status (4D schedule + 5D cost) + live sensors |
 | `report.html` | AIA G702 / G703 Application for Payment |
 
+These views work on computers and tablets, including iPads. Phones show a “Please open on a
+tablet or computer” notice with the current link instead of loading the app or requesting
+ArcGIS data. A narrow desktop window or iPad Split View does not trigger the notice.
+
 Every page opens the vertical project by default. URL options:
 
 | Option | Effect |

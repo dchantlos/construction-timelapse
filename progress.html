@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <!-- ============ CLEAN CAPTURE MODE (marketing screenshots) ============
          Append ?clean to the URL to hide floating UI (help / resources /
@@ -28,11 +28,15 @@
     <title>Current Construction Progress · ArcGIS</title>
 
     <!-- ArcGIS dark base theme (we override most of it in styles.css) -->
-    <link rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css" />
-    <link rel="stylesheet" href="./css/styles.css?v=82" />
-    <link rel="stylesheet" href="./css/linear-sensors.css?v=3" />
-    <link rel="stylesheet" href="./css/linear-radar.css?v=1" />
-    <link rel="stylesheet" href="./css/linear-instruments.css?v=5" />
+    <template data-device="supported">
+      <link rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css" />
+    </template>
+    <link rel="stylesheet" href="./css/styles.css?v=83" />
+    <template data-device="supported">
+      <link rel="stylesheet" href="./css/linear-sensors.css?v=3" />
+      <link rel="stylesheet" href="./css/linear-radar.css?v=1" />
+      <link rel="stylesheet" href="./css/linear-instruments.css?v=5" />
+    </template>
 
     <!-- ESM import map: load @arcgis/core straight from the CDN -->
     <script type="importmap">
@@ -48,6 +52,8 @@
   </head>
 
   <body data-help="progress">
+    <noscript>Open Construction Timelapse on a tablet or computer with JavaScript enabled.</noscript>
+    <template data-device="supported">
     <!-- 3D scene mount point -->
     <div id="viewDiv"></div>
 
@@ -686,6 +692,11 @@
     <script type="module" src="./js/resources.js?v=4"></script>
     <script type="module">
       if (document.documentElement.dataset.project === "vertical") import("./js/site-conditions-widget.js?v=15");
+    </script>
+    </template>
+    <script type="module">
+      import { openAppPage } from "./js/phone-gate.mjs?v=1";
+      openAppPage();
     </script>
   </body>
 </html>

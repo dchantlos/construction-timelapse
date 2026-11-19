@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <!-- ============ CLEAN CAPTURE MODE (marketing screenshots) ============
          Append ?clean to the URL to hide floating UI (help / resources /
@@ -27,8 +27,10 @@
     <title>Construction Timelapse · ArcGIS</title>
 
     <!-- ArcGIS dark base theme (we override most of it in styles.css) -->
-    <link rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css" />
-    <link rel="stylesheet" href="./css/styles.css?v=82" />
+    <template data-device="supported">
+      <link rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css" />
+    </template>
+    <link rel="stylesheet" href="./css/styles.css?v=83" />
 
     <!-- ESM import map: load @arcgis/core (and JSZip for BCF export) from CDNs -->
     <script type="importmap">
@@ -45,6 +47,8 @@
   </head>
 
   <body data-help="index">
+    <noscript>Open Construction Timelapse on a tablet or computer with JavaScript enabled.</noscript>
+    <template data-device="supported">
     <!-- 3D scene mount point -->
     <div id="viewDiv"></div>
 
@@ -311,5 +315,10 @@
     <script type="module" src="./js/app.js?v=58"></script>
     <script type="module" src="./js/help.js?v=10"></script>
     <script type="module" src="./js/resources.js?v=4"></script>
+    </template>
+    <script type="module">
+      import { openAppPage } from "./js/phone-gate.mjs?v=1";
+      openAppPage();
+    </script>
   </body>
 </html>

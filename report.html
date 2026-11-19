@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>AIA G702 · Application for Payment · Meridian Tower</title>
 
+    <template data-device="phone">
+      <link rel="stylesheet" href="./css/styles.css?v=83" />
+    </template>
+    <template data-device="supported">
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -581,6 +585,7 @@
         }
       }
     </style>
+    </template>
     <!-- Privacy-friendly page-visit analytics (GoatCounter) -->
     <script data-goatcounter="https://dchantlos.goatcounter.com/count"
             async src="//gc.zgo.at/count.js"></script>
@@ -595,6 +600,8 @@
   </head>
 
   <body data-help="report">
+    <noscript>Open Construction Timelapse on a tablet or computer with JavaScript enabled.</noscript>
+    <template data-device="supported">
     <div class="splash" id="splash">
       <div class="splash__inner">
         <div class="spinner"></div>
@@ -972,5 +979,10 @@
         });
     </script>
     <script type="module" src="./js/help.js?v=10"></script>
+    </template>
+    <script type="module">
+      import { openAppPage } from "./js/phone-gate.mjs?v=1";
+      openAppPage();
+    </script>
   </body>
 </html>
