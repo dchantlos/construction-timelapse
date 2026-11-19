@@ -129,7 +129,13 @@ async function boot() {
   // Live ArcGIS Velocity sensor network (the tower site): pulsing 3D markers
   // for every noise, dust, gas and wind sensor, plus the shared store that
   // drives the panel.
-  if (PROJECT.features.sensors) createVelocityLive({ scene, view });
+  if (PROJECT.id === "linear") {
+    import("./linear-sensors.mjs").then(({ createLinearSensorPanel }) => {
+      createLinearSensorPanel({ scene, view });
+    }).catch(error => console.warn("Roadway IoT panel unavailable", error));
+  } else if (PROJECT.features.sensors) {
+    createVelocityLive({ scene, view });
+  }
 
   // Bridge so the embedded AI assistant can read the live schedule/cost figures
   // (window.CT3D) for its IoT→cost analysis.
@@ -137,7 +143,7 @@ async function boot() {
 
   // Live on-site environmental sensor panel (top-right, draggable) — its wind,
   // noise, dust and gas figures come straight from the Velocity feeds above.
-  if (PROJECT.features.sensors) createSensorPanel();
+  if (PROJECT.id !== "linear" && PROJECT.features.sensors) createSensorPanel();
 
   // "Filter 3D Map by Cost" pills recolor the building components in 3D.
   const overlays = createCostOverlays(scene);
