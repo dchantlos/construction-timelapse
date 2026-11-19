@@ -10,6 +10,7 @@
 
 import { HELP_CONTENT } from "./help-content.js?v=8";
 import { PROJECT_ID } from "./config.js?v=15";
+import { SENSOR_HELP_CONTENT } from "./sensor-help-content.mjs";
 
 const STYLE_ID = "help-widget-styles";
 
@@ -50,6 +51,8 @@ const CSS = `
   font-family: "Inter", "Segoe UI", system-ui, sans-serif;
 }
 .help-panel.is-open { opacity: 1; pointer-events: auto; transform: none; }
+.help-panel[hidden] { display: none; }
+.help-panel[data-guide="sensors"] { z-index: 100003; }
 .help-panel.is-dragging {
   transition: none;
   box-shadow: 0 26px 64px -14px rgba(0, 0, 0, 0.9), 0 0 36px -8px rgba(72, 223, 229, 0.55);
@@ -123,12 +126,15 @@ function el(tag, className, html) {
 
 /**
  * Build and mount the Help FAB + floating panel for a given page.
- * @param {"index"|"progress"|"report"} pageKey
+ * @param {"index"|"progress"|"report"|"sensors"} pageKey
+ * @param {{ showFab?: boolean }} [options]
  * @returns {{ open: () => void, close: () => void } | null}
  */
-export function createHelp(pageKey) {
+export function createHelp(pageKey, { showFab = true } = {}) {
   // Projects other than the default have their own guide ("index-linear", …).
-  const content = HELP_CONTENT[`${pageKey}-${PROJECT_ID}`] ?? HELP_CONTENT[pageKey];
+  const content = pageKey === "sensors"
+    ? SENSOR_HELP_CONTENT[PROJECT_ID] ?? SENSOR_HELP_CONTENT.vertical
+    : HELP_CONTENT[`${pageKey}-${PROJECT_ID}`] ?? HELP_CONTENT[pageKey];
   if (!content) return null;
   injectStyles();
 
@@ -144,8 +150,11 @@ export function createHelp(pageKey) {
 
   // --- Panel ----------------------------------------------------------------
   const panel = el("section", "help-panel");
+  panel.id = `help-${pageKey}`;
+  panel.dataset.guide = pageKey;
+  panel.hidden = !showFab;
   panel.setAttribute("role", "dialog");
-  panel.setAttribute("aria-label", "On-screen guide");
+  panel.setAttribute("aria-label", pageKey === "sensors" ? "Sensor readings help" : "On-screen guide");
 
   const head = el("header", "help-panel__head");
   head.appendChild(el("span", "help-panel__title", content.title));
@@ -172,19 +181,33 @@ export function createHelp(pageKey) {
 
   panel.appendChild(head);
   panel.appendChild(body);
-  document.body.appendChild(fab);
+  if (showFab) document.body.appendChild(fab);
   document.body.appendChild(panel);
 
   // --- Open / close ---------------------------------------------------------
-  function open() {
+  let previousFocus = null;
+  function open(trigger = document.activeElement) {
+    previousFocus = trigger;
+    const sourceStatus = panel.querySelector("[data-help-source-status]");
+    if (sourceStatus) {
+      const source = document.querySelector(PROJECT_ID === "linear"
+        ? "#linearIotDetail .sensor-detail__sources" : "#sensorDetailPanel .sensor-detail__sources");
+      sourceStatus.replaceChildren();
+      if (source) sourceStatus.append(...[...source.children].map(node => node.cloneNode(true)));
+      else sourceStatus.textContent = "The IoT panel is still loading.";
+    }
+    panel.hidden = false;
     panel.classList.add("is-open");
     fab.classList.add("is-hidden");
+    if (!showFab) closeBtn.focus();
   }
   function close() {
+    if (!showFab && panel.contains(document.activeElement)) previousFocus?.focus();
     panel.classList.remove("is-open");
     fab.classList.remove("is-hidden");
+    if (!showFab) panel.hidden = true;
   }
-  fab.addEventListener("click", open);
+  fab.addEventListener("click", () => open(fab));
   closeBtn.addEventListener("click", close);
   window.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && panel.classList.contains("is-open")) close();
@@ -232,6 +255,13 @@ export function createHelp(pageKey) {
 function autoInit() {
   const key = document.body?.dataset?.help;
   if (key) createHelp(key);
+  if (document.querySelector("[data-sensor-help]")) {
+    const guide = createHelp("sensors", { showFab: false });
+    document.addEventListener("click", event => {
+      const button = event.target.closest?.("[data-sensor-help]");
+      if (button && guide) guide.open(button);
+    });
+  }
 }
 
 if (document.readyState === "loading") {

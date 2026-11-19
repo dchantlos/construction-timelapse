@@ -29,9 +29,10 @@
 
     <!-- ArcGIS dark base theme (we override most of it in styles.css) -->
     <link rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css" />
-    <link rel="stylesheet" href="./css/styles.css?v=80" />
-    <link rel="stylesheet" href="./css/linear-sensors.css?v=2" />
+    <link rel="stylesheet" href="./css/styles.css?v=82" />
+    <link rel="stylesheet" href="./css/linear-sensors.css?v=3" />
     <link rel="stylesheet" href="./css/linear-radar.css?v=1" />
+    <link rel="stylesheet" href="./css/linear-instruments.css?v=5" />
 
     <!-- ESM import map: load @arcgis/core straight from the CDN -->
     <script type="importmap">
@@ -425,6 +426,9 @@
           <button class="loc-chip" type="button" data-type="wind" aria-pressed="false">Wind</button>
         </div>
       </div>
+      <button class="sensor-help-button" type="button" data-sensor-help aria-haspopup="dialog" aria-controls="help-sensors">
+        <span aria-hidden="true">?</span> Help
+      </button>
     </aside>
 
     <!-- ============ REAL-TIME IoT FEEDS — DETAIL PANEL ============ -->
@@ -563,7 +567,7 @@
       <!-- Full per-sensor breakdown. -->
       <span class="dp-label">Per-sensor detail</span>
       <div class="sensor-detail" id="sensorDetail">
-        <div class="sensor-detail__sources" id="sensorSources"></div>
+        <div class="sensor-detail__sources" id="sensorSources" hidden></div>
         <div class="sensor-detail__group">
           <span class="sensor-detail__title">Wind <small>tower crane · WIND-01</small></span>
           <ul class="sensor-mini" id="windDetail"></ul>
@@ -585,6 +589,9 @@
           humidity &amp; air-quality index from <strong>Open-Meteo</strong>. Worker &amp; vehicle counts are modelled.
         </p>
       </div>
+      <button class="sensor-help-button" type="button" data-sensor-help aria-haspopup="dialog" aria-controls="help-sensors">
+        <span aria-hidden="true">?</span> Help
+      </button>
     </aside>
 
     <!-- ======================= CUSTOM RIGHT CONTROLS ======================= -->
@@ -674,8 +681,8 @@
     <script type="module">
       if (document.documentElement.dataset.project === "vertical") import("./js/presentation.js?v=26");
     </script>
-    <script type="module" src="./js/progress.js?v=44"></script>
-    <script type="module" src="./js/help.js?v=9"></script>
+    <script type="module" src="./js/progress.js?v=52"></script>
+    <script type="module" src="./js/help.js?v=10"></script>
     <script type="module" src="./js/resources.js?v=4"></script>
     <script type="module">
       if (document.documentElement.dataset.project === "vertical") import("./js/site-conditions-widget.js?v=15");

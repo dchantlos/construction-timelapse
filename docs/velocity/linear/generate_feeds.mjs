@@ -160,11 +160,14 @@ export const FEEDS = [
     sensors: [station("LIN-TRAFFIC-W01", 103.87277511, 1.29036868, 64, "West"), station("LIN-TRAFFIC-E01", 103.88426215, 1.2940426, 1456, "East")],
     values({ hour, activity, index }) {
       const busy = Math.max(pulse(hour, 8.4 + index * 0.15, 0.8), pulse(hour, 17.1, 0.9));
-      const queue = round(activity * (12 + 170 * busy));
+      const hold = Math.max(pulse(hour, 8.45 + index * 0.15, 0.04), pulse(hour, 16.4 + index * 0.15, 0.04));
+      // Quiet access-road scenario: 6 m per waiting vehicle including its gap.
+      const queuedVehicles = Math.round(activity * (0.2 + 1.8 * busy + 3 * hold));
+      const queue = queuedVehicles * 6;
       return {
-        MeanSpeed_kmh: round(38 - 29 * busy - 5 * activity), QueueLength_m: queue,
-        VehicleCount_1min: Math.round(3 + 12 * busy + 3 * activity),
-        TrafficState: queue >= 120 ? "Queueing" : queue >= 50 ? "Slowing" : "Free_Flow"
+        MeanSpeed_kmh: round(35 - queuedVehicles * 4 - 8 * hold), QueueLength_m: queue,
+        VehicleCount_1min: Math.round(1 + 2 * activity + 2 * busy),
+        TrafficState: queue >= 18 ? "Brief_Hold" : queue > 0 ? "Short_Queue" : "Free_Flow"
       };
     }
   }
@@ -235,12 +238,15 @@ export function generateFiles({ update = false, outputDirectory = directory } = 
     const destination = join(outputDirectory, artifact.filename);
     if (!existsSync(destination)) return true;
     const previousContent = readFileSync(destination, "utf8");
-    if (previousContent === artifact.content) return false;
+    // Git may check these text datasets out as CRLF on Windows.
+    const canonicalContent = previousContent.replace(/\r\n/g, "\n");
+    if (canonicalContent === artifact.content) return false;
     if (!update) throw new Error(`Refusing to overwrite changed dataset: ${artifact.filename}; use --update after review`);
     if (artifact.filename !== "feed-manifest.json") {
       const expected = previousManifest?.feeds?.find(feed => feed.filename === artifact.filename)?.sha256;
       const actual = createHash("sha256").update(previousContent).digest("hex");
-      if (expected !== actual) throw new Error(`Existing dataset fails its saved hash: ${artifact.filename}`);
+      const canonicalHash = createHash("sha256").update(canonicalContent).digest("hex");
+      if (expected !== actual && expected !== canonicalHash) throw new Error(`Existing dataset fails its saved hash: ${artifact.filename}`);
     }
     return true;
   });

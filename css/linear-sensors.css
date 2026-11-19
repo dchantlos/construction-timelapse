@@ -1,30 +1,17 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 .linear-iot [hidden], .linear-iot[hidden] { display: none !important; }
 .linear-iot .liot-icon, .linear-iot-toggle .liot-icon { display: block; filter: invert(1); flex: none; }
-.linear-iot .panel-collapse { display: grid; place-items: center; }
-.linear-iot .sensor-row__label { flex-wrap: wrap; gap: 2px 5px; min-width: 0; }
-.linear-iot .sensor-row__read { min-width: 0; }
-.linear-iot .sensor-activity__val small { font-size: 10px; }
-.linear-iot .loc-chips { flex-wrap: wrap; }
-.linear-iot .loc-chip { letter-spacing: 0; }
-.linear-iot .sensor-detail__foot { margin: 0; overflow-wrap: anywhere; }
 .linear-iot .sensor-detail__foot a { color: var(--accent-bright); }
-.linear-iot.is-collapsed .loc-controls, .linear-iot.is-collapsed .liot-source-note { display: none; }
-.linear-iot .sensor-live { animation: none; background: #94a3b8; box-shadow: none; }
-.linear-iot .liot-detail-tools { gap: 7px; flex-wrap: wrap; }
-.linear-iot .liot-detail-tools label { flex: 1; display: flex; gap: 7px; align-items: center; font-size: 12px; }
-.linear-iot select { font: inherit; min-width: 0; padding: 4px 6px; border: 1px solid var(--glass-border); border-radius: 5px; color: var(--text); background: #18232f; }
-.linear-iot .sensor-mini li { cursor: pointer; }
-.linear-iot .sensor-mini li[aria-pressed="true"] { background: rgba(56, 226, 234, 0.1); }
-.linear-iot .sensor-mini li:focus-visible { outline: 2px solid var(--accent-bright); outline-offset: -2px; }
-.linear-iot canvas { width: 100%; height: 100px; display: block; }
-.linear-iot #liotReadings { display: flex; flex-direction: column; gap: 11px; }
-.linear-iot .src-chip { min-width: 0; }
-.linear-iot .src-chip__name, .linear-iot .src-chip__state { white-space: normal; overflow-wrap: anywhere; }
+.linear-iot.is-collapsed .loc-controls { display: none; }
 @media (max-width: 900px) {
-  .linear-iot.sensor-panel, .linear-iot.sensor-detail-panel { top: 86px; right: 70px; max-width: calc(100vw - 84px); max-height: calc(100dvh - 108px); }
+  .linear-iot.sensor-panel, .linear-iot.sensor-detail-panel { top: 86px; right: 70px; max-width: calc(100vw - 84px); max-height: calc(100dvh - 108px); overflow-y: auto; }
   html.linear-iot-open .dashboard--progress { visibility: hidden; }
 }
 @media (max-width: 600px) {
   .linear-iot .metric-grid { grid-template-columns: minmax(0, 1fr); }
   .linear-iot .metric-tile__label { white-space: normal; }
+  .linear-iot .src-chip__name, .linear-iot .src-chip__state { overflow-wrap: anywhere; }
 }

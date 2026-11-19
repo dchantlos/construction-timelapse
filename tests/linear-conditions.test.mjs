@@ -27,6 +27,36 @@ test("particle colors use provider AQI subindices, and missing data is not green
   assert.equal(assessConditions(sample).head, "Conditions partly unavailable");
 });
 
+test("instrument alerts override benign weather without repeating a work-front pair", () => {
+  const assessment = assessConditions(snapshot(), [
+    { label: "settlement", level: 3 }, { label: "settlement", level: 3 },
+    { label: "groundwater", level: 0 }
+  ]);
+  assert.equal(assessment.color, CONDITION_COLORS[3]);
+  assert.equal(assessment.head, "Caution - monitor closely");
+  assert.equal(assessment.detail.match(/settlement/g).length, 1);
+  assert.doesNotMatch(assessment.detail, /weather-sensitive/);
+});
+
+test("missing instrument readings cannot produce an all-clear summary", () => {
+  const assessment = assessConditions(snapshot(), [{ label: "paving", level: null }]);
+  assert.equal(assessment.head, "Conditions partly unavailable");
+  assert.notEqual(assessment.color, CONDITION_COLORS[0]);
+  assert.match(assessment.detail, /site readings are unavailable/);
+});
+
+test("sensor warnings use explanatory demo language rather than unexplained elevated labels", () => {
+  const message = "The ground is sinking faster than the demo's alert setting.";
+  const assessment = assessConditions(snapshot(), [
+    { label: "ground settling", level: 3, message },
+    { label: "ground settling", level: 3, message }
+  ]);
+  assert.ok(assessment.detail.startsWith(message));
+  assert.equal(assessment.detail.split(message).length - 1, 1);
+  assert.doesNotMatch(assessment.detail, /Elevated ground settling/);
+  assert.equal(assessment.color, CONDITION_COLORS[3]);
+});
+
 test("modeled worker and vehicle counts follow Singapore shifts and stay within capacity", () => {
   const day = modeledSiteActivity(Date.parse("2026-11-18T02:00:00Z"));
   const night = modeledSiteActivity(Date.parse("2026-11-18T15:00:00Z"));

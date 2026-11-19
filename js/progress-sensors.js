@@ -25,6 +25,7 @@
 
 import { liveStore, setLocationsVisible, setTypeVisible, gasAssess } from "./velocity-live.js?v=8";
 import { VELOCITY } from "./velocity.js";
+import { escHtml, srcChip, miniRow } from "./iot-panel-template.mjs";
 
 const SITE = { label: "Zürich, CH", tz: "Europe/Zurich", lat: 47.4133, lon: 8.6142 };
 
@@ -503,36 +504,6 @@ function paint(now = new Date()) {
 // --- Expanded "full detail" view ---------------------------------------------
 const COMPASS16 = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
 const compass16 = (deg) => COMPASS16[Math.round((((deg % 360) + 360) % 360) / 22.5) % 16];
-const escHtml = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-
-const CONN_STATE = {
-  streaming: { text: "live", color: "#34d399" },
-  connecting: { text: "connecting", color: "#facc15" },
-  reconnecting: { text: "reconnecting", color: "#fb923c" },
-  offline: { text: "offline", color: "#f87171" }
-};
-
-/** A data-source chip with a connection-state dot. */
-function srcChip(name, state, full = false) {
-  const c = CONN_STATE[state] || CONN_STATE.offline;
-  return (
-    `<span class="src-chip"${full ? ' style="grid-column:1 / -1"' : ""}>` +
-    `<span class="src-chip__dot" style="background:${c.color};box-shadow:0 0 8px -1px ${c.color}"></span>` +
-    `<span class="src-chip__name">${name}</span><span class="src-chip__state">${c.text}</span></span>`
-  );
-}
-
-/** One detail row: label (+ sub), value (+ unit), and an optional status dot. */
-function miniRow(label, sub, value, unit, color, offsite = false) {
-  const dot = color ? `background:${color};box-shadow:0 0 7px -1px ${color}` : "opacity:0";
-  return (
-    `<li class="${offsite ? "is-offsite" : ""}">` +
-    `<span class="sensor-mini__label">${label}${sub ? `<small>${sub}</small>` : ""}</span>` +
-    `<span class="sensor-mini__read">${value}${unit ? `<small>${unit}</small>` : ""}</span>` +
-    `<span class="sensor-mini__dot" style="${dot}"></span></li>`
-  );
-}
-
 const GAS_LABEL = { CO_ppm: "CO", CO2_ppm: "CO₂", NO2_ugm3: "NO₂", O3_ugm3: "O₃", VOC_ppb: "VOC", CH4_ppm: "CH₄" };
 const GAS_KEY = { CO_ppm: "co", CO2_ppm: "co2", NO2_ugm3: "no2", O3_ugm3: "o3", VOC_ppb: "voc", CH4_ppm: "ch4" };
 

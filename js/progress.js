@@ -8,7 +8,7 @@
 
 import Camera from "@arcgis/core/Camera.js";
 
-import { createView } from "./scene.js?v=16";
+import { createView } from "./scene.js?v=17";
 import { createLayerVisibility } from "./visibility.js?v=13";
 import { createSpin } from "./spin.js?v=13";
 import { collectConstructionStatus } from "./progress-stats.js?v=14";
@@ -19,9 +19,9 @@ import { createSlice } from "./slice.js?v=12";
 import { createExplode } from "./explode.js?v=2";
 import { renderFinancialPanel, createFinancialControls } from "./progress-financial.js?v=16";
 import { createCostOverlays } from "./progress-overlays.js?v=15";
-import { createSensorPanel } from "./progress-sensors.js?v=15";
+import { createSensorPanel } from "./progress-sensors.js?v=16";
 import { createVelocityLive } from "./velocity-live.js?v=8";
-import { createBasemapToggle } from "./basemap.js?v=3";
+import { createBasemapToggle } from "./basemap.js?v=4";
 import { PROGRESS_WEBSCENE_ID, PROJECT } from "./config.js?v=15";
 import { installAiBridge } from "./ai-bridge.js?v=4";
 
@@ -130,7 +130,7 @@ async function boot() {
   // for every noise, dust, gas and wind sensor, plus the shared store that
   // drives the panel.
   if (PROJECT.id === "linear") {
-    import("./linear-sensors.mjs?v=4").then(({ createLinearSensorPanel }) => {
+    import("./linear-sensors.mjs?v=12").then(({ createLinearSensorPanel }) => {
       createLinearSensorPanel({ scene, view });
     }).catch(error => console.warn("Roadway IoT panel unavailable", error));
   } else if (PROJECT.features.sensors) {

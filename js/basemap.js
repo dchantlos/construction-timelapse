@@ -5,7 +5,7 @@
 // 3D mask (a "replace" modification) that flattens the mesh along the
 // alignment. Google only streams to a signed-in ArcGIS user whose organization
 // enables the basemap for this site, so public visitors get a dark basemap
-// styled like the tower's (Dark Gray Canvas, 3D labels and glass context
+// styled like the tower's (Dark Gray Canvas and glass context
 // buildings) and nobody is asked to sign in. The nav-stack toggle (or
 // ?basemap=photoreal) signs in first and only then swaps the authored basemap
 // back in — the same Basemap instance, so its mask comes with it.
@@ -20,6 +20,7 @@ import OAuthInfo from "@arcgis/core/identity/OAuthInfo.js";
 import esriRequest from "@arcgis/core/request.js";
 
 import { PHOTOREAL_OAUTH, PROJECT } from "./config.js?v=15";
+import { hideBasemapLabels } from "./basemap-labels.mjs";
 
 const GOOGLE_TILES = /tile\.googleapis\.com/i;
 const SHARING_URL = `${PHOTOREAL_OAUTH.portalUrl}/sharing`;
@@ -40,7 +41,7 @@ function wantsPhotoreal() {
 }
 
 /**
- * The tower's Dark Gray Canvas look: vector basemap, 3D place labels, and the
+ * The tower's Dark Gray Canvas look: vector basemap and the
  * Esri 3D buildings drawn as faint glass like the tower's Swiss context layer.
  */
 function darkBasemap(scene) {
@@ -79,6 +80,7 @@ function darkBasemap(scene) {
       new SceneLayer({
         title: "Places and Labels",
         url: "https://basemaps3d.arcgis.com/arcgis/rest/services/Open3D_LightLabels_v1/SceneServer/layers/0",
+        visible: false,
         popupEnabled: false
       })
     ]
@@ -138,11 +140,19 @@ export async function preparePublicBasemap(scene) {
   if (!googleLayers(authored).length) return null;
   authoredBasemaps.set(scene, authored);
   try {
-    if (wantsPhotoreal() && (await isSignedIn())) return "photoreal";
-  } catch {
-    // fall through to the public basemap
+    if (wantsPhotoreal() && (await isSignedIn())) {
+      await hideBasemapLabels(authored);
+      return "photoreal";
+    }
+  } catch (error) {
+    console.warn("[BASEMAP] Using the public basemap after preparation failed", error);
   }
   scene.basemap = darkBasemap(scene);
+  try {
+    await hideBasemapLabels(scene.basemap);
+  } catch (error) {
+    console.warn("[BASEMAP] Basemap label styling failed", error);
+  }
   return "dark";
 }
 
@@ -351,8 +361,9 @@ export function createBasemapToggle({ scene, initial, onChange }) {
       return;
     }
 
-    scene.basemap = authored;
     try {
+      await hideBasemapLabels(authored);
+      scene.basemap = authored;
       await Promise.all(googleLayers(authored).map((layer) => layer.load()));
       busy = false;
       setMode("photoreal");

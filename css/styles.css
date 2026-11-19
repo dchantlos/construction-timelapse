@@ -3415,7 +3415,8 @@ body {
 .sensor-panel.is-collapsed .sensor-panel__meta,
 .sensor-panel.is-collapsed .sensor-activity,
 .sensor-panel.is-collapsed .sensor-list,
-.sensor-panel.is-collapsed .sensor-summary {
+.sensor-panel.is-collapsed .sensor-summary,
+.sensor-panel.is-collapsed .sensor-help-button {
   display: none;
 }
 /* Head buttons (detail + collapse sit side by side). */
@@ -3804,6 +3805,31 @@ body {
   color: #cbd5e1;
   font-weight: 650;
 }
+
+.sensor-detail__sources[hidden] { display: none; }
+.sensor-help-button {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border: 1px solid rgba(56, 226, 234, 0.25);
+  border-radius: 8px;
+  background: #18232f;
+  color: var(--accent-bright);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.sensor-help-button span { font-weight: 800; }
+.sensor-help-button:hover { background: #213440; }
+.sensor-help-button:focus-visible { outline: 2px solid var(--accent-bright); outline-offset: 2px; }
 
 /* Sensor-location map controls (show/hide + per-type filters) — in both panels. */
 .loc-controls {

@@ -48,14 +48,17 @@ for (const feed of FEEDS) {
   });
 }
 
-test("traffic slows as the queue grows, and reports nonnegative integer vehicle counts", () => {
+test("quiet traffic stays within 30 m, is normally at most 15 m, and slows during brief holds", () => {
   const { rows } = buildFeed(FEEDS.find(feed => feed.name === "traffic"));
-  assert.ok(rows.some(row => row.TrafficState === "Queueing"));
+  assert.ok(rows.some(row => row.TrafficState === "Brief_Hold"));
   assert.ok(rows.some(row => row.TrafficState === "Free_Flow"));
+  assert.equal(Math.max(...rows.map(row => row.QueueLength_m)), 30);
+  assert.ok(rows.filter(row => row.QueueLength_m <= 15).length / rows.length >= 0.95);
   for (const row of rows) {
-    assert.ok(row.QueueLength_m >= 0 && row.MeanSpeed_kmh >= 0);
-    assert.ok(row.VehicleCount_1min >= 0 && Number.isInteger(row.VehicleCount_1min));
-    if (row.QueueLength_m >= 120) assert.ok(row.MeanSpeed_kmh < 20);
+    assert.ok(row.QueueLength_m >= 0 && row.QueueLength_m <= 30);
+    assert.ok(row.MeanSpeed_kmh >= 0 && row.MeanSpeed_kmh <= 35);
+    assert.ok(row.VehicleCount_1min >= 1 && row.VehicleCount_1min <= 5 && Number.isInteger(row.VehicleCount_1min));
+    if (row.QueueLength_m >= 18) assert.ok(row.MeanSpeed_kmh < 25);
   }
 });
 
@@ -172,4 +175,33 @@ test("intentional regeneration checks the previous manifest before replacing any
   assert.equal(readFileSync(csvPath, "utf8"), original);
   writeFileSync(csvPath, original + "unexpected edit\n");
   assert.throws(() => generateFiles({ outputDirectory, update: true }), /fails its saved hash/);
+});
+
+test("Windows checkout line endings are preserved for unchanged datasets and still checked against the manifest", context => {
+  const outputDirectory = mkdtempSync(join(tmpdir(), "roadway-crlf-test-"));
+  context.after(() => rmSync(outputDirectory, { recursive: true, force: true }));
+  generateFiles({ outputDirectory });
+  const originals = new Map();
+  for (const feed of FEEDS) {
+    const path = join(outputDirectory, `velocity_linear_${feed.name}_feed.csv`);
+    const content = readFileSync(path, "utf8").replace(/\n/g, "\r\n");
+    writeFileSync(path, content);
+    originals.set(path, content);
+  }
+  generateFiles({ outputDirectory });
+  for (const [path, content] of originals) assert.equal(readFileSync(path, "utf8"), content);
+
+  const trafficPath = join(outputDirectory, "velocity_linear_traffic_feed.csv");
+  const previous = originals.get(trafficPath).replace("MeanSpeed_kmh", "PreviousSpeed_kmh");
+  writeFileSync(trafficPath, previous);
+  const manifestPath = join(outputDirectory, "feed-manifest.json");
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+  manifest.feeds.find(feed => feed.filename.includes("traffic")).sha256 =
+    createHash("sha256").update(previous.replace(/\r\n/g, "\n")).digest("hex");
+  writeFileSync(manifestPath, JSON.stringify(manifest));
+  generateFiles({ outputDirectory, update: true });
+  for (const [path, content] of originals) {
+    if (path !== trafficPath) assert.equal(readFileSync(path, "utf8"), content);
+  }
+  assert.equal(readFileSync(trafficPath, "utf8"), originals.get(trafficPath).replace(/\r\n/g, "\n"));
 });

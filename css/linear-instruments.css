@@ -1,0 +1,21 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
+.linstr-popup { max-width: calc(100vw - 16px); max-height: calc(100dvh - 24px); overflow-y: auto; }
+.linstr-popup .sensor-pop__rows li { gap: 10px; }
+.linstr-popup .sensor-pop__rows b { min-width: 0; overflow-wrap: anywhere; text-align: right; }
+.linstr-popup .liot-icon { filter: invert(1); display: block; }
+.linstr-popup .sensor-pop__name { cursor: grab; touch-action: none; }
+.linstr-label-overlay { position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
+.linstr-label-overlay[hidden], .linstr-map-label[hidden] { display: none; }
+.linstr-map-label { position: absolute; width: 0; height: 0; }
+.linstr-map-label__line { position: absolute; bottom: 0; left: 0; height: var(--label-offset); border-left: 1.1px solid var(--instrument-color); opacity: .85; filter: drop-shadow(0 0 1px #040814); }
+.linstr-map-label__text { position: absolute; bottom: var(--label-offset); left: 0; transform: translateX(-50%); display: block; padding: 0 2px; border: 0; background: none; color: #fff; font: 700 11.5pt/1.25 Arial, sans-serif; text-align: center; white-space: nowrap; pointer-events: auto; cursor: pointer; text-shadow: -1px -1px 1px #040814, 1px -1px 1px #040814, -1px 1px 1px #040814, 1px 1px 1px #040814; }
+.linstr-map-label__text span { display: block; }
+.linstr-map-label__text:focus-visible { outline: 2px solid var(--accent-bright); outline-offset: 3px; }
+.linear-iot-mobile { display: none; }
+html.linear-iot-open .help-fab, html.linear-iot-open .res-fab { visibility: hidden; }
+@media (max-width: 900px) {
+  .linear-iot-mobile { display: grid; position: fixed; z-index: 17; top: 134px; right: 12px; width: 42px; height: 42px; border-radius: 6px; }
+}

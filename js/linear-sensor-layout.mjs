@@ -1,4 +1,22 @@
-const icon = name => `<img class="liot-icon" src="https://cdn.jsdelivr.net/npm/lucide-static@0.468.0/icons/${name}.svg" width="16" height="16" alt="" />`;
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
+import { escHtml, miniRow } from "./iot-panel-template.mjs";
+
+const icon = (name, size = 16) => `<img class="liot-icon" src="https://cdn.jsdelivr.net/npm/lucide-static@0.468.0/icons/${name}.svg" width="${size}" height="${size}" alt="" />`;
+const WEATHER_READINGS = [
+  ["temperature_2m", "Temperature", "\u00b0C", "thermometer"],
+  ["relative_humidity_2m", "Humidity", "%", "droplets"],
+  ["wind_speed_10m", "Wind", "m/s", "wind", "10 m height"],
+  ["us_aqi", "Air Quality", "US AQI", "gauge"],
+  ["wind_gusts_10m", "Wind gust", "m/s", "wind"],
+  ["precipitation", "Rain", "mm", "cloud-rain"],
+  ["pm2_5", "Fine dust", "\u00b5g/m\u00b3", "cloud", "PM2.5"],
+  ["pm10", "Dust", "\u00b5g/m\u00b3", "cloud", "PM10"],
+  ["nitrogen_dioxide", "NO2", "\u00b5g/m\u00b3", "cloud"],
+  ["ozone", "Ozone", "\u00b5g/m\u00b3", "cloud"]
+];
 
 function clonePanel(sourceId) {
   const panel = document.getElementById(sourceId).cloneNode(true);
@@ -9,6 +27,12 @@ function clonePanel(sourceId) {
   return panel;
 }
 
+function cloneReading(source) {
+  const node = source.cloneNode(true);
+  for (const element of [node, ...node.querySelectorAll("[id]")]) element.removeAttribute("id");
+  return node;
+}
+
 export function createLinearSensorLayout() {
   const panel = clonePanel("sensorPanel");
   const detail = clonePanel("sensorDetailPanel");
@@ -16,55 +40,90 @@ export function createLinearSensorLayout() {
   detail.id = "linearIotDetail";
   panel.setAttribute("aria-label", "Roadway IoT feeds");
   detail.setAttribute("aria-label", "Roadway IoT overview");
-  panel.querySelector(".kicker").textContent = "Progress IoT Feeds";
-  detail.querySelector(".kicker").textContent = "Progress IoT Feeds | Overview";
   for (const root of [panel, detail]) {
     root.querySelector(".sensor-panel__meta span").textContent = "Marina Bay, SG";
     const counters = root.querySelectorAll(".sensor-activity__val strong");
     counters[0].dataset.liotCount = "workers";
     counters[1].dataset.liotCount = "vehicles";
-    root.querySelector(".loc-controls").remove();
   }
-  panel.querySelector(".sensor-list").replaceChildren();
-  detail.querySelector(".metric-grid").replaceChildren();
-  detail.querySelector(".sensor-detail").innerHTML = `
-    <div class="sensor-detail__sources" id="liotSources"></div>
-    <p class="sensor-detail__foot">Weather and air quality from Open-Meteo. Worker and vehicle counts are modeled.</p>
-    <p class="sensor-detail__foot"><a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a> | <a href="https://atmosphere.copernicus.eu/" target="_blank" rel="noopener noreferrer">CAMS atmospheric data</a> | <a href="https://open-meteo.com/en/docs/air-quality-api" target="_blank" rel="noopener noreferrer">Air-quality sources</a></p>`;
-  detail.querySelectorAll(".dp-label")[1].textContent = "Data sources";
-  document.body.append(panel, detail);
+  const list = panel.querySelector(".sensor-list");
+  const grid = detail.querySelector(".metric-grid");
+  const details = detail.querySelector(".sensor-detail");
+  const rowTemplate = list.querySelector(".sensor-row:not(.sensor-row--gas)");
+  const tileTemplate = grid.querySelector(".metric-tile");
+  const groupTemplate = details.querySelector(".sensor-detail__group");
+  const sources = details.querySelector(".sensor-detail__sources");
+  const footer = details.querySelector(".sensor-detail__foot");
   const summaryRows = new Map();
-  for (const [key, label, unit, qualifier] of [
-    ["temperature_2m", "Temperature", "&deg;C", ""], ["relative_humidity_2m", "Humidity", "%", ""],
-    ["wind_speed_10m", "Wind", "m/s", "10 m model"], ["us_aqi", "Air Quality", "US AQI", ""],
-    ["pm2_5", "Particles", "&micro;g/m&sup3;", "PM2.5"], ["pm10", "Particles", "&micro;g/m&sup3;", "PM10"],
-    ["precipitation", "Rain", "mm", ""]
-  ]) {
-    const row = document.createElement("li");
-    row.className = "sensor-row";
-    row.dataset.reading = key;
-    row.innerHTML = `<span class="sensor-row__label">${label}${qualifier ? `<span class="sensor-row__q">${qualifier}</span>` : ""}</span>
-      <span class="sensor-row__read"><strong>--</strong><small>${unit}</small></span><span class="sensor-row__dot"></span>`;
-    panel.querySelector(".sensor-list").append(row);
-    summaryRows.set(key, row);
-  }
   const tileNodes = new Map();
-  for (const [key, label, unit, glyph] of [
-    ["temperature_2m", "Temperature", "&deg;C", "thermometer"], ["relative_humidity_2m", "Humidity", "%", "droplets"],
-    ["wind_speed_10m", "Wind at 10 m | model", "m/s", "wind"], ["wind_gusts_10m", "Gust at 10 m | model", "m/s", "wind"],
-    ["us_aqi", "US Air Quality Index", "US AQI", "gauge"], ["precipitation", "Precipitation", "mm", "cloud-rain"],
-    ["pm2_5", "PM2.5 | model", "&micro;g/m&sup3;", "cloud"], ["pm10", "PM10 | model", "&micro;g/m&sup3;", "cloud"],
-    ["nitrogen_dioxide", "NO2 | model", "&micro;g/m&sup3;", "cloud"], ["ozone", "Ozone | model", "&micro;g/m&sup3;", "cloud"]
-  ]) {
-    const tile = document.createElement("div");
-    tile.className = "metric-tile";
-    tile.dataset.reading = key;
-    tile.innerHTML = `<span class="metric-tile__icon">${icon(glyph)}</span><div class="metric-tile__text">
-      <span class="metric-tile__top"><strong>--</strong><small>${unit}</small></span><span class="metric-tile__label">${label}</span></div><span class="metric-tile__dot"></span>`;
-    detail.querySelector(".metric-grid").append(tile);
-    tileNodes.set(key, tile);
+  const weatherDetails = new Map();
+  list.replaceChildren();
+  grid.replaceChildren();
+  sources.replaceChildren();
+  footer.innerHTML = 'Weather and air quality from <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a> / <a href="https://atmosphere.copernicus.eu/" target="_blank" rel="noopener noreferrer">CAMS</a>. Worker and vehicle counts are modeled.';
+  details.replaceChildren(sources, footer);
+
+  function addGroup(title, qualifier = "") {
+    const group = cloneReading(groupTemplate);
+    const heading = group.querySelector(".sensor-detail__title");
+    heading.textContent = title;
+    if (qualifier) {
+      const small = document.createElement("small");
+      small.textContent = qualifier;
+      heading.append(small);
+    }
+    const readings = group.querySelector(".sensor-mini");
+    readings.replaceChildren();
+    details.insertBefore(group, footer);
+    return { group, list: readings };
   }
-  return { panel, detail, summaryRows, tileNodes, icon, element: id => document.getElementById(id), roots: [panel, detail] };
+
+  const weatherGroup = addGroup("Weather and air quality", "Open-Meteo / CAMS");
+  for (const [key, label, unit, , qualifier = ""] of WEATHER_READINGS) {
+    weatherGroup.list.insertAdjacentHTML("beforeend", miniRow(escHtml(label), escHtml(qualifier), "\u2014", escHtml(unit), null));
+    const row = weatherGroup.list.lastElementChild;
+    row.dataset.reading = key;
+    weatherDetails.set(key, row);
+  }
+
+  function addReading(key, { title, unit, glyph, qualifier = "" }) {
+    const row = cloneReading(rowTemplate);
+    row.dataset.reading = key;
+    row.querySelector(".sensor-row__label").textContent = title;
+    const note = document.createElement("span");
+    note.className = "sensor-row__q";
+    note.textContent = qualifier;
+    note.hidden = !qualifier;
+    row.querySelector(".sensor-row__label").append(note);
+    row.querySelector(".sensor-row__read small").textContent = unit;
+    list.append(row);
+    const tile = cloneReading(tileTemplate);
+    tile.dataset.reading = key;
+    tile.querySelector(".metric-tile__icon").innerHTML = icon(glyph, 20);
+    tile.querySelector(".metric-tile__label").textContent = qualifier ? `${title} - ${qualifier}` : title;
+    tile.querySelector(".metric-tile__top small").textContent = unit;
+    grid.lastElementChild?.classList.remove("metric-tile--wide");
+    grid.append(tile);
+    tile.classList.toggle("metric-tile--wide", grid.children.length % 2 === 1);
+    summaryRows.set(key, row);
+    tileNodes.set(key, tile);
+    return { row, tile };
+  }
+
+  document.body.append(panel, detail);
+  return { panel, detail, summaryRows, tileNodes, weatherDetails, sources, icon, addReading,
+    addGroup(title, qualifier) {
+      const result = addGroup(title, qualifier);
+      details.insertBefore(result.group, weatherGroup.group);
+      return result;
+    },
+    addWeatherReadings() {
+      for (const key of ["temperature_2m", "relative_humidity_2m", "wind_speed_10m", "us_aqi", "pm2_5", "pm10", "precipitation"]) {
+        const [, title, unit, glyph, qualifier] = WEATHER_READINGS.find(reading => reading[0] === key);
+        addReading(key, { title, unit, glyph, qualifier });
+      }
+    },
+    element: id => document.getElementById(id), roots: [panel, detail] };
 }
 
 export function enableSensorDrag(panel, handle) {

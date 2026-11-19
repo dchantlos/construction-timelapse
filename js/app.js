@@ -6,7 +6,7 @@ import TimeSlider from "@arcgis/core/widgets/TimeSlider.js";
 import Point from "@arcgis/core/geometry/Point.js";
 import * as reactiveUtils from "@arcgis/core/core/reactiveUtils.js";
 
-import { createView, resolveTimeExtent } from "./scene.js?v=16";
+import { createView, resolveTimeExtent } from "./scene.js?v=17";
 import { createDashboard, loadBuildCurves } from "./dashboard.js?v=2";
 import { createLayerControl } from "./layers.js?v=2";
 import { createLayerVisibility } from "./visibility.js?v=13";
@@ -15,7 +15,7 @@ import { createAssistant } from "./assistant.js?v=24";
 import { createInteraction } from "./interaction.js?v=3";
 import { createSlice } from "./slice.js";
 import { createExplode } from "./explode.js?v=2";
-import { createBasemapToggle } from "./basemap.js?v=3";
+import { createBasemapToggle } from "./basemap.js?v=4";
 import { BUILDING_LAYERS, PROJECT, TIME_STEP } from "./config.js?v=15";
 
 /**

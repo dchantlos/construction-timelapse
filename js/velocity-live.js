@@ -17,6 +17,7 @@ import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer.js";
 import Graphic from "@arcgis/core/Graphic.js";
 import Glow from "@arcgis/core/webscene/Glow.js";
 import { VELOCITY, VELOCITY_WKID } from "./velocity.js";
+import { orbSymbol, labelSymbol } from "./sensor-marker-style.mjs";
 
 // Public stored-credential proxies (each mints its own stream token on ?f=json).
 const PROXY = {
@@ -138,46 +139,6 @@ function recomputeMax(feedKey, thresholds) {
 // model stays untouched. `source: "color"` emits in each orb's category colour.
 // One small sphere per sensor — the SDK glow gives it its halo of light, so no
 // second "halo" sphere is needed; the orb's own opacity breathes the pulse.
-const ORB_EMISSIVE = 2; // sphere emission strength (≥0, tunable)
-
-// Small emissive sphere sitting at the sensor spot — the sensor itself.
-function orbSymbol(rgb) {
-  return {
-    type: "point-3d",
-    symbolLayers: [
-      {
-        type: "object",
-        resource: { primitive: "sphere" },
-        material: { color: rgb, emissive: { strength: ORB_EMISSIVE, source: "color" } },
-        anchor: "bottom",
-        width: 6,
-        depth: 6,
-        height: 6
-      }
-    ]
-  };
-}
-
-function labelSymbol(text, rgb) {
-  return {
-    type: "point-3d",
-    symbolLayers: [
-      {
-        type: "text",
-        text,
-        material: { color: "#ffffff" },
-        halo: { color: rgba([4, 8, 20], 0.85), size: 1.1 },
-        size: 11.5,
-        font: { weight: "bold", family: "Inter, system-ui, sans-serif" }
-      }
-    ],
-    // Float the reading above the cone with a thin leader line — world-anchored
-    // (minWorldLength) so it stays clear of the 3D marker at any zoom.
-    verticalOffset: { screenLength: 22, minWorldLength: 16 },
-    callout: { type: "line", size: 1.1, color: rgba(rgb, 0.85), border: { color: rgba([4, 8, 20], 0.6) } }
-  };
-}
-
 function pointGeom(x, y, z) {
   return { type: "point", x, y, z, spatialReference: { wkid: VELOCITY_WKID } };
 }

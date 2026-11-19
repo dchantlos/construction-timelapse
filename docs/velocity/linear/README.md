@@ -2,6 +2,76 @@
 
 Seven synthetic instrument feeds for the Marina Bay roadway. These are CSV inputs for **Velocity HTTP Simulator**, not browser-generated readings. Nothing in this folder connects sensors to the website or creates a Velocity service automatically.
 
+## Local Application Replay
+
+The linear progress page can replay these same seven CSVs locally, without connecting
+to Velocity. These remain synthetic readings (`IsSimulated = 1`), without repeated
+source badges in the panel. Sensor locations and labels start hidden; use **Show Sensor Locations**
+to reveal them, then the type chips to isolate a feed. The compact and expanded
+panels share the same visibility and filter state.
+Each sensor type has a unique, fixed map/legend color shared by its West/East pair.
+The seven type colors do not change with severity; reading values and status dots
+retain the vertical template's green/yellow/orange/red scale. Place labels on the
+main 3D basemap are hidden so they do not compete with sensor labels; the radar
+map is unchanged.
+
+The traffic feed now models a **quiet access road**, not a busy rush-hour bottleneck:
+routine queues are 0-12 m, with brief holds up to 30 m. It assumes 6 m per waiting
+vehicle including its gap, 1-5 arrivals per minute, and lower approach speeds
+during holds. These are explicit demo assumptions, not traffic statistics or a
+site-validated model for Singapore. The other six instrument datasets are unchanged.
+
+### Shared panel template
+
+The vertical panel in `progress.html` is the source template for both projects.
+The roadway clones its compact rows, expanded metric tiles, location controls
+and per-sensor detail groups, using the same CSS. Temperature, humidity, wind,
+air quality, fine dust, dust and rain appear at the top of the compact panel and
+in the expanded tiles, followed by the seven engineering readings. Rain shows
+the provider's accumulation interval, and AQI includes its category. Source chips and detail rows use the same
+rendering helpers as the vertical project. The overall condition summary includes
+both weather and instrument alerts, so good weather cannot mask a sensor alert.
+The Help button at the bottom of either panel opens the existing help widget.
+Long sensor explanations and the optional source/connection-status badges live
+there, not in the default view. All weather readings remain visible in the panel.
+
+Do not add project-specific tabs, replay toolbars, sensor pickers, feed counters
+or alternate panel layouts. Project differences belong in the readings and sensor
+definitions, not the UI/UX. The automatic CSV replay remains at its default speed.
+
+### Explaining the readings in a demo
+
+| Panel reading | Plain-language meaning | What the alert color uses |
+| --- | --- | --- |
+| Ground settling (mm) | How far the ground has moved down since a reference survey | Settling speed in mm/h, not just total movement |
+| Water pressure (kPa) | Pressure of water below ground, not its depth | Change from the starting pressure |
+| Ground vibration (mm/s) | Speed of ground movement during shaking, not vehicle speed | Strongest measured vibration axis |
+| Concrete temp. (C) | Temperature inside concrete as it hardens | Center-to-surface temperature difference |
+| Runoff cloudiness (NTU) | How cloudy site drainage water is; higher means murkier | Cloudiness, not chemical contamination |
+| Asphalt temp. (C) | Temperature of asphalt near the roller | Cooling during valid compaction readings |
+| Traffic queue (m) | Length of the waiting-vehicle line: 12 m means about 12 metres of queue | Queue length, not traffic speed |
+
+These meanings are available on demand from the panel's Help button.
+Alerts describe the observed condition in plain language instead of saying
+"elevated settlement." Display bands are illustrative demo settings, not
+engineering acceptance limits.
+
+The fourteen tracks use 2-metre glowing markers for the closer
+roadway view; the vertical project's 6-metre markers are unchanged. Only moving
+tracks update their map positions. Persistent screen labels keep their live
+readings visible without rebuilding ArcGIS 3D text graphics. They follow the
+camera and moving sensors, use the view's terrain sampler for ground stations,
+and open the same instrument details when clicked. They are screen overlays,
+not depth-tested 3D text. Orbs breathe gently; labels remain at steady opacity.
+
+Run the marker lifecycle regression tests with
+`node --test tests/linear-instrument-map.test.mjs tests/linear-instrument-labels.test.mjs`
+(Node.js 24).
+
+The panel's browser regressions run on a loaded progress page with
+`import("./tests/linear-instrument-panel.browser.mjs").then(m => [m.runInstrumentPanelChecks(), m.runSensorHelpChecks()])`
+in the browser console.
+
 ## Choose a Feed
 
 Each link below is the raw CSV URL to paste into HTTP Simulator. Start with **traffic**, **paving**, or **runoff** for an easily visible demonstration; add geotechnical and concrete monitoring when you want to explain those workflows.

@@ -17,14 +17,18 @@ export function conditionLevel(key, snapshot) {
   return 0;
 }
 
-export function assessConditions(snapshot) {
+export function assessConditions(snapshot, instrumentLevels = []) {
   const labels = { temperature_2m: "temperature", relative_humidity_2m: "humidity", wind_gusts_10m: "wind", us_aqi: "air quality", precipitation: "rain" };
-  const levels = Object.entries(labels).map(([key, label]) => ({ label, level: conditionLevel(key, snapshot) }));
+  const levels = [...Object.entries(labels).map(([key, label]) => ({ label, level: conditionLevel(key, snapshot) })), ...instrumentLevels];
   const maximum = Math.max(0, ...levels.map(entry => entry.level ?? 0));
   const missing = levels.some(entry => entry.level === null);
-  if (missing && maximum < 2) return { color: NO_DATA_COLOR, head: "Conditions partly unavailable", detail: "Some weather or air-quality readings are unavailable. Check source updates." };
-  const drivers = levels.filter(entry => entry.level >= Math.max(1, maximum)).map(entry => entry.label).join(", ");
-  if (maximum >= 2) return { color: CONDITION_COLORS[maximum], head: "Caution - monitor closely", detail: `Elevated ${drivers}. Review conditions at the work fronts before weather-sensitive tasks.${missing ? " Some source data is unavailable." : ""}` };
-  if (maximum === 1) return { color: CONDITION_COLORS[1], head: "Good - minor watch", detail: `Keep an eye on ${drivers} and changing site conditions.` };
-  return { color: CONDITION_COLORS[0], head: "Good - routine monitoring", detail: "Continue routine weather and air-quality checks at the work fronts." };
+  if (missing && maximum < 2) return { color: NO_DATA_COLOR, head: "Conditions partly unavailable", detail: `Some ${instrumentLevels.length ? "site" : "weather or air-quality"} readings are unavailable. Check source updates.` };
+  const drivers = [...new Set(levels.filter(entry => entry.level >= Math.max(1, maximum)).map(entry => entry.label))].join(", ");
+  const watched = levels.filter(entry => entry.level >= Math.max(1, maximum));
+  const messages = [...new Set(watched.map(entry => entry.message).filter(Boolean))];
+  const otherDrivers = [...new Set(watched.filter(entry => !entry.message).map(entry => entry.label))].join(", ");
+  const explanation = [otherDrivers ? `Elevated ${otherDrivers}.` : "", ...messages].filter(Boolean).join(" ");
+  if (maximum >= 2) return { color: CONDITION_COLORS[maximum], head: "Caution - monitor closely", detail: `${explanation} Review conditions at the work fronts${instrumentLevels.length ? "" : " before weather-sensitive tasks"}.${missing ? " Some source data is unavailable." : ""}` };
+  if (maximum === 1) return { color: CONDITION_COLORS[1], head: "Good - minor watch", detail: messages.length ? `${explanation} Continue monitoring site conditions.` : `Keep an eye on ${drivers} and changing site conditions.` };
+  return { color: CONDITION_COLORS[0], head: "Good - routine monitoring", detail: `Continue routine ${instrumentLevels.length ? "site" : "weather and air-quality"} checks at the work fronts.` };
 }
