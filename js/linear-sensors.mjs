@@ -3,6 +3,7 @@ import { createOpenMeteoClient, WEATHER_REFRESH_MS } from "./linear-weather.mjs"
 import { createWeatherDisplay } from "./linear-weather-view.mjs";
 import { modeledSiteActivity } from "./linear-site-activity.mjs";
 import { assessConditions } from "./linear-conditions.mjs";
+import { createRadarPanel } from "./linear-radar-panel.mjs";
 
 const clock = new Intl.DateTimeFormat("en-SG", { timeZone: "Asia/Singapore", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
 
@@ -24,8 +25,10 @@ export function createLinearSensorPanel() {
   toggle.setAttribute("aria-controls", "linearIotPanel");
   toggle.innerHTML = icon("radio");
   document.querySelector(".nav-stack").append(toggle);
+  const radar = createRadarPanel({ icon, onOpen: () => setOpen(false) });
 
   function setOpen(open) {
+    if (open) radar.setOpen(false);
     panel.hidden = !open;
     detail.hidden = !open;
     toggle.classList.toggle("is-active", open);
@@ -83,6 +86,7 @@ export function createLinearSensorPanel() {
     clearInterval(freshnessTimer);
     clearInterval(weatherTimer);
     weather.destroy();
+    radar.destroy();
     stopDragging.forEach(stop => stop());
     window.removeEventListener("resize", paint);
     document.documentElement.classList.remove("linear-iot-open");

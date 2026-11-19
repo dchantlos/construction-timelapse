@@ -130,7 +130,7 @@ async function boot() {
   // for every noise, dust, gas and wind sensor, plus the shared store that
   // drives the panel.
   if (PROJECT.id === "linear") {
-    import("./linear-sensors.mjs").then(({ createLinearSensorPanel }) => {
+    import("./linear-sensors.mjs?v=4").then(({ createLinearSensorPanel }) => {
       createLinearSensorPanel({ scene, view });
     }).catch(error => console.warn("Roadway IoT panel unavailable", error));
   } else if (PROJECT.features.sensors) {
