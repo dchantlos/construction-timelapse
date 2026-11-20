@@ -16,6 +16,10 @@ demo projects you can switch between from the top bar:
 > IDS 1.0** specification in the browser, and findings export to **BCF 2.1**. IFC in, IDS
 > checked, BCF out.
 
+**Customer guide: [IFC and ArcGIS construction timelapse workflows](docs/ifc-schedule-workflows.md).**
+Follow one installation activity from a planner's schedule to IFC components, a field-reported
+progress view, a JavaScript dashboard, and a repeatable P6 XML refresh.
+
 ## Vertical and linear projects
 
 The **Vertical | Linear** switch in the top bar reopens the current view (planned sequencing or

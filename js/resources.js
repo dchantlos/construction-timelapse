@@ -47,6 +47,12 @@ const GROUPS = [
     group: "Source & documentation",
     items: [
       {
+        badge: "Guide",
+        title: "IFC and schedule workflows",
+        desc: "Link activities to components, report installation in Field Maps, build the JavaScript views, and refresh a P6 schedule.",
+        href: "https://dchantlos.github.io/construction-timelapse/docs/ifc-schedule-workflows.html"
+      },
+      {
         badge: "GitHub",
         title: "Source code on GitHub",
         desc: "dchantlos/construction-timelapse — the full app repository.",
