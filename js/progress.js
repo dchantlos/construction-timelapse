@@ -14,10 +14,11 @@ import { createSpin } from "./spin.js?v=13";
 import { collectConstructionStatus } from "./progress-stats.js?v=14";
 import { renderProgressPanel } from "./progress-panel.js?v=14";
 import { createProgressLayers } from "./progress-layers.js?v=15";
-import { createProgressInteraction } from "./progress-interaction.js?v=19";
+import { createProgressInteraction } from "./progress-interaction.js?v=20";
 import { createSlice } from "./slice.js?v=12";
 import { createExplode } from "./explode.js?v=2";
-import { renderFinancialPanel, createFinancialControls } from "./progress-financial.js?v=16";
+import { renderFinancialPanel, createFinancialControls } from "./progress-financial.js?v=17";
+import { createSitePhotos } from "./linear-site-photos.mjs?v=4";
 import { createCostOverlays } from "./progress-overlays.js?v=15";
 import { createSensorPanel } from "./progress-sensors.js?v=16";
 import { createVelocityLive } from "./velocity-live.js?v=8";
@@ -95,7 +96,7 @@ async function boot() {
   const spin = PROJECT.id !== "linear" ? createSpin(view) : null;
 
   // Click a component to highlight it + show its real construction status.
-  createProgressInteraction(view);
+  const picking = createProgressInteraction(view);
 
   // Slice tool: cut an interactive plane through the model.
   createSlice(view);
@@ -124,7 +125,11 @@ async function boot() {
   });
 
   // Wire the Schedule (4D) ↔ Financials (5D) view toggle and its controls.
-  createFinancialControls();
+  const sitePhotos = PROJECT.id === "linear" ? createSitePhotos(view) : null;
+  createFinancialControls(sitePhotos && (open => {
+    picking?.setEnabled(!open);
+    sitePhotos.setOpen(open);
+  }));
 
   // Live ArcGIS Velocity sensor network (the tower site): pulsing 3D markers
   // for every noise, dust, gas and wind sensor, plus the shared store that

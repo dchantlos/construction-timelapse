@@ -36,6 +36,7 @@
       <link rel="stylesheet" href="./css/linear-sensors.css?v=3" />
       <link rel="stylesheet" href="./css/linear-radar.css?v=1" />
       <link rel="stylesheet" href="./css/linear-instruments.css?v=5" />
+      <link rel="stylesheet" href="./css/linear-site-photos.css?v=3" />
     </template>
 
     <!-- ESM import map: load @arcgis/core straight from the CDN -->
@@ -129,16 +130,17 @@
     <aside class="dashboard dashboard--progress glass">
       <!-- 4D / 5D view switch -->
       <div class="dash-toggle" role="tablist" aria-label="Dashboard view">
-        <button id="viewSchedule" class="dash-toggle__btn is-active" type="button" role="tab" aria-selected="true">
+        <button id="viewSchedule" class="dash-toggle__btn is-active" type="button" role="tab" aria-controls="scheduleView" aria-selected="true">
           Schedule <span class="dash-toggle__d">4D</span>
         </button>
-        <button id="viewFinancial" class="dash-toggle__btn" type="button" role="tab" aria-selected="false">
+        <button id="viewFinancial" class="dash-toggle__btn" type="button" role="tab" aria-controls="financialView" aria-selected="false">
           Financials <span class="dash-toggle__d">5D</span>
         </button>
+        <button id="viewSitePhotos" class="dash-toggle__btn linear-only" type="button" role="tab" aria-controls="sitePhotosView" aria-selected="false">Site photos</button>
       </div>
 
       <!-- ---------- Schedule (4D) view ---------- -->
-      <div id="scheduleView" class="dash-view">
+      <div id="scheduleView" class="dash-view" role="tabpanel" aria-labelledby="viewSchedule">
         <div class="dashboard__head dashboard__head--stack">
           <span class="dashboard__sub" id="progSub">Simulated status</span>
         </div>
@@ -197,7 +199,7 @@
       </div>
 
       <!-- ---------- Financials (5D) view ---------- -->
-      <div id="financialView" class="dash-view is-inactive">
+      <div id="financialView" class="dash-view is-inactive" role="tabpanel" aria-labelledby="viewFinancial">
         <div class="dashboard__head dashboard__head--stack">
           <h2>Financial Progress <span class="fin-badge">5D</span></h2>
           <span class="dashboard__sub is-behind" id="finSub">— delay penalty</span>
@@ -321,6 +323,44 @@
 
         <p class="fin-disclaimer">Illustrative figures — not actual project financials.</p>
       </div>
+
+      <section id="sitePhotosView" class="dash-view is-inactive linear-only" role="tabpanel" aria-labelledby="viewSitePhotos">
+        <dialog id="sitePhotoStage" open aria-label="Site photo viewer">
+          <div class="site-photos__toolbar">
+            <label for="sitePhotoSelect" class="kicker">West work front · Camera view</label>
+            <button type="button" id="sitePhotoExpand" class="btn-reset" aria-expanded="false" aria-controls="sitePhotoStage" disabled>Expand photos</button>
+          </div>
+          <select id="sitePhotoSelect" disabled aria-label="Choose a site photo"></select>
+          <div class="site-photo-frame">
+            <div id="sitePhotoViewer" class="calcite-mode-dark"></div>
+            <div id="sitePhotoDetections" hidden>
+              <svg id="sitePhotoBoxes" aria-hidden="true"></svg>
+              <div id="sitePhotoTags" aria-hidden="true"></div>
+            </div>
+          </div>
+          <div class="site-photos__nav">
+            <button type="button" class="btn-reset" id="sitePhotoPrev" aria-label="Previous photo" disabled>← Prev</button>
+            <span id="sitePhotoBearing"></span>
+            <button type="button" class="btn-reset" id="sitePhotoNext" aria-label="Next photo" disabled>Next →</button>
+          </div>
+          <div class="site-photos__notes">
+            <p id="sitePhotoStatus" role="status"></p>
+            <button type="button" id="sitePhotoRetry" class="btn-reset" hidden>Retry photos</button>
+            <details id="sitePhotoAnalysis" class="site-analysis">
+              <summary>AI photo analysis</summary>
+              <p id="siteAnalysisCaption" role="status"></p>
+              <button type="button" id="siteAnalysisToggle" class="btn-reset" aria-controls="sitePhotoDetections" aria-pressed="false" hidden>Show construction boxes</button>
+              <p id="siteAnalysisLabels" hidden></p>
+              <details id="siteAnalysisDraft" hidden>
+                <summary>Unedited model caption</summary>
+                <p></p>
+              </details>
+              <p class="site-analysis__source">SmolVLM description · Grounding DINO construction boxes. Verify against the photo.</p>
+            </details>
+            <p class="site-photos__shortcuts">← / → to browse · Esc to collapse</p>
+          </div>
+        </dialog>
+      </section>
     </aside>
 
     <!-- ============ LAYER VISIBILITY (flyout from the widget stack) ============ -->
@@ -687,7 +727,7 @@
     <script type="module">
       if (document.documentElement.dataset.project === "vertical") import("./js/presentation.js?v=26");
     </script>
-    <script type="module" src="./js/progress.js?v=52"></script>
+    <script type="module" src="./js/progress.js?v=56"></script>
     <script type="module" src="./js/help.js?v=10"></script>
     <script type="module" src="./js/resources.js?v=5"></script>
     <script type="module">

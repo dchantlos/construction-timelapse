@@ -1,0 +1,42 @@
+{
+  "be4d62be53d9bf9015186af948c9aa32b146be92d03d31a619586224a4c76914": {
+    "caption": "Scaffolding surrounds a concrete base with vertical reinforcing bars. An excavator stands behind it beside the site fence.",
+    "workArea": [0.06, 0.17, 0.85, 0.93],
+    "targets": ["concrete column", "temporary supports"]
+  },
+  "65aa210da6315f85efc3f763e63d75ddea802712ce4b9c69856c52ea482bd866": {
+    "caption": "A ladder descends into a water-filled excavation bordered by yellow guardrails. A concrete column with exposed reinforcing bars rises beside the pit.",
+    "workArea": [0, 0.25, 0.94, 0.91],
+    "targets": ["concrete column", "access ladder", "excavator"]
+  },
+  "66815f81ddb0563a33614fcae66bfcbd1a7a6301c05a4d29b3c8e9348397e579": {
+    "caption": "This tilted view looks across yellow guardrails into the excavation. A ladder rests against the cut edge, with an excavator and blue site toilets behind it.",
+    "workArea": [0, 0.1, 1, 0.89],
+    "targets": ["concrete column", "excavator", "guardrail"]
+  },
+  "b83a440e3a986ff22bf0c01f965794cd556733767e09f9310eeaaa9fbe3b2ac2": {
+    "caption": "A concrete column stands inside a fenced excavation. Water collects beside the access ladder; bundles of bent reinforcing steel lie outside the railings.",
+    "workArea": [0.04, 0.35, 0.99, 0.97],
+    "targets": ["concrete column", "access ladder", "guardrail"]
+  },
+  "cea174e056d3a7ec3c4c0a163264155e2956fc70aba7637e8fd346a904f3aa32": {
+    "caption": "Scaffolding rises around a concrete pier. Gray mesh encloses the upper platform, with residential towers visible beyond the site.",
+    "workArea": [0.1, 0.37, 0.85, 0.94],
+    "targets": ["temporary supports"]
+  },
+  "2d00ed40eacee234a98559c39caabab50c2488f2350aa618c8f276ec363ee603": {
+    "caption": "Two concrete columns with exposed reinforcing bars stand beside a grid of metal supports. A person in a high-visibility vest is on the walkway at lower right.",
+    "workArea": [0.02, 0.38, 0.995, 0.92],
+    "targets": ["concrete column", "temporary supports", "site worker"]
+  },
+  "78f702128c22bae0febf44d38d6d1d2d8f877e3f6b5a8a2d9f3fdee9bb7288f5": {
+    "caption": "An excavator sits beside a grid of metal supports. Two concrete columns with exposed reinforcing bars rise above the yellow guardrails.",
+    "workArea": [0, 0.46, 1, 0.84],
+    "targets": ["concrete column", "temporary supports", "excavator"]
+  },
+  "95702314c5ac0f48305c0d6a346b22b45062c02dff47c6796ca999bb3e063c28": {
+    "caption": "Yellow guardrails line the edge of a sheeted excavation. A column with exposed reinforcing bars stands among stacked materials, with apartment blocks beyond the fence.",
+    "workArea": [0.08, 0.42, 1, 0.91],
+    "targets": ["concrete column", "access ladder", "guardrail"]
+  }
+}

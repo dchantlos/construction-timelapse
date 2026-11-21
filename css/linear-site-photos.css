@@ -1,0 +1,172 @@
+html[data-project="linear"] .dashboard--progress .dash-toggle {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+html[data-project="linear"] .dashboard--progress .dash-toggle__btn {
+  padding-inline: 4px;
+  white-space: nowrap;
+}
+.dashboard--progress:has(#sitePhotosView:not(.is-inactive)) {
+  max-height: calc(100dvh - 130px);
+  overflow: hidden;
+}
+#sitePhotosView {
+  min-height: 0;
+  overflow: auto;
+  gap: 9px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) transparent;
+}
+#sitePhotoStage[open] {
+  position: static;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 9px;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+.site-photos__toolbar, .site-photos__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+#sitePhotoExpand { white-space: nowrap; }
+#sitePhotoStage :is(button, select, summary):focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.site-photos__notes { display: grid; align-content: start; gap: 8px; min-width: 0; }
+.site-photos__shortcuts { display: none; }
+#sitePhotoSelect {
+  width: 100%;
+  padding: 8px;
+  color-scheme: dark;
+  color: var(--text);
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 13px;
+}
+#sitePhotoViewer {
+  flex: none;
+  height: clamp(195px, 44dvh, 440px);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--glass-strong);
+}
+#sitePhotoViewer:empty { display: none; }
+/* Keep the native viewer laid out, but don't let its loading veil paint over the annotated photo. */
+#sitePhotoViewer[inert] { opacity: 0; }
+#sitePhotoViewer arcgis-oriented-imagery-viewer {
+  display: block;
+  width: 100%;
+  height: 100%;
+  --arcgis-oriented-imagery-viewer-min-width: 0px;
+  --arcgis-oriented-imagery-viewer-min-height: 0px;
+}
+.site-photos__nav button:disabled { opacity: 0.45; cursor: default; }
+#sitePhotoBearing { font-size: 12px; color: var(--accent-bright); }
+#sitePhotoStatus, .site-analysis { margin: 0; color: var(--text-dim); font-size: 12px; line-height: 1.45; }
+.site-photo-frame { position: relative; flex: none; min-width: 0; }
+.site-photo-frame:has(#sitePhotoViewer:empty) { display: none; }
+#sitePhotoDetections {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--bg);
+}
+#sitePhotoDetections img, #sitePhotoBoxes {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+#sitePhotoBoxes rect {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2px;
+  vector-effect: non-scaling-stroke;
+}
+#sitePhotoTags {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  font-size: 0.875rem;
+}
+.site-photo-tag {
+  position: absolute;
+  width: max-content;
+  max-width: 100%;
+  padding: 2px 5px;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  font-weight: 700;
+  line-height: 1.22;
+}
+.site-analysis { border-top: 1px solid var(--glass-border); padding-top: 8px; }
+.site-analysis summary { color: var(--accent-bright); cursor: pointer; font-weight: 700; }
+.site-analysis summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.site-analysis p { margin: 6px 0; }
+.site-analysis details summary { color: var(--text-dim); font-weight: 400; }
+.site-analysis__source { color: var(--text-faint); font-size: 11px; }
+#sitePhotoStage:modal {
+  position: fixed;
+  inset: 12px 0 max(32px, env(safe-area-inset-bottom));
+  display: grid;
+  grid-template: "toolbar toolbar" auto "photo chooser" auto "photo nav" auto "photo notes" minmax(0, 1fr)
+    / minmax(0, 1fr) clamp(240px, 26vw, 350px);
+  gap: 12px 20px;
+  width: min(1240px, calc(100vw - 24px));
+  height: calc(100dvh - 12px - max(32px, env(safe-area-inset-bottom)));
+  max-height: none;
+  margin: auto;
+  padding: clamp(12px, 1.4vw, 20px);
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+#sitePhotoStage::backdrop {
+  bottom: max(32px, env(safe-area-inset-bottom));
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+}
+#sitePhotoStage:modal .site-photos__toolbar { grid-area: toolbar; }
+#sitePhotoStage:modal .site-photos__toolbar label { font-size: 1rem; }
+#sitePhotoStage:modal #sitePhotoSelect { grid-area: chooser; font-size: 1rem; }
+#sitePhotoStage:modal .site-photo-frame { grid-area: photo; min-height: 0; }
+#sitePhotoStage:modal #sitePhotoViewer { position: absolute; inset: 0; height: auto; }
+#sitePhotoStage:modal .site-photos__nav { grid-area: nav; }
+#sitePhotoStage:modal .site-photos__notes { grid-area: notes; overflow-y: auto; scrollbar-width: thin; }
+#sitePhotoStage:modal :is(#sitePhotoStatus, #sitePhotoBearing, .site-analysis) { font-size: 1rem; }
+#sitePhotoStage:modal .btn-reset { min-height: 36px; font-size: 0.875rem; }
+#sitePhotoStage:modal .site-photos__nav .btn-reset { padding-inline: 8px; letter-spacing: 0.02em; white-space: nowrap; }
+#sitePhotoStage:modal #sitePhotoBearing { font-size: 0.875rem; white-space: nowrap; }
+#sitePhotoStage:modal #sitePhotoTags { font-size: clamp(1.125rem, 1.6vw, 1.5rem); }
+#sitePhotoStage:modal .site-photo-tag { padding: 3px 8px; }
+#sitePhotoStage:modal .site-photos__shortcuts { display: block; color: var(--text-faint); font-size: 0.875rem; }
+@media (max-width: 720px) {
+  .dashboard--progress:has(#sitePhotosView:not(.is-inactive)) {
+    width: calc(100vw - 80px);
+    max-height: 46dvh;
+  }
+  #sitePhotoViewer { height: 23dvh; }
+}
+@media (max-width: 740px) and (orientation: portrait) {
+  #sitePhotoStage:modal {
+    grid-template: "toolbar" auto "chooser" auto "photo" minmax(0, 1fr) "nav" auto "notes" auto / minmax(0, 1fr);
+    gap: 8px;
+  }
+  #sitePhotoStage:modal .site-photos__notes { max-height: 23dvh; }
+}

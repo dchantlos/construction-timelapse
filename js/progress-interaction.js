@@ -36,6 +36,8 @@ export function createProgressInteraction(view) {
   requestTooltipFields(view.map, [PROGRESS_STATUS.field]);
 
   let highlightHandle = null;
+  let enabled = true;
+  let pick = 0;
 
   function clearHighlight() {
     if (highlightHandle) {
@@ -110,6 +112,8 @@ export function createProgressInteraction(view) {
   }
 
   view.on("click", async (event) => {
+    if (!enabled) return;
+    const request = ++pick;
     let response;
     try {
       response = await view.hitTest(event);
@@ -118,6 +122,7 @@ export function createProgressInteraction(view) {
       return;
     }
 
+    if (request !== pick) return;
     const results = response.results.filter(
       (r) =>
         r.type === "graphic" &&
@@ -148,6 +153,7 @@ export function createProgressInteraction(view) {
     // Highlight via the owning layerView (works for SceneLayers / 3D objects).
     try {
       const layerView = await view.whenLayerView(graphic.layer);
+      if (request !== pick) return;
       highlightHandle = layerView.highlight(graphic);
     } catch (err) {
       console.warn("highlight failed", err);
@@ -175,9 +181,22 @@ export function createProgressInteraction(view) {
   // Dismiss highlight + tooltip on Escape for a clean keyboard experience.
   window.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
+      ++pick;
       clearHighlight();
       hideTooltip();
       closeSensorPopup();
     }
   });
+
+  return {
+    setEnabled(value) {
+      enabled = value;
+      ++pick;
+      if (!value) {
+        clearHighlight();
+        hideTooltip();
+        closeSensorPopup();
+      }
+    }
+  };
 }

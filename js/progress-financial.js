@@ -250,38 +250,44 @@ export function renderFinancialPanel(summary = {}) {
  * toggle, the cost-overlay pill group, the risk-filter cards, and the AIA
  * billing button.
  */
-export function createFinancialControls() {
-  wireViewToggle();
+export function createFinancialControls(onPhotoMode) {
+  wireViewToggle(onPhotoMode);
   wireOverlayPills();
   wireRiskFilters();
   wireBillingButton();
   wireDrillDownModal();
 }
 
-/** Toggle the left dashboard between the schedule and financial views. */
-function wireViewToggle() {
-  const btnSchedule = document.getElementById("viewSchedule");
-  const btnFinancial = document.getElementById("viewFinancial");
-  const scheduleView = document.getElementById("scheduleView");
-  const financialView = document.getElementById("financialView");
-  if (!btnSchedule || !btnFinancial || !scheduleView || !financialView) return;
-
+function wireViewToggle(onPhotoMode) {
+  const tabs = [...document.querySelectorAll(".dash-toggle [aria-controls]")]
+    .filter(tab => tab.id !== "viewSitePhotos" || onPhotoMode);
   let countsPlayed = false;
-  const show = (financial) => {
-    financialView.classList.toggle("is-inactive", !financial);
-    scheduleView.classList.toggle("is-inactive", financial);
-    btnFinancial.classList.toggle("is-active", financial);
-    btnSchedule.classList.toggle("is-active", !financial);
-    btnFinancial.setAttribute("aria-selected", String(financial));
-    btnSchedule.setAttribute("aria-selected", String(!financial));
-    if (financial && !countsPlayed) {
-      countsPlayed = true;
-      playCountUps();
-    }
-  };
-
-  btnSchedule.addEventListener("click", () => show(false));
-  btnFinancial.addEventListener("click", () => show(true));
+  tabs.forEach((tab, index) => {
+    tab.tabIndex = index === 0 ? 0 : -1;
+    tab.addEventListener("click", () => {
+      if (tab.getAttribute("aria-selected") === "true") return;
+      for (const other of tabs) {
+        const active = other === tab;
+        other.tabIndex = active ? 0 : -1;
+        other.setAttribute("aria-selected", String(active));
+        other.classList.toggle("is-active", active);
+        document.getElementById(other.getAttribute("aria-controls")).classList.toggle("is-inactive", !active);
+      }
+      onPhotoMode?.(tab.id === "viewSitePhotos");
+      if (tab.id === "viewFinancial" && !countsPlayed) {
+        countsPlayed = true;
+        playCountUps();
+      }
+    });
+    tab.addEventListener("keydown", event => {
+      const next = { ArrowLeft: (index + tabs.length - 1) % tabs.length,
+        ArrowRight: (index + 1) % tabs.length, Home: 0, End: tabs.length - 1 }[event.key];
+      if (next == null) return;
+      event.preventDefault();
+      tabs[next].focus();
+      tabs[next].click();
+    });
+  });
 }
 
 /** Single-select the 3D-map cost overlay pills (visual state only for now). */

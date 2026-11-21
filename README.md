@@ -120,6 +120,18 @@ due-soon vs. upcoming).
   drill into delay-penalty, delayed-component and change-order risk cards synced to the geometry.
 - **AIA report** — generate a formal **AIA G702 / G703** Application for Payment from the live
   figures, exportable to CSV / PDF.
+- **Site photos (Linear Progress only)** — opens the [Singapore oriented imagery layer](https://www.arcgis.com/home/item.html?id=97766919c9ef47c89f2ed9ff00af2dba).
+  Choose a photo or click a camera stop to see its image and viewing cone. At Station F, **Next**
+  turns from P17 to P18 without moving the scene camera. Switch back to Schedule or Financials
+  to return to your prior viewpoint. The field photos are real; their roadway placements are
+  illustrative and do not affect reported progress.
+  Expand **AI photo analysis** for a precomputed field description and objects in the work area.
+  **Show construction boxes** highlights features such as pier columns, temporary supports and
+  excavators, not surrounding apartments or road traffic. It displays the upright source photo so each label stays aligned with its
+  pixels. Use **Expand photos** to present the current image with larger labels.
+  **Prev / Next** (or the arrow keys) browse without leaving presentation view;
+  **Esc** returns to the map. **Return to oriented photo** resumes the native viewer. See the
+  [local analysis workflow](docs/site-photos/README.md) to process new attachments.
 
 ### Live environmental sensors (ArcGIS Velocity)
 Real-time **noise, dust, gas and wind** feeds stream in over **ArcGIS Velocity** stream services

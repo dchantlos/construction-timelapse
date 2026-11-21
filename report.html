@@ -813,7 +813,7 @@
       async function liveFigures() {
         const [{ loadWebSceneLayers, collectLayerStats }, { financialModel }] = await Promise.all([
           import("./js/progress-stats.js?v=14"),
-          import("./js/progress-financial.js?v=16"),
+          import("./js/progress-financial.js?v=17"),
         ]);
         const data = await collectLayerStats(await loadWebSceneLayers(PROGRESS_WEBSCENE_ID));
         const m = financialModel(data.summary);

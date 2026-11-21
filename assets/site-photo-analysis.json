@@ -1,0 +1,343 @@
+{
+  "source": "https://services.arcgis.com/tgUWep3BZhLoHKNh/arcgis/rest/services/SG_Roadway_OrientedImages/FeatureServer/0",
+  "captionModel": {
+    "id": "HuggingFaceTB/SmolVLM-Instruct",
+    "revision": "bb436dc36521da6d8cf80a8fdeb12e6b2e323f81",
+    "instruction": "Describe what is visible at this construction site in two short sentences. Focus on the foreground works, structures and equipment. Do not infer progress, safety or what will happen next."
+  },
+  "detectionModel": {
+    "id": "onnx-community/grounding-dino-tiny-ONNX",
+    "revision": "ff690b0a8050566c290287545bd059350f3e9096",
+    "scope": "construction-work-area",
+    "prompts": {
+      "concrete column": "concrete column.",
+      "temporary supports": "metal scaffolding.",
+      "access ladder": "ladder.",
+      "guardrail": "yellow safety railing.",
+      "excavator": "excavator.",
+      "site worker": "construction worker."
+    },
+    "minScore": 0.3
+  },
+  "photos": {
+    "660bb8f9-f08f-439b-8bf4-310c9980901e": {
+      "attachmentId": 1,
+      "attachmentGlobalId": "bc804fbe-0b68-4ec5-af2a-a5db7392db0e",
+      "filename": "IMG_4713.jpg",
+      "sha256": "be4d62be53d9bf9015186af948c9aa32b146be92d03d31a619586224a4c76914",
+      "byteLength": 1523211,
+      "width": 1800,
+      "height": 2400,
+      "caption": "In the foreground of the image there are several metal rods and girders which appear to be part of a building under construction. There is also a large concrete slab with rebar sticking out of it. There are several pieces of wood and other debris scattered around. There are some yellow caution signs and orange traffic cones. There is a yellow truck parked near the back",
+      "displayCaption": "Scaffolding surrounds a concrete base with vertical reinforcing bars. An excavator stands behind it beside the site fence.",
+      "workAreaReviewed": true,
+      "objects": [
+        {
+          "label": "concrete column",
+          "box": [
+            751,
+            586,
+            892,
+            1669
+          ]
+        },
+        {
+          "label": "temporary supports",
+          "box": [
+            317,
+            471,
+            1194,
+            1929
+          ]
+        }
+      ]
+    },
+    "cf8fdd3d-4f7a-43d1-93d6-5a466977126b": {
+      "attachmentId": 2,
+      "attachmentGlobalId": "cafd189d-3b8d-4a2a-9600-15340887b22a",
+      "filename": "IMG_4714.jpg",
+      "sha256": "65aa210da6315f85efc3f763e63d75ddea802712ce4b9c69856c52ea482bd866",
+      "byteLength": 1558353,
+      "width": 1800,
+      "height": 2400,
+      "caption": "In the foreground of the image there are several yellow metal fences surrounding a large, rectangular pool filled with murky water. There is a yellow ladder leading up to the top level of the pool. To the left of the pool there is a yellow vehicle. There are several white port-o-lets. Behind the port-olets there is a blue truck.",
+      "displayCaption": "A ladder descends into a water-filled excavation bordered by yellow guardrails. A concrete column with exposed reinforcing bars rises beside the pit.",
+      "workAreaReviewed": true,
+      "objects": [
+        {
+          "label": "concrete column",
+          "box": [
+            1216,
+            779,
+            1408,
+            1372
+          ]
+        },
+        {
+          "label": "access ladder",
+          "box": [
+            683,
+            1078,
+            952,
+            1495
+          ]
+        },
+        {
+          "label": "excavator",
+          "box": [
+            5,
+            676,
+            458,
+            1215
+          ]
+        }
+      ]
+    },
+    "4e465a0c-70e4-43a8-8f9e-e02d64f82c75": {
+      "attachmentId": 3,
+      "attachmentGlobalId": "28239d1f-f3ec-40a5-912a-70bb9cf5844b",
+      "filename": "IMG_4715.jpg",
+      "sha256": "66815f81ddb0563a33614fcae66bfcbd1a7a6301c05a4d29b3c8e9348397e579",
+      "byteLength": 1669628,
+      "width": 1800,
+      "height": 2400,
+      "caption": "In the foreground of the image there are yellow metal handrails, a ladder, a blue container with a white circle on it, a brown pipe, a wooden plank, a metal pole, a car, a building, a tree, a person, a crane, a truck, a building under construction, a building in the background, a tree in the background",
+      "displayCaption": "This tilted view looks across yellow guardrails into the excavation. A ladder rests against the cut edge, with an excavator and blue site toilets behind it.",
+      "workAreaReviewed": true,
+      "objects": [
+        {
+          "label": "concrete column",
+          "box": [
+            1251,
+            1002,
+            1649,
+            1542
+          ]
+        },
+        {
+          "label": "excavator",
+          "box": [
+            2,
+            252,
+            658,
+            1012
+          ]
+        },
+        {
+          "label": "guardrail",
+          "box": [
+            35,
+            850,
+            1776,
+            2017
+          ]
+        }
+      ]
+    },
+    "6be19288-3626-4e37-a121-093e0034e861": {
+      "attachmentId": 4,
+      "attachmentGlobalId": "d31436e5-7a0b-4e23-8cf9-7485b632cb6a",
+      "filename": "IMG_4717.jpg",
+      "sha256": "b83a440e3a986ff22bf0c01f965794cd556733767e09f9310eeaaa9fbe3b2ac2",
+      "byteLength": 1084573,
+      "width": 1800,
+      "height": 2400,
+      "caption": "In the foreground of the image there are several yellow metal handrails, a brown pipe, some rusty rods, a green tarp, a concrete structure, a yellow pole, a brown pole, a white pipe, a blue pipe, a black pipe, a wooden plank, a metal fence, a building with a green roof, a building without a roof",
+      "displayCaption": "A concrete column stands inside a fenced excavation. Water collects beside the access ladder; bundles of bent reinforcing steel lie outside the railings.",
+      "workAreaReviewed": true,
+      "objects": [
+        {
+          "label": "concrete column",
+          "box": [
+            599,
+            1081,
+            708,
+            1493
+          ]
+        },
+        {
+          "label": "access ladder",
+          "box": [
+            1220,
+            1344,
+            1497,
+            1767
+          ]
+        },
+        {
+          "label": "guardrail",
+          "box": [
+            143,
+            1187,
+            1778,
+            2226
+          ]
+        }
+      ]
+    },
+    "2f5c0a5c-162e-4128-86ae-ba631b62dbfe": {
+      "attachmentId": 5,
+      "attachmentGlobalId": "290271a7-cb6c-4692-b9f2-3764cb7c47b3",
+      "filename": "IMG_4720.jpg",
+      "sha256": "cea174e056d3a7ec3c4c0a163264155e2956fc70aba7637e8fd346a904f3aa32",
+      "byteLength": 1277083,
+      "width": 1800,
+      "height": 2400,
+      "caption": "In the foreground of the image there are several metal frames that have been erected. There are also some wooden planks and other materials.",
+      "displayCaption": "Scaffolding rises around a concrete pier. Gray mesh encloses the upper platform, with residential towers visible beyond the site.",
+      "workAreaReviewed": true,
+      "objects": [
+        {
+          "label": "temporary supports",
+          "box": [
+            285,
+            929,
+            1469,
+            2193
+          ]
+        }
+      ]
+    },
+    "a21cf11c-dbf4-4680-a0c7-41785844b9b4": {
+      "attachmentId": 6,
+      "attachmentGlobalId": "aba6292e-3650-40a2-b8fb-0cdcc5bbb89f",
+      "filename": "IMG_4721.jpg",
+      "sha256": "2d00ed40eacee234a98559c39caabab50c2488f2350aa618c8f276ec363ee603",
+      "byteLength": 1415381,
+      "width": 1800,
+      "height": 2400,
+      "caption": "In the foreground of the image there are several concrete pillars. There are some metal rods. There are a few wooden planks. There are several workers. There is a large yellow sign. There is an orange barrier. There are two men standing near the barrier. There is one man walking away from the camera. There are trees. There are buildings in the background",
+      "displayCaption": "Two concrete columns with exposed reinforcing bars stand beside a grid of metal supports. A person in a high-visibility vest is on the walkway at lower right.",
+      "workAreaReviewed": true,
+      "objects": [
+        {
+          "label": "concrete column",
+          "box": [
+            859,
+            1168,
+            991,
+            1998
+          ]
+        },
+        {
+          "label": "concrete column",
+          "box": [
+            144,
+            1097,
+            277,
+            1760
+          ]
+        },
+        {
+          "label": "temporary supports",
+          "box": [
+            228,
+            940,
+            1783,
+            1922
+          ]
+        },
+        {
+          "label": "site worker",
+          "box": [
+            1290,
+            1743,
+            1416,
+            2115
+          ]
+        }
+      ]
+    },
+    "5de1f801-7d5e-4efd-a308-4ee14afc4c62": {
+      "attachmentId": 7,
+      "attachmentGlobalId": "c69b3716-69fd-4028-b25b-5321c09bd4ff",
+      "filename": "IMG_4722.jpg",
+      "sha256": "78f702128c22bae0febf44d38d6d1d2d8f877e3f6b5a8a2d9f3fdee9bb7288f5",
+      "byteLength": 988499,
+      "width": 1800,
+      "height": 2400,
+      "caption": "In the foreground of the image there are several concrete pillars with metal rods. There are yellow poles around the area. There is a large piece of machinery that looks like it has tracks on the ground. There are some trees in the background.",
+      "displayCaption": "An excavator sits beside a grid of metal supports. Two concrete columns with exposed reinforcing bars rise above the yellow guardrails.",
+      "workAreaReviewed": true,
+      "objects": [
+        {
+          "label": "concrete column",
+          "box": [
+            354,
+            1305,
+            464,
+            1756
+          ]
+        },
+        {
+          "label": "concrete column",
+          "box": [
+            795,
+            1283,
+            867,
+            1593
+          ]
+        },
+        {
+          "label": "temporary supports",
+          "box": [
+            7,
+            1204,
+            1238,
+            1746
+          ]
+        },
+        {
+          "label": "excavator",
+          "box": [
+            890,
+            1228,
+            1736,
+            1724
+          ]
+        }
+      ]
+    },
+    "37359481-cb11-49fc-968a-69835d1084a0": {
+      "attachmentId": 8,
+      "attachmentGlobalId": "f5008a64-a905-44b1-8bea-4cc5656e02a8",
+      "filename": "IMG_4723.jpg",
+      "sha256": "95702314c5ac0f48305c0d6a346b22b45062c02dff47c6796ca999bb3e063c28",
+      "byteLength": 1306240,
+      "width": 1800,
+      "height": 2400,
+      "caption": "In the foreground of the image there are yellow metal railings, a concrete floor, some wooden planks, a few metal poles, a sign that says \"Danger\" with a warning symbol, a pile of scrap metal, a few more signs, some metal rods, a few pieces of wood, a few empty containers, a few pipes, a few other",
+      "displayCaption": "Yellow guardrails line the edge of a sheeted excavation. A column with exposed reinforcing bars stands among stacked materials, with apartment blocks beyond the fence.",
+      "workAreaReviewed": true,
+      "objects": [
+        {
+          "label": "concrete column",
+          "box": [
+            674,
+            1175,
+            760,
+            1484
+          ]
+        },
+        {
+          "label": "access ladder",
+          "box": [
+            1004,
+            1353,
+            1208,
+            1758
+          ]
+        },
+        {
+          "label": "guardrail",
+          "box": [
+            513,
+            1258,
+            1778,
+            1874
+          ]
+        }
+      ]
+    }
+  }
+}
